@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
+import { Analytics } from '@vercel/analytics/react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useUIStore } from '@/stores/ui-store';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -123,6 +124,7 @@ export function App() {
           </Suspense>
         </BrowserRouter>
         <Toaster position="top-right" theme="system" richColors />
+        <Analytics />
       </ThemeProvider>
     </QueryClientProvider>
   );
