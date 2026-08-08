@@ -3,24 +3,25 @@ import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
-import { mockTickets } from '@/lib/mock-data';
-import { Plus, Search, Filter, SlidersHorizontal, Download, MoreHorizontal, Lock, Building2 } from 'lucide-react';
+import { Plus, Search, Filter, SlidersHorizontal, Download, MoreHorizontal, Lock, Building2, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/stores/auth-store';
 import { Badge } from '@/components/ui/badge';
+import { useTickets } from '@/hooks/useTickets';
 
 export default function TicketListPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { isKaaInternal, userCompany } = useAuthStore();
+  const { data: tickets = [], isLoading, refetch, isRefetching } = useTickets();
 
   // Multi-tenant Row-Level Security Filtering
-  const filteredTickets = mockTickets.filter(ticket => {
-    const matchesTenant = isKaaInternal ? true : (ticket.company === userCompany);
+  const filteredTickets = (tickets || []).filter((ticket: any) => {
+    const matchesTenant = isKaaInternal ? true : (ticket.company === userCompany || !ticket.company);
     const matchesSearch = 
-      ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.assignee.name.toLowerCase().includes(searchTerm.toLowerCase());
+      (ticket.id || ticket.ticket_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (ticket.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (ticket.company || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (ticket.assignee?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesTenant && matchesSearch;
   });
 
@@ -30,12 +31,22 @@ export default function TicketListPage() {
         title={isKaaInternal ? "Support Tickets (All Clients)" : `My Tickets (${userCompany})`} 
         description={isKaaInternal ? "Manage and track customer support requests across all KAA client companies." : `Track status, field engineer visits, and updates for ${userCompany} tickets.`}
       >
-        <Link 
-          to="/tickets/new" 
-          className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary/20"
-        >
-          <Plus className="w-4 h-4" /> Raise Ticket
-        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            className="p-2 border border-border bg-secondary/50 hover:bg-secondary rounded-lg text-muted-foreground transition-colors"
+            title="Sync with Supabase"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefetching ? 'animate-spin' : ''}`} />
+          </button>
+          <Link 
+            to="/tickets/new" 
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary/20"
+          >
+            <Plus className="w-4 h-4" /> Raise Ticket
+          </Link>
+        </div>
       </PageHeader>
 
       <div className="glass rounded-xl border border-border flex flex-col flex-1 min-h-0 overflow-hidden animate-slide-in-up">
@@ -81,80 +92,86 @@ export default function TicketListPage() {
 
         {/* Table */}
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead className="sticky top-0 bg-secondary/80 backdrop-blur border-b border-border z-10 text-xs font-semibold text-muted-foreground uppercase">
-              <tr>
-                <th className="p-4 w-10">
-                  <input type="checkbox" className="rounded border-border" />
-                </th>
-                <th className="p-4">Ticket ID</th>
-                <th className="p-4">Title</th>
-                {isKaaInternal && <th className="p-4">Client Company</th>}
-                <th className="p-4">Priority</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Assignee</th>
-                <th className="p-4">Created</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50">
-              {filteredTickets.map((ticket) => (
-                <tr key={ticket.id} className="hover:bg-secondary/30 transition-colors group">
-                  <td className="p-4">
-                    <input type="checkbox" className="rounded border-border" />
-                  </td>
-                  <td className="p-4 font-mono font-medium text-primary">
-                    <Link to={`/tickets/${ticket.id}`} className="hover:underline flex items-center gap-1">
-                      {ticket.id}
-                      {ticket.slaBreached && (
-                        <span className="w-2 h-2 rounded-full bg-destructive animate-ping" title="SLA Breached" />
-                      )}
-                    </Link>
-                  </td>
-                  <td className="p-4 max-w-md font-medium text-foreground">
-                    <Link to={`/tickets/${ticket.id}`} className="hover:text-primary transition-colors block truncate">
-                      {ticket.title}
-                    </Link>
-                  </td>
-                  {isKaaInternal && (
-                    <td className="p-4 text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Building2 className="w-3.5 h-3.5 text-primary" /> {ticket.company}
-                      </span>
-                    </td>
-                  )}
-                  <td className="p-4">
-                    <PriorityBadge priority={ticket.priority} />
-                  </td>
-                  <td className="p-4">
-                    <StatusBadge status={ticket.status} />
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <img src={ticket.assignee.avatar} alt={ticket.assignee.name} className="w-6 h-6 rounded-full border border-border" />
-                      <span className="text-xs text-foreground font-medium">{ticket.assignee.name}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 text-xs text-muted-foreground whitespace-nowrap">
-                    {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
-                  </td>
-                  <td className="p-4 text-right">
-                    <button className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-
-              {filteredTickets.length === 0 && (
+          {isLoading ? (
+            <div className="flex items-center justify-center p-12">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse text-sm">
+              <thead className="sticky top-0 bg-secondary/80 backdrop-blur border-b border-border z-10 text-xs font-semibold text-muted-foreground uppercase">
                 <tr>
-                  <td colSpan={isKaaInternal ? 9 : 8} className="p-8 text-center text-muted-foreground">
-                    No tickets found matching your scope or search query.
-                  </td>
+                  <th className="p-4 w-10">
+                    <input type="checkbox" className="rounded border-border" />
+                  </th>
+                  <th className="p-4">Ticket ID</th>
+                  <th className="p-4">Title</th>
+                  {isKaaInternal && <th className="p-4">Client Company</th>}
+                  <th className="p-4">Priority</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Assignee</th>
+                  <th className="p-4">Created</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {filteredTickets.map((ticket: any) => (
+                  <tr key={ticket.id} className="hover:bg-secondary/30 transition-colors group">
+                    <td className="p-4">
+                      <input type="checkbox" className="rounded border-border" />
+                    </td>
+                    <td className="p-4 font-mono font-medium text-primary">
+                      <Link to={`/tickets/${ticket.id}`} className="hover:underline flex items-center gap-1">
+                        {ticket.id || ticket.ticket_number}
+                        {ticket.slaBreached && (
+                          <span className="w-2 h-2 rounded-full bg-destructive animate-ping" title="SLA Breached" />
+                        )}
+                      </Link>
+                    </td>
+                    <td className="p-4 max-w-md font-medium text-foreground">
+                      <Link to={`/tickets/${ticket.id}`} className="hover:text-primary transition-colors block truncate">
+                        {ticket.title}
+                      </Link>
+                    </td>
+                    {isKaaInternal && (
+                      <td className="p-4 text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Building2 className="w-3.5 h-3.5 text-primary" /> {ticket.company || 'KAA Client'}
+                        </span>
+                      </td>
+                    )}
+                    <td className="p-4">
+                      <PriorityBadge priority={ticket.priority || 'medium'} />
+                    </td>
+                    <td className="p-4">
+                      <StatusBadge status={ticket.status || 'open'} />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <img src={ticket.assignee?.avatar || 'https://i.pravatar.cc/150?u=1'} alt={ticket.assignee?.name || 'Alex Johnson'} className="w-6 h-6 rounded-full border border-border" />
+                        <span className="text-xs text-foreground font-medium">{ticket.assignee?.name || 'Alex Johnson'}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-xs text-muted-foreground whitespace-nowrap">
+                      {formatDistanceToNow(new Date(ticket.createdAt || ticket.created_at || Date.now()), { addSuffix: true })}
+                    </td>
+                    <td className="p-4 text-right">
+                      <button className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {filteredTickets.length === 0 && (
+                  <tr>
+                    <td colSpan={isKaaInternal ? 9 : 8} className="p-8 text-center text-muted-foreground">
+                      No tickets found matching your scope or search query.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Footer */}
