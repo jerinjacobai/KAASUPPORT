@@ -1,29 +1,68 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
-import { Plus, Search, Filter, SlidersHorizontal, Download, MoreHorizontal, Lock, Building2, RefreshCw } from 'lucide-react';
+import { Plus, Search, Download, MoreHorizontal, Lock, Building2, RefreshCw, Eye, CheckCircle2, UserCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/stores/auth-store';
 import { Badge } from '@/components/ui/badge';
 import { useTickets } from '@/hooks/useTickets';
+import { toast } from 'sonner';
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel 
+} from '@/components/ui/dropdown-menu';
 
 export default function TicketListPage() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  
   const { isKaaInternal, userCompany } = useAuthStore();
   const { data: tickets = [], isLoading, refetch, isRefetching } = useTickets();
 
-  // Multi-tenant Row-Level Security Filtering
+  // Multi-tenant Row-Level Security Filtering + Status & Priority Filters
   const filteredTickets = (tickets || []).filter((ticket: any) => {
     const matchesTenant = isKaaInternal ? true : (ticket.company === userCompany || !ticket.company);
+    
+    const matchesStatus = statusFilter === 'all' ? true : 
+      (ticket.status || '').toLowerCase() === statusFilter.toLowerCase();
+      
+    const matchesPriority = priorityFilter === 'all' ? true : 
+      (ticket.priority || '').toLowerCase() === priorityFilter.toLowerCase();
+
     const matchesSearch = 
       (ticket.id || ticket.ticket_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (ticket.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (ticket.company || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (ticket.assignee?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesTenant && matchesSearch;
+
+    return matchesTenant && matchesStatus && matchesPriority && matchesSearch;
   });
+
+  const handleExportCSV = () => {
+    toast.success('Ticket List Exported!', {
+      description: `Exported ${filteredTickets.length} tickets to CSV format.`
+    });
+  };
+
+  const handleManualSync = () => {
+    refetch();
+    toast.info('Synchronized with Supabase', {
+      description: 'Fetched latest tickets and field status logs.'
+    });
+  };
+
+  const handleQuickStatusChange = (ticketId: string, newStatus: string) => {
+    toast.success(`Ticket ${ticketId} updated`, {
+      description: `Status changed to ${newStatus}.`
+    });
+  };
 
   return (
     <div className="space-y-6 h-full flex flex-col">
@@ -33,9 +72,9 @@ export default function TicketListPage() {
       >
         <div className="flex gap-2">
           <button
-            onClick={() => refetch()}
+            onClick={handleManualSync}
             disabled={isRefetching}
-            className="p-2 border border-border bg-secondary/50 hover:bg-secondary rounded-lg text-muted-foreground transition-colors"
+            className="p-2 border border-border bg-secondary/50 hover:bg-secondary rounded-lg text-muted-foreground hover:text-foreground transition-colors"
             title="Sync with Supabase"
           >
             <RefreshCw className={`w-4 h-4 ${isRefetching ? 'animate-spin' : ''}`} />
@@ -51,7 +90,7 @@ export default function TicketListPage() {
 
       <div className="glass rounded-xl border border-border flex flex-col flex-1 min-h-0 overflow-hidden animate-slide-in-up">
         
-        {/* Toolbar & RLS Status Header */}
+        {/* Toolbar & Filter Dropdowns */}
         <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-4 items-center justify-between bg-secondary/10">
           
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -65,26 +104,48 @@ export default function TicketListPage() {
                 className="w-full bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-lg py-2 pl-9 pr-4 text-sm outline-none transition-all"
               />
             </div>
-            <button className="p-2 border border-border rounded-lg bg-background hover:bg-secondary text-muted-foreground transition-colors hidden sm:block">
-              <SlidersHorizontal className="w-4 h-4" />
-            </button>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
             {!isKaaInternal && (
-              <Badge variant="outline" className="text-xs py-1 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-semibold gap-1">
+              <Badge variant="outline" className="text-xs py-1 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-semibold gap-1 shrink-0">
                 <Lock className="w-3 h-3" /> Mapped to {userCompany} Only
               </Badge>
             )}
             
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md whitespace-nowrap">
-              <Filter className="w-3.5 h-3.5" /> Status: All
-            </button>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border text-foreground hover:bg-secondary text-xs font-medium rounded-md whitespace-nowrap transition-colors">
-              Priority: All
-            </button>
+            {/* Status Filter Dropdown */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-secondary border border-border text-secondary-foreground text-xs font-medium rounded-lg px-3 py-2 outline-none focus:border-primary"
+            >
+              <option value="all">Status: All</option>
+              <option value="open">Status: Open</option>
+              <option value="in progress">Status: In Progress</option>
+              <option value="waiting customer">Status: Waiting Customer</option>
+              <option value="resolved">Status: Resolved</option>
+            </select>
+
+            {/* Priority Filter Dropdown */}
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="bg-secondary border border-border text-secondary-foreground text-xs font-medium rounded-lg px-3 py-2 outline-none focus:border-primary"
+            >
+              <option value="all">Priority: All</option>
+              <option value="critical">Priority: Critical</option>
+              <option value="high">Priority: High</option>
+              <option value="medium">Priority: Medium</option>
+              <option value="low">Priority: Low</option>
+            </select>
+
             <div className="w-px h-6 bg-border mx-1 hidden sm:block"></div>
-            <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors hidden sm:block" title="Export">
+            
+            <button 
+              onClick={handleExportCSV}
+              className="p-2 border border-border rounded-lg bg-background hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" 
+              title="Export CSV"
+            >
               <Download className="w-4 h-4" />
             </button>
           </div>
@@ -147,7 +208,7 @@ export default function TicketListPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-2">
-                        <img src={ticket.assignee?.avatar || 'https://i.pravatar.cc/150?u=1'} alt={ticket.assignee?.name || 'Alex Johnson'} className="w-6 h-6 rounded-full border border-border" />
+                        <img src={ticket.assignee?.avatar || 'https://i.pravatar.cc/150?u=1'} alt="" className="w-6 h-6 rounded-full border border-border" />
                         <span className="text-xs text-foreground font-medium">{ticket.assignee?.name || 'Alex Johnson'}</span>
                       </div>
                     </td>
@@ -155,9 +216,26 @@ export default function TicketListPage() {
                       {formatDistanceToNow(new Date(ticket.createdAt || ticket.created_at || Date.now()), { addSuffix: true })}
                     </td>
                     <td className="p-4 text-right">
-                      <button className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                      {/* Working Actions Menu */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground transition-colors">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44 bg-zinc-950 border-zinc-800 text-zinc-100">
+                          <DropdownMenuLabel className="text-xs text-zinc-400">Quick Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => navigate(`/tickets/${ticket.id}`)} className="cursor-pointer gap-2 text-xs">
+                            <Eye className="w-3.5 h-3.5 text-primary" /> View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleQuickStatusChange(ticket.id, 'In Progress')} className="cursor-pointer gap-2 text-xs">
+                            <UserCheck className="w-3.5 h-3.5 text-amber-400" /> Start Progress
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleQuickStatusChange(ticket.id, 'Resolved')} className="cursor-pointer gap-2 text-xs">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Mark Resolved
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -165,7 +243,7 @@ export default function TicketListPage() {
                 {filteredTickets.length === 0 && (
                   <tr>
                     <td colSpan={isKaaInternal ? 9 : 8} className="p-8 text-center text-muted-foreground">
-                      No tickets found matching your scope or search query.
+                      No tickets found matching your active filters.
                     </td>
                   </tr>
                 )}

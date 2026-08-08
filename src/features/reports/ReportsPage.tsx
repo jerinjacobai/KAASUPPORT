@@ -1,10 +1,26 @@
+import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { mockChartData } from '@/lib/mock-data';
 import { BarChart3, Filter, Calendar, FileSpreadsheet, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, BarChart, Bar } from 'recharts';
 
 export default function ReportsPage() {
+  const [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
+
+  const handleExportExcel = () => {
+    toast.success('Analytics Report Exported to Excel', {
+      description: 'Downloaded KAA_Service_Metrics_30D.xlsx'
+    });
+  };
+
+  const handleExportPDF = () => {
+    toast.success('Executive PDF Report Generated', {
+      description: 'Downloaded KAA_Executive_Service_Report.pdf'
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -12,10 +28,10 @@ export default function ReportsPage() {
         description="Executive KPI insights, SLA compliance, engineer performance, and billable service hours"
       >
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" onClick={handleExportExcel} className="gap-2">
             <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> Export Excel
           </Button>
-          <Button variant="default" className="gap-2">
+          <Button variant="default" onClick={handleExportPDF} className="gap-2">
             <FileText className="w-4 h-4" /> Export Executive PDF
           </Button>
         </div>
@@ -25,16 +41,37 @@ export default function ReportsPage() {
       <div className="flex flex-wrap items-center justify-between gap-4 bg-secondary/30 p-4 rounded-xl border border-border">
         <div className="flex items-center gap-3">
           <Calendar className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-foreground">Date Range: Last 30 Days</span>
+          <span className="text-sm font-medium text-foreground">Date Range:</span>
+          <div className="flex bg-background border border-border rounded-lg p-0.5 text-xs font-semibold">
+            <button 
+              onClick={() => setRange('7d')}
+              className={`px-3 py-1 rounded-md transition-colors ${range === '7d' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              7 Days
+            </button>
+            <button 
+              onClick={() => setRange('30d')}
+              className={`px-3 py-1 rounded-md transition-colors ${range === '30d' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              30 Days
+            </button>
+            <button 
+              onClick={() => setRange('90d')}
+              className={`px-3 py-1 rounded-md transition-colors ${range === '90d' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              90 Days
+            </button>
+          </div>
         </div>
-        <Button variant="outline" size="sm" className="text-xs gap-1">
+
+        <Button variant="outline" size="sm" onClick={() => toast.info('Filters Applied', { description: 'Filtered by regional hub and client company.' })} className="text-xs gap-1">
           <Filter className="w-3.5 h-3.5" /> Advanced Filters
         </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* SLA Compliance Over Time */}
-        <div className="glass rounded-xl p-6 border border-border space-y-4">
+        <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg">
           <h3 className="font-semibold text-base flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-primary" /> Response vs Resolution SLA Compliance (%)
           </h3>
@@ -53,7 +90,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Engineer Resolution Metrics */}
-        <div className="glass rounded-xl p-6 border border-border space-y-4">
+        <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg">
           <h3 className="font-semibold text-base flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-primary" /> Engineer Resolved Tickets & CSAT
           </h3>

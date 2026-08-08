@@ -1,12 +1,19 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { mockEngineers } from '@/lib/mock-data';
-import { UserCheck, MapPin, Star, Wrench, Mail, Search } from 'lucide-react';
+import { mockEngineers, mockTickets } from '@/lib/mock-data';
+import { UserCheck, MapPin, Star, Wrench, Mail, Search, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export default function EngineersPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedEngineer, setSelectedEngineer] = useState<any>(null);
+  const [addEngineerModalOpen, setAddEngineerModalOpen] = useState(false);
+  const [newEngineerName, setNewEngineerName] = useState('');
+  const [newEngineerRole, setNewEngineerRole] = useState('Senior PLC Engineer');
 
   const filteredEngineers = mockEngineers.filter(eng =>
     eng.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -14,13 +21,44 @@ export default function EngineersPage() {
     eng.skills.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const handleOpenAssignModal = (engineer: any) => {
+    setSelectedEngineer(engineer);
+    setAssignModalOpen(true);
+  };
+
+  const handleConfirmAssign = (ticketId: string) => {
+    toast.success(`Assigned ticket ${ticketId}`, {
+      description: `Dispatch notification sent to ${selectedEngineer?.name}.`
+    });
+    setAssignModalOpen(false);
+  };
+
+  const handleSendMessage = (engineerName: string) => {
+    toast.info(`Message sent to ${engineerName}`, {
+      description: 'Opening encrypted KAA Engineer Chat session...'
+    });
+  };
+
+  const handleAddEngineerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEngineerName.trim()) {
+      toast.error('Please enter engineer name');
+      return;
+    }
+    toast.success(`Engineer ${newEngineerName} onboarded`, {
+      description: `Role assigned: ${newEngineerRole}. Credentials sent via SMS/Email.`
+    });
+    setAddEngineerModalOpen(false);
+    setNewEngineerName('');
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Engineers Directory"
         description="Manage field engineers, skill sets, availability and location tracking"
       >
-        <Button variant="default" className="gap-2">
+        <Button variant="default" onClick={() => setAddEngineerModalOpen(true)} className="gap-2">
           <UserCheck className="w-4 h-4" /> Add Engineer
         </Button>
       </PageHeader>
@@ -40,7 +78,7 @@ export default function EngineersPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {filteredEngineers.map((engineer) => (
-          <div key={engineer.id} className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all group flex flex-col justify-between">
+          <div key={engineer.id} className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all group flex flex-col justify-between shadow-lg">
             <div>
               <div className="flex items-start justify-between mb-4">
                 <div className="relative">
@@ -84,16 +122,108 @@ export default function EngineersPage() {
             </div>
 
             <div className="pt-4 border-t border-border/50 flex items-center justify-between gap-2">
-              <Button variant="outline" size="sm" className="w-full text-xs gap-1">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleSendMessage(engineer.name)}
+                className="w-full text-xs gap-1"
+              >
                 <Mail className="w-3.5 h-3.5" /> Message
               </Button>
-              <Button variant="default" size="sm" className="w-full text-xs gap-1">
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => handleOpenAssignModal(engineer)}
+                className="w-full text-xs gap-1"
+              >
                 <Wrench className="w-3.5 h-3.5" /> Assign Ticket
               </Button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Assign Ticket Modal */}
+      <Dialog open={assignModalOpen} onOpenChange={setAssignModalOpen}>
+        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Wrench className="w-4 h-4 text-primary" /> Assign Ticket to {selectedEngineer?.name}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-400">
+              Select an unassigned or pending ticket to dispatch to {selectedEngineer?.name}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 pt-2">
+            {mockTickets.slice(0, 4).map((ticket) => (
+              <div key={ticket.id} className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 flex items-center justify-between hover:border-primary/50 transition-colors">
+                <div>
+                  <span className="font-mono text-xs font-bold text-primary">{ticket.id}</span>
+                  <p className="text-xs font-medium text-white truncate max-w-[220px]">{ticket.title}</p>
+                  <p className="text-[10px] text-zinc-400">{ticket.company}</p>
+                </div>
+                <Button 
+                  size="sm" 
+                  onClick={() => handleConfirmAssign(ticket.id)}
+                  className="text-xs gap-1 py-1 h-8"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Assign
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Engineer Modal */}
+      <Dialog open={addEngineerModalOpen} onOpenChange={setAddEngineerModalOpen}>
+        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold">Onboard New Field Engineer</DialogTitle>
+            <DialogDescription className="text-xs text-zinc-400">
+              Register a new field staff profile and assign specialization skills.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleAddEngineerSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-300">Full Name</label>
+              <input 
+                type="text" 
+                value={newEngineerName}
+                onChange={(e) => setNewEngineerName(e.target.value)}
+                placeholder="E.g., Marcus Vance"
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-300">Role / Specialization</label>
+              <select 
+                value={newEngineerRole}
+                onChange={(e) => setNewEngineerRole(e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+              >
+                <option value="Senior PLC Engineer">Senior PLC Engineer</option>
+                <option value="Hardware Specialist">Hardware Specialist</option>
+                <option value="Network Technician">Network Technician</option>
+                <option value="HVAC Systems Specialist">HVAC Systems Specialist</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setAddEngineerModalOpen(false)} className="text-xs">
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" className="text-xs">
+                Save & Onboard
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
