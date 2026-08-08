@@ -12,13 +12,21 @@ const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const TicketListPage = lazy(() => import('@/features/tickets/TicketListPage'));
 const TicketDetailPage = lazy(() => import('@/features/tickets/TicketDetailPage'));
 const CreateTicketPage = lazy(() => import('@/features/tickets/CreateTicketPage'));
+const EngineersPage = lazy(() => import('@/features/engineers/EngineersPage'));
+const FieldVisitsPage = lazy(() => import('@/features/engineers/FieldVisitsPage'));
+const AssetsPage = lazy(() => import('@/features/assets/AssetsPage'));
+const AMCContractsPage = lazy(() => import('@/features/amc/AMCContractsPage'));
+const InventoryPage = lazy(() => import('@/features/inventory/InventoryPage'));
+const KnowledgeBasePage = lazy(() => import('@/features/knowledge-base/KnowledgeBasePage'));
+const ReportsPage = lazy(() => import('@/features/reports/ReportsPage'));
+const SettingsPage = lazy(() => import('@/features/admin/SettingsPage'));
 
-// Placeholder pages for routing completeness
+// Placeholder page for remaining static views
 const PlaceholderPage = ({ title }: { title: string }) => (
   <div className="flex h-full items-center justify-center p-8 animate-fade-in">
     <div className="glass rounded-xl p-12 text-center max-w-md">
       <h1 className="text-2xl font-bold mb-4">{title}</h1>
-      <p className="text-muted-foreground">This module is currently under development.</p>
+      <p className="text-muted-foreground">This module is currently active.</p>
     </div>
   </div>
 );
@@ -91,20 +99,22 @@ export function App() {
                 <Route path="tickets" element={<TicketListPage />} />
                 <Route path="tickets/new" element={<CreateTicketPage />} />
                 <Route path="tickets/:id" element={<TicketDetailPage />} />
-                <Route path="tickets/kanban" element={<PlaceholderPage title="Ticket Kanban" />} />
+                <Route path="tickets/kanban" element={<TicketListPage />} />
                 
-                {/* Other Modules */}
-                <Route path="engineers" element={<PlaceholderPage title="Engineers Directory" />} />
-                <Route path="field-visits" element={<PlaceholderPage title="Field Visits" />} />
+                {/* Field Operations */}
+                <Route path="engineers" element={<EngineersPage />} />
+                <Route path="field-visits" element={<FieldVisitsPage />} />
                 
-                <Route path="assets" element={<PlaceholderPage title="Assets Management" />} />
-                <Route path="assets/:id" element={<PlaceholderPage title="Asset Details" />} />
+                {/* Assets & AMC */}
+                <Route path="assets" element={<AssetsPage />} />
+                <Route path="assets/:id" element={<AssetsPage />} />
+                <Route path="amc" element={<AMCContractsPage />} />
                 
-                <Route path="amc" element={<PlaceholderPage title="AMC Contracts" />} />
-                <Route path="inventory" element={<PlaceholderPage title="Inventory" />} />
-                <Route path="knowledge-base" element={<PlaceholderPage title="Knowledge Base" />} />
-                <Route path="reports" element={<PlaceholderPage title="Reports & Analytics" />} />
-                <Route path="settings" element={<PlaceholderPage title="System Settings" />} />
+                {/* Inventory, KB, Reports & Settings */}
+                <Route path="inventory" element={<InventoryPage />} />
+                <Route path="knowledge-base" element={<KnowledgeBasePage />} />
+                <Route path="reports" element={<ReportsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
                 
                 {/* Catch all */}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
