@@ -7,25 +7,30 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { mockAssets } from '@/lib/mock-data';
 
-const STEPS = ['Context', 'Issue Details', 'Attachments', 'Review'];
+const STEPS = ['Context', 'Issue Details', 'Attachments', 'Review & Submit'];
 
 export default function CreateTicketPage() {
-  const [currentStep, setCurrentStep] = useState(0);
   const navigate = useNavigate();
   const { isKaaInternal, userCompany } = useAuthStore();
-
-  const [company, setCompany] = useState(isKaaInternal ? '' : (userCompany || 'Acme Corp'));
+  
+  const [currentStep, setCurrentStep] = useState(0);
+  const [company, setCompany] = useState(isKaaInternal ? 'Acme Corp' : (userCompany || 'Acme Corp'));
   const [assetId, setAssetId] = useState('');
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('medium');
   const [category, setCategory] = useState('Hardware');
 
-  // Filter assets to mapped company if client login
+  // Filter available equipment based on company scope
   const availableAssets = mockAssets.filter(ast => 
-    isKaaInternal ? true : (company ? ast.company === company : true)
+    isKaaInternal ? true : (ast.company === userCompany)
   );
 
   const handleNext = () => {
+    if (currentStep === 1 && !title.trim()) {
+      toast.error('Please enter a ticket title');
+      return;
+    }
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(s => s + 1);
     } else {
@@ -43,7 +48,7 @@ export default function CreateTicketPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-12">
+    <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-12">
       <PageHeader 
         title="Create New Ticket" 
         description={isKaaInternal ? "Submit a new service or support ticket on behalf of a client." : `Raise a new support ticket for ${userCompany || 'your mapped organization'}.`}
@@ -53,35 +58,32 @@ export default function CreateTicketPage() {
         </button>
       </PageHeader>
 
-      {/* Stepper */}
-      <div className="glass rounded-xl p-4 border-border/50">
-        <div className="flex items-center justify-between relative">
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-secondary -z-10"></div>
-          <div 
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-primary transition-all duration-300 -z-10"
-            style={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
-          ></div>
-          
+      {/* Responsive Stepper */}
+      <div className="glass rounded-xl p-6 border-border/50">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {STEPS.map((step, idx) => {
             const isCompleted = idx < currentStep;
             const isActive = idx === currentStep;
             
             return (
-              <div key={step} className="flex flex-col items-center gap-2">
+              <div key={step} className="flex items-center gap-3">
                 <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors border-2",
-                  isActive ? "bg-background border-primary text-primary shadow-lg shadow-primary/20" : 
-                  isCompleted ? "bg-primary border-primary text-primary-foreground" : 
-                  "bg-background border-border text-muted-foreground"
+                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 shrink-0",
+                  isActive ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105" : 
+                  isCompleted ? "bg-emerald-500 border-emerald-500 text-white" : 
+                  "bg-secondary border-border text-muted-foreground"
                 )}>
                   {isCompleted ? <Check className="w-4 h-4" /> : idx + 1}
                 </div>
-                <span className={cn(
-                  "text-xs font-medium absolute top-10 whitespace-nowrap",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}>
-                  {step}
-                </span>
+                <div className="flex flex-col">
+                  <span className={cn(
+                    "text-xs font-semibold leading-tight",
+                    isActive ? "text-primary" : isCompleted ? "text-foreground" : "text-muted-foreground"
+                  )}>
+                    {step}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">Step {idx + 1}</span>
+                </div>
               </div>
             );
           })}
@@ -89,13 +91,13 @@ export default function CreateTicketPage() {
       </div>
 
       {/* Form Content */}
-      <div className="glass rounded-xl p-6 lg:p-8 border-border/50 mt-12 min-h-[400px]">
+      <div className="glass rounded-xl p-6 lg:p-8 border-border/50 min-h-[380px]">
         
         {/* Step 1: Context */}
         {currentStep === 0 && (
           <div className="space-y-6 animate-slide-in-right">
             <div className="flex items-center justify-between border-b border-border pb-3">
-              <h2 className="text-xl font-semibold">Select Organization Context</h2>
+              <h2 className="text-lg font-semibold">Select Organization Context</h2>
               {!isKaaInternal && (
                 <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full flex items-center gap-1">
                   <Lock className="w-3 h-3" /> Scope Locked to {userCompany}
@@ -107,13 +109,13 @@ export default function CreateTicketPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium flex items-center justify-between">
                   Company <span className="text-destructive">*</span>
-                  {!isKaaInternal && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                  {!isKaaInternal && <Lock className="w-3.5 h-3.5 text-emerald-400" />}
                 </label>
                 <select 
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   disabled={!isKaaInternal}
-                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none disabled:opacity-75"
+                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none disabled:bg-secondary/50 disabled:text-emerald-400 disabled:font-semibold"
                 >
                   <option value="Acme Corp">Acme Corp</option>
                   <option value="Globex Ltd">Globex Ltd</option>
@@ -160,7 +162,7 @@ export default function CreateTicketPage() {
         {/* Step 2: Issue Details */}
         {currentStep === 1 && (
           <div className="space-y-6 animate-slide-in-right">
-            <h2 className="text-xl font-semibold mb-6">Issue Category & Details</h2>
+            <h2 className="text-lg font-semibold border-b border-border pb-3">Issue Category & Details</h2>
             
             <div className="space-y-4">
               <div className="space-y-2">
@@ -178,27 +180,33 @@ export default function CreateTicketPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Category</label>
                   <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none">
-                    <option>Hardware</option>
-                    <option>Electrical</option>
-                    <option>PLC</option>
-                    <option>Software / ERP</option>
-                    <option>Biometric</option>
+                    <option value="Hardware">Hardware / Machinery</option>
+                    <option value="Software">Software / Firmware</option>
+                    <option value="Electrical">Electrical / PLC</option>
+                    <option value="Network">Network / Cloud</option>
                   </select>
                 </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Priority Level</label>
                   <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none">
-                    <option value="low">Low (Standard SLA)</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical (Immediate SLA Alert)</option>
+                    <option value="low">Low (Standard response)</option>
+                    <option value="medium">Medium (4-hour SLA)</option>
+                    <option value="high">High (2-hour SLA)</option>
+                    <option value="critical">Critical (Emergency dispatch)</option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Problem Description</label>
-                <textarea rows={4} placeholder="Describe the error code, machine symptoms, or breakdown in detail..." className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none resize-none"></textarea>
+                <label className="text-sm font-medium">Detailed Symptom Description</label>
+                <textarea 
+                  rows={4}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe error codes, physical condition, LED status, or steps to reproduce..."
+                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none"
+                />
               </div>
             </div>
           </div>
@@ -207,12 +215,16 @@ export default function CreateTicketPage() {
         {/* Step 3: Attachments */}
         {currentStep === 2 && (
           <div className="space-y-6 animate-slide-in-right">
-            <h2 className="text-xl font-semibold mb-6">Upload Photos & Documents</h2>
+            <h2 className="text-lg font-semibold border-b border-border pb-3">Supporting Attachments & Photos</h2>
             
-            <div className="border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-8 text-center bg-secondary/20 transition-all cursor-pointer">
-              <UploadCloud className="w-10 h-10 text-primary mx-auto mb-3" />
-              <p className="font-medium text-sm">Drag and drop photos of error logs or equipment here</p>
-              <p className="text-xs text-muted-foreground mt-1">Supports PNG, JPG, PDF, ZIP up to 25MB</p>
+            <div className="border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-8 text-center transition-colors cursor-pointer space-y-3">
+              <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+                <UploadCloud className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Click to upload or drag & drop files</p>
+                <p className="text-xs text-muted-foreground mt-1">Images, PDF logs, diagnostics XML up to 25MB</p>
+              </div>
             </div>
           </div>
         )}
@@ -220,41 +232,48 @@ export default function CreateTicketPage() {
         {/* Step 4: Review */}
         {currentStep === 3 && (
           <div className="space-y-6 animate-slide-in-right">
-            <h2 className="text-xl font-semibold mb-4">Review Ticket Before Submission</h2>
+            <h2 className="text-lg font-semibold border-b border-border pb-3">Review & Submit Ticket</h2>
             
-            <div className="bg-secondary/30 p-4 rounded-xl border border-border space-y-3 text-sm">
-              <div className="flex justify-between border-b border-border/50 pb-2">
-                <span className="text-muted-foreground">Mapped Client:</span>
-                <span className="font-semibold text-foreground">{company}</span>
-              </div>
-              <div className="flex justify-between border-b border-border/50 pb-2">
-                <span className="text-muted-foreground">Title:</span>
-                <span className="font-medium text-foreground">{title || 'Equipment Issue'}</span>
-              </div>
-              <div className="flex justify-between border-b border-border/50 pb-2">
-                <span className="text-muted-foreground">Priority:</span>
-                <span className="font-semibold uppercase text-primary">{priority}</span>
+            <div className="bg-secondary/30 rounded-xl p-5 border border-border space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-muted-foreground text-xs block">COMPANY</span>
+                  <span className="font-semibold text-primary">{company}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs block">PRIORITY</span>
+                  <span className="font-semibold capitalize text-amber-400">{priority}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs block">TITLE</span>
+                  <span className="font-medium">{title || 'Siemens PLC module error'}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground text-xs block">CATEGORY</span>
+                  <span className="font-medium">{category}</span>
+                </div>
               </div>
             </div>
           </div>
         )}
+      </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex items-center justify-between pt-8 border-t border-border mt-8">
-          <button
-            onClick={handleBack}
-            className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors"
-          >
-            Back
-          </button>
-          <button
-            onClick={handleNext}
-            className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
-          >
-            {currentStep === STEPS.length - 1 ? 'Submit Ticket' : 'Continue'} <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+      {/* Navigation Buttons */}
+      <div className="flex items-center justify-between pt-2">
+        <button
+          onClick={handleBack}
+          className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors"
+        >
+          {currentStep === 0 ? 'Cancel' : 'Back'}
+        </button>
 
+        <button
+          onClick={handleNext}
+          className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
+        >
+          {currentStep === STEPS.length - 1 ? 'Submit Ticket' : 'Next Step'}
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
     </div>
   );
