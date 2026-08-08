@@ -42,6 +42,9 @@
 
 /* Root dark theme variables */
 :root {
+  --chart-grid: #27272a;
+  --chart-tooltip-bg: #18181b;
+  --chart-tooltip-border: #27272a;
   --background: #09090b;
   --foreground: #fafafa;
   --card: #18181b;
@@ -69,6 +72,9 @@
 
 /* Light theme */
 .light {
+  --chart-grid: #e4e4e7;
+  --chart-tooltip-bg: #ffffff;
+  --chart-tooltip-border: #e4e4e7;
   --background: #ffffff;
   --foreground: #09090b;
   --card: #ffffff;
@@ -163,4 +169,58 @@ body {
 }
 .animate-fade-in {
   animation: fade-in 0.3s ease-in-out forwards;
+}
+
+@keyframes card-enter {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-card-enter {
+  animation: card-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--stagger, 0) * 0.1s);
+  opacity: 0;
+}
+
+.card-hover-lift {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+
+.glass-subtle {
+  background: rgba(24, 24, 27, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(63, 63, 70, 0.3);
+}
+.light .glass-subtle {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(228, 228, 231, 0.3);
+}
+
+.glass-heavy {
+  background: rgba(24, 24, 27, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(63, 63, 70, 0.8);
+}
+.light .glass-heavy {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(228, 228, 231, 0.8);
+}
+
+.gradient-accent-bar {
+  height: 3px;
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
 }

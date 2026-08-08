@@ -91,7 +91,7 @@ export default function TicketListPage() {
       <div className="glass rounded-xl border border-border flex flex-col flex-1 min-h-0 overflow-hidden animate-slide-in-up">
         
         {/* Toolbar & Filter Dropdowns */}
-        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-4 items-center justify-between bg-secondary/10">
+        <div className="glass p-4 border-b border-border flex flex-col sm:flex-row gap-4 items-center justify-between">
           
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative group w-full sm:w-72">
@@ -117,7 +117,8 @@ export default function TicketListPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-secondary border border-border text-secondary-foreground text-xs font-medium rounded-lg px-3 py-2 outline-none focus:border-primary"
+              className="bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer px-3 py-2 pr-8 outline-none focus:border-primary text-xs font-medium"
+              style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}
             >
               <option value="all">Status: All</option>
               <option value="open">Status: Open</option>
@@ -130,7 +131,8 @@ export default function TicketListPage() {
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="bg-secondary border border-border text-secondary-foreground text-xs font-medium rounded-lg px-3 py-2 outline-none focus:border-primary"
+              className="bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer px-3 py-2 pr-8 outline-none focus:border-primary text-xs font-medium"
+              style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}
             >
               <option value="all">Priority: All</option>
               <option value="critical">Priority: Critical</option>
@@ -159,7 +161,7 @@ export default function TicketListPage() {
             </div>
           ) : (
             <table className="w-full text-left border-collapse text-sm">
-              <thead className="sticky top-0 bg-secondary/80 backdrop-blur border-b border-border z-10 text-xs font-semibold text-muted-foreground uppercase">
+              <thead className="sticky top-0 bg-secondary/80 backdrop-blur border-b border-border z-10 text-muted-foreground uppercase text-xs font-semibold tracking-wider">
                 <tr>
                   <th className="p-4 w-10">
                     <input type="checkbox" className="rounded border-border" />
@@ -176,7 +178,7 @@ export default function TicketListPage() {
               </thead>
               <tbody className="divide-y divide-border/50">
                 {filteredTickets.map((ticket: any) => (
-                  <tr key={ticket.id} className="hover:bg-secondary/30 transition-colors group">
+                  <tr key={ticket.id} className="hover:bg-secondary/40 transition-all duration-200 group">
                     <td className="p-4">
                       <input type="checkbox" className="rounded border-border" />
                     </td>
@@ -223,8 +225,8 @@ export default function TicketListPage() {
                             <MoreHorizontal className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44 bg-zinc-950 border-zinc-800 text-zinc-100">
-                          <DropdownMenuLabel className="text-xs text-zinc-400">Quick Actions</DropdownMenuLabel>
+                        <DropdownMenuContent align="end" className="w-44 bg-card border-border text-foreground">
+                          <DropdownMenuLabel className="text-xs text-muted-foreground">Quick Actions</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => navigate(`/tickets/${ticket.id}`)} className="cursor-pointer gap-2 text-xs">
                             <Eye className="w-3.5 h-3.5 text-primary" /> View Details
                           </DropdownMenuItem>

@@ -27,11 +27,11 @@ export function DashboardLayout() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative bg-background">
         <Header />
         
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background">
-          <div className="container mx-auto p-4 md:p-6 lg:p-8 animate-fade-in max-w-7xl">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden relative">
+          <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-7xl animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
             <Outlet />
           </div>
         </main>

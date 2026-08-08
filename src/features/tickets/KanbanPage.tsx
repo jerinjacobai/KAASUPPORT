@@ -18,8 +18,11 @@ const KANBAN_COLUMNS = [
 export default function KanbanPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { isKaaInternal, userCompany } = useAuthStore();
+  const [tickets, setTickets] = useState(mockTickets);
+  const [draggedTicket, setDraggedTicket] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
-  const filteredTickets = mockTickets.filter(ticket => {
+  const filteredTickets = tickets.filter(ticket => {
     const matchesTenant = isKaaInternal ? true : (ticket.company === userCompany);
     const matchesSearch = 
       ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -27,6 +30,34 @@ export default function KanbanPage() {
       ticket.company.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesTenant && matchesSearch;
   });
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedTicket(id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, colId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverCol !== colId) {
+      setDragOverCol(colId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverCol(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, statusId: string) => {
+    e.preventDefault();
+    setDragOverCol(null);
+    if (!draggedTicket) return;
+    
+    setTickets(prev => prev.map(t => 
+      t.id === draggedTicket ? { ...t, status: statusId } : t
+    ));
+    setDraggedTicket(null);
+  };
 
   return (
     <div className="space-y-6 h-full flex flex-col">
@@ -74,9 +105,18 @@ export default function KanbanPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 flex-1 min-h-[500px]">
         {KANBAN_COLUMNS.map((col) => {
           const colTickets = filteredTickets.filter(t => t.status === col.id);
+          const isDraggingOver = dragOverCol === col.id;
 
           return (
-            <div key={col.id} className={`glass rounded-xl border ${col.color} p-4 flex flex-col space-y-4`}>
+            <div 
+              key={col.id} 
+              className={`glass rounded-xl border p-4 flex flex-col space-y-4 transition-colors ${
+                isDraggingOver ? 'border-primary/50 bg-primary/5' : col.color
+              }`}
+              onDragOver={(e) => handleDragOver(e, col.id)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, col.id)}
+            >
               <div className="flex items-center justify-between pb-2 border-b border-border/50">
                 <h3 className="font-semibold text-sm text-foreground flex items-center gap-2">
                   {col.title}
@@ -92,7 +132,14 @@ export default function KanbanPage() {
               {/* Cards list */}
               <div className="space-y-3 flex-1 overflow-y-auto pr-1 custom-scrollbar">
                 {colTickets.map((ticket) => (
-                  <div key={ticket.id} className="glass rounded-lg p-4 border border-border hover:border-primary/50 transition-all shadow-md group cursor-pointer space-y-3">
+                  <div 
+                    key={ticket.id} 
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, ticket.id)}
+                    className={`glass rounded-lg p-4 border border-border hover:border-primary/50 transition-all shadow-md group cursor-grab active:cursor-grabbing space-y-3 ${
+                      draggedTicket === ticket.id ? 'opacity-50 border-primary' : ''
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
                       <Link to={`/tickets/${ticket.id}`} className="font-mono text-xs font-bold text-primary hover:underline">
                         {ticket.id}

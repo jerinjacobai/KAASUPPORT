@@ -139,43 +139,43 @@ export default function AssetsPage() {
 
       {/* Register Asset Modal */}
       <Dialog open={registerModalOpen} onOpenChange={setRegisterModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold">Register New Machinery Asset</DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Add equipment to the central asset registry with serial and warranty specs.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleRegisterSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Equipment Name</label>
+              <label className="text-xs font-medium text-foreground">Equipment Name</label>
               <input 
                 type="text" 
                 value={newAssetName}
                 onChange={(e) => setNewAssetName(e.target.value)}
                 placeholder="E.g., Siemens S7-1500 PLC Rack"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Model / Serial Number</label>
+              <label className="text-xs font-medium text-foreground">Model / Serial Number</label>
               <input 
                 type="text" 
                 value={newAssetModel}
                 onChange={(e) => setNewAssetModel(e.target.value)}
                 placeholder="E.g., S7-1518-4 PN/DP (SN: 99481A)"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Owner Company</label>
+              <label className="text-xs font-medium text-foreground">Owner Company</label>
               <select 
                 value={newAssetCompany}
                 onChange={(e) => setNewAssetCompany(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               >
                 <option value="Acme Corp">Acme Corp</option>
                 <option value="Globex Ltd">Globex Ltd</option>
@@ -197,16 +197,16 @@ export default function AssetsPage() {
 
       {/* QR Code Scanner / Print Modal */}
       <Dialog open={qrModalOpen} onOpenChange={setQrModalOpen}>
-        <DialogContent className="max-w-sm bg-zinc-950 border-zinc-800 text-zinc-100 p-6 text-center space-y-4">
+        <DialogContent className="max-w-sm bg-card border-border text-card-foreground p-6 text-center space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center justify-center gap-2">
               <QrCode className="w-5 h-5 text-primary" /> QR Asset Tag Scanner
             </DialogTitle>
           </DialogHeader>
 
-          <div className="p-6 bg-zinc-900 rounded-xl border border-zinc-800 flex flex-col items-center space-y-3">
+          <div className="p-6 bg-secondary/50 rounded-xl border border-border flex flex-col items-center space-y-3">
             <QrCode className="w-24 h-24 text-primary animate-pulse" />
-            <p className="text-xs text-zinc-400 font-mono">Scan barcode with mobile camera or scanner</p>
+            <p className="text-xs text-muted-foreground font-mono">Scan barcode with mobile camera or scanner</p>
           </div>
 
           <div className="flex justify-center gap-2 pt-2">
@@ -222,33 +222,33 @@ export default function AssetsPage() {
 
       {/* Service History Modal */}
       <Dialog open={historyModalOpen} onOpenChange={setHistoryModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <History className="w-4 h-4 text-primary" /> Service History: {selectedAsset?.name}
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Tag: {selectedAsset?.tag} ({selectedAsset?.company})
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 pt-2">
-            <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 space-y-1">
+            <div className="p-3 bg-secondary/50 rounded-lg border border-border space-y-1">
               <div className="flex justify-between text-xs">
                 <span className="font-bold text-primary">TKT-1064</span>
                 <span className="text-emerald-400 font-semibold">Resolved</span>
               </div>
-              <p className="text-xs font-medium text-white">PLC module replacement & firmware flash</p>
-              <p className="text-[10px] text-zinc-500">Serviced by Alex Johnson on 2026-08-01</p>
+              <p className="text-xs font-medium text-foreground">PLC module replacement & firmware flash</p>
+              <p className="text-[10px] text-muted-foreground">Serviced by Alex Johnson on 2026-08-01</p>
             </div>
 
-            <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 space-y-1">
+            <div className="p-3 bg-secondary/50 rounded-lg border border-border space-y-1">
               <div className="flex justify-between text-xs">
                 <span className="font-bold text-primary">TKT-1052</span>
                 <span className="text-emerald-400 font-semibold">Preventive Maintenance</span>
               </div>
-              <p className="text-xs font-medium text-white">Quarterly AMC inspection & calibration</p>
-              <p className="text-[10px] text-zinc-500">Serviced by Priya Sharma on 2026-06-15</p>
+              <p className="text-xs font-medium text-foreground">Quarterly AMC inspection & calibration</p>
+              <p className="text-[10px] text-muted-foreground">Serviced by Priya Sharma on 2026-06-15</p>
             </div>
           </div>
         </DialogContent>

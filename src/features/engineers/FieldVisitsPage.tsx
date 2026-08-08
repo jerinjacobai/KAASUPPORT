@@ -145,21 +145,21 @@ export default function FieldVisitsPage() {
 
       {/* Schedule Visit Modal */}
       <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold">Schedule New Field Visit</DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Dispatch a field service engineer for on-site maintenance.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleScheduleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Assign Engineer</label>
+              <label className="text-xs font-medium text-foreground">Assign Engineer</label>
               <select 
                 value={visitEngineer}
                 onChange={(e) => setVisitEngineer(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               >
                 <option value="Alex Johnson">Alex Johnson (Senior PLC Specialist)</option>
                 <option value="Priya Sharma">Priya Sharma (Hardware Engineer)</option>
@@ -168,12 +168,12 @@ export default function FieldVisitsPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Site Location / Address</label>
+              <label className="text-xs font-medium text-foreground">Site Location / Address</label>
               <input 
                 type="text" 
                 value={visitLocation}
                 onChange={(e) => setVisitLocation(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 

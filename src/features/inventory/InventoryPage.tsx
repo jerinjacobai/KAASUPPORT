@@ -139,45 +139,45 @@ export default function InventoryPage() {
 
       {/* Add Spare Part Modal */}
       <Dialog open={addPartModalOpen} onOpenChange={setAddPartModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold">Add Spare Part to Warehouse</DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Register a component SKU in the central inventory catalog.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleAddPartSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Part Name</label>
+              <label className="text-xs font-medium text-foreground">Part Name</label>
               <input 
                 type="text" 
                 value={partName}
                 onChange={(e) => setPartName(e.target.value)}
                 placeholder="E.g., Siemens 24V DC Relay Module"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-300">SKU Code</label>
+                <label className="text-xs font-medium text-foreground">SKU Code</label>
                 <input 
                   type="text" 
                   value={partSku}
                   onChange={(e) => setPartSku(e.target.value)}
                   placeholder="PRT-9921"
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-300">Unit Price</label>
+                <label className="text-xs font-medium text-foreground">Unit Price</label>
                 <input 
                   type="text" 
                   value={partPrice}
                   onChange={(e) => setPartPrice(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
                 />
               </div>
             </div>
@@ -196,28 +196,28 @@ export default function InventoryPage() {
 
       {/* Purchase Order Modal */}
       <Dialog open={poModalOpen} onOpenChange={setPoModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <Truck className="w-4 h-4 text-primary" /> Create Restock Purchase Order
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Generate supplier PO for low-stock inventory replenishment.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreatePOSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Supplier Name</label>
-              <select className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary">
+              <label className="text-xs font-medium text-foreground">Supplier Name</label>
+              <select className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary">
                 <option>Siemens Industrial India Ltd</option>
                 <option>Cisco Systems Enterprise</option>
                 <option>Schneider Electric Global</option>
               </select>
             </div>
 
-            <div className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 text-xs space-y-1">
-              <p className="font-semibold text-zinc-200">Auto-detected Restock Items:</p>
+            <div className="p-3 bg-secondary/50 rounded-lg border border-border text-xs space-y-1">
+              <p className="font-semibold text-foreground">Auto-detected Restock Items:</p>
               <p className="text-rose-400 flex items-center gap-1">• Siemens S7 PLC Module (SKU: PRT-1001) - 10 units</p>
               <p className="text-rose-400 flex items-center gap-1">• Industrial Cat6 Patch Cable (SKU: PRT-1004) - 50 units</p>
             </div>

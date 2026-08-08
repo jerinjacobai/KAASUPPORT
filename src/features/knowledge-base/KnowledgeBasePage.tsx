@@ -107,17 +107,17 @@ export default function KnowledgeBasePage() {
 
       {/* Article Reader Modal */}
       <Dialog open={readModalOpen} onOpenChange={setReadModalOpen}>
-        <DialogContent className="max-w-xl bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-xl bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <div className="flex items-center gap-2 mb-1">
               <Badge variant="outline" className="text-xs border-primary/30 text-primary">{selectedArticle?.category}</Badge>
-              <span className="text-xs text-zinc-400">Ref: KB-{selectedArticle?.id}</span>
+              <span className="text-xs text-muted-foreground">Ref: KB-{selectedArticle?.id}</span>
             </div>
-            <DialogTitle className="text-lg font-bold text-white">{selectedArticle?.title}</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-foreground">{selectedArticle?.title}</DialogTitle>
           </DialogHeader>
 
-          <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-3 text-xs text-zinc-300">
-            <h4 className="font-semibold text-zinc-200 flex items-center gap-1.5">
+          <div className="p-4 bg-secondary/50 rounded-xl border border-border space-y-3 text-xs text-foreground">
+            <h4 className="font-semibold text-foreground flex items-center gap-1.5">
               <BookOpen className="w-4 h-4 text-primary" /> Troubleshooting Procedure
             </h4>
             <p>1. Verify 24V DC power input to the main CPU rack LED indicator panel.</p>
@@ -125,8 +125,8 @@ export default function KnowledgeBasePage() {
             <p>3. If red fault LED flashes 3 times, reset buffer memory via KAA Diagnostics Utility v4.2.</p>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-zinc-800 text-xs">
-            <span className="text-zinc-400">Was this resolution article helpful?</span>
+          <div className="flex items-center justify-between pt-2 border-t border-border text-xs">
+            <span className="text-muted-foreground">Was this resolution article helpful?</span>
             <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" onClick={() => handleFeedback(true)} className="text-xs gap-1">
                 <ThumbsUp className="w-3.5 h-3.5 text-emerald-400" /> Yes
@@ -141,32 +141,32 @@ export default function KnowledgeBasePage() {
 
       {/* Create Article Modal */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold">Publish KB Article</DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Create a self-service troubleshooting article for KAA engineers and clients.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateArticleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Article Title</label>
+              <label className="text-xs font-medium text-foreground">Article Title</label>
               <input 
                 type="text" 
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="E.g., How to resolve Siemens PLC PROFIBUS communication fault"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Category</label>
+              <label className="text-xs font-medium text-foreground">Category</label>
               <select 
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               >
                 <option value="Hardware">Hardware / Machinery</option>
                 <option value="Electrical">Electrical / PLC</option>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Settings, Shield, Bell, Key, Palette, CheckCircle2, Send, Save } from 'lucide-react';
+import { Settings, Shield, Bell, Key, Palette, CheckCircle2, Send, Save, Copy } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,13 @@ export default function SettingsPage() {
     });
   };
 
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} Copied`, {
+      description: 'Copied to clipboard successfully.'
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -43,14 +50,14 @@ export default function SettingsPage() {
 
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="bg-secondary/40 p-1 border border-border rounded-xl">
-          <TabsTrigger value="general" className="gap-2 text-xs"><Settings className="w-3.5 h-3.5" /> General & Branding</TabsTrigger>
-          <TabsTrigger value="security" className="gap-2 text-xs"><Shield className="w-3.5 h-3.5" /> Multi-Tenant RLS</TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2 text-xs"><Bell className="w-3.5 h-3.5" /> Notification Channels</TabsTrigger>
-          <TabsTrigger value="api" className="gap-2 text-xs"><Key className="w-3.5 h-3.5" /> API Keys & Supabase</TabsTrigger>
+          <TabsTrigger value="general" className="gap-2 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"><Settings className="w-3.5 h-3.5" /> General & Branding</TabsTrigger>
+          <TabsTrigger value="security" className="gap-2 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"><Shield className="w-3.5 h-3.5" /> Multi-Tenant RLS</TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"><Bell className="w-3.5 h-3.5" /> Notification Channels</TabsTrigger>
+          <TabsTrigger value="api" className="gap-2 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"><Key className="w-3.5 h-3.5" /> API Keys & Supabase</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="mt-6 space-y-6">
-          <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg">
+          <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg hover:border-primary/30 transition-all duration-300">
             <h3 className="font-semibold text-base flex items-center gap-2">
               <Palette className="w-5 h-5 text-primary" /> Portal Branding & Customization
             </h3>
@@ -61,7 +68,7 @@ export default function SettingsPage() {
                   type="text" 
                   value={portalName}
                   onChange={(e) => setPortalName(e.target.value)}
-                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none" 
+                  className="w-full bg-secondary/50 border border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 rounded-lg p-2.5 text-sm outline-none transition-all" 
                 />
               </div>
               <div className="space-y-2">
@@ -70,7 +77,7 @@ export default function SettingsPage() {
                   type="email" 
                   value={supportEmail}
                   onChange={(e) => setSupportEmail(e.target.value)}
-                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none" 
+                  className="w-full bg-secondary/50 border border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 rounded-lg p-2.5 text-sm outline-none transition-all" 
                 />
               </div>
             </div>
@@ -84,7 +91,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="security" className="mt-6 space-y-6">
-          <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg">
+          <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg hover:border-primary/30 transition-all duration-300">
             <h3 className="font-semibold text-base flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" /> Supabase Row-Level Security (RLS) Status
             </h3>
@@ -99,7 +106,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="notifications" className="mt-6 space-y-6">
-          <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg">
+          <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg hover:border-primary/30 transition-all duration-300">
             <h3 className="font-semibold text-base flex items-center gap-2">
               <Bell className="w-5 h-5 text-primary" /> Automated SLA & Ticket Alert Channels
             </h3>
@@ -134,18 +141,28 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="api" className="mt-6 space-y-6">
-          <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg">
+          <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg hover:border-primary/30 transition-all duration-300">
             <h3 className="font-semibold text-base flex items-center gap-2">
               <Key className="w-5 h-5 text-primary" /> Supabase Connection & API Token
             </h3>
             <div className="space-y-3 font-mono text-xs">
               <div>
                 <label className="text-muted-foreground">SUPABASE_URL</label>
-                <input type="text" readOnly value="https://pqiboqctyzvjdxqtxilp.supabase.co" className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-primary font-bold mt-1" />
+                <div className="relative mt-1">
+                  <input type="text" readOnly value="https://pqiboqctyzvjdxqtxilp.supabase.co" className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 pr-10 text-xs font-bold" />
+                  <button onClick={() => copyToClipboard("https://pqiboqctyzvjdxqtxilp.supabase.co", "Supabase URL")} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-background transition-colors">
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="text-muted-foreground">SUPABASE_ANON_KEY</label>
-                <input type="password" readOnly value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." className="w-full bg-background border border-border rounded-lg p-2.5 text-xs text-muted-foreground mt-1" />
+                <div className="relative mt-1">
+                  <input type="password" readOnly value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." className="w-full bg-secondary/50 border border-border text-muted-foreground rounded-lg p-2.5 pr-10 text-xs" />
+                  <button onClick={() => copyToClipboard("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", "Anon Key")} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-background transition-colors">
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>

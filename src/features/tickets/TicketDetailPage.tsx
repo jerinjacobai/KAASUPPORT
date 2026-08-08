@@ -2,23 +2,37 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Clock, Paperclip, CheckCircle2, AlertTriangle, Send, History } from 'lucide-react';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
-import { mockTimeline } from '@/lib/mock-data';
+import { mockTimeline, mockTickets } from '@/lib/mock-data';
 
 export default function TicketDetailPage() {
   const { id } = useParams();
 
-  // Mock specific data
+  const foundTicket = mockTickets.find(t => t.id === id);
+
+  if (!foundTicket) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center space-y-4 animate-fade-in">
+        <h2 className="text-2xl font-bold">Ticket Not Found</h2>
+        <p className="text-muted-foreground">The ticket you are looking for does not exist or you don't have access.</p>
+        <Link to="/tickets" className="text-primary hover:underline flex items-center gap-2">
+          <ArrowLeft className="w-4 h-4" /> Back to Tickets
+        </Link>
+      </div>
+    );
+  }
+
+  // Use found ticket data
   const ticket = {
-    id: id || 'TKT-1042',
-    title: 'Main server database connection timeout',
-    description: '<p>The main production database is rejecting connections after 100 concurrent users. We are seeing timeout errors in the application logs.</p><p>Please investigate urgently as this is affecting customer checkouts.</p>',
-    status: 'in_progress',
-    priority: 'critical',
-    company: 'Acme Corp',
+    id: foundTicket.id,
+    title: foundTicket.title,
+    description: foundTicket.description || '<p>No description provided.</p>',
+    status: foundTicket.status,
+    priority: foundTicket.priority,
+    company: foundTicket.company,
     project: 'E-commerce Platform',
-    assignee: { name: 'Alex Johnson', avatar: 'https://i.pravatar.cc/150?u=1' },
-    reporter: { name: 'John Doe', avatar: 'https://i.pravatar.cc/150?u=5', email: 'john@acme.com' },
-    created: '2023-10-24T10:00:00Z',
+    assignee: foundTicket.assignee || { name: 'Unassigned', avatar: 'https://i.pravatar.cc/150?u=0' },
+    reporter: { name: 'Unknown Reporter', avatar: 'https://i.pravatar.cc/150?u=5', email: 'reporter@example.com' },
+    created: foundTicket.createdAt || '2023-10-24T10:00:00Z',
   };
 
   return (
@@ -80,18 +94,21 @@ export default function TicketDetailPage() {
               </div>
             </div>
 
-            <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+            <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-primary/30 before:via-primary/20 before:to-transparent">
               
               {mockTimeline.map((item) => (
-                <div key={item.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                <div key={item.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active mb-8">
                   {/* Icon */}
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full border border-border bg-background shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 relative z-10">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-primary bg-card shadow-[0_0_15px_rgba(var(--primary),0.2)] shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 relative z-10">
                     {item.type === 'comment' ? (
-                      <img src={item.user.avatar} className="w-full h-full rounded-full" alt="" />
+                      <img src={item.user.avatar} className="w-full h-full rounded-full border border-border" alt="" />
                     ) : (
-                      <div className="w-2 h-2 rounded-full bg-primary" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-primary" />
                     )}
                   </div>
+                  {/* Connector Line (Horizontal) - hidden on mobile */}
+                  <div className="hidden md:block w-8 h-0.5 bg-primary/20 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2" />
+                  
                   {/* Content */}
                   <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] glass p-4 rounded-xl border border-border shadow-sm">
                     <div className="flex items-center justify-between mb-1">

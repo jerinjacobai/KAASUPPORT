@@ -320,46 +320,46 @@ export default function MastersPage() {
 
       {/* Modal 1: Add Company Master */}
       <Dialog open={companyModalOpen} onOpenChange={setCompanyModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <Building2 className="w-5 h-5 text-primary" /> Add New Client Company Master
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Create a new client tenant organization. RLS database policies will isolate all user data.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateCompany} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Company Name *</label>
+              <label className="text-xs font-medium text-foreground">Company Name *</label>
               <input 
                 type="text" 
                 value={compName}
                 onChange={(e) => setCompName(e.target.value)}
                 placeholder="E.g., Umbrella Corporation"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-300">Company Code</label>
+                <label className="text-xs font-medium text-foreground">Company Code</label>
                 <input 
                   type="text" 
                   value={compCode}
                   onChange={(e) => setCompCode(e.target.value)}
                   placeholder="UMBR"
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-300">Industry Sector</label>
+                <label className="text-xs font-medium text-foreground">Industry Sector</label>
                 <select 
                   value={compIndustry}
                   onChange={(e) => setCompIndustry(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
                 >
                   <option value="Industrial Manufacturing">Industrial Manufacturing</option>
                   <option value="Electronics & Automation">Electronics & Automation</option>
@@ -370,13 +370,13 @@ export default function MastersPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Primary Contact Email</label>
+              <label className="text-xs font-medium text-foreground">Primary Contact Email</label>
               <input 
                 type="email" 
                 value={compEmail}
                 onChange={(e) => setCompEmail(e.target.value)}
                 placeholder="admin@umbrella.com"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
@@ -394,45 +394,45 @@ export default function MastersPage() {
 
       {/* Modal 2: Create & Map User */}
       <Dialog open={userModalOpen} onOpenChange={setUserModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-amber-400" /> Create User & Assign Access Scope
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Set user role as KAA Admin/Staff (Global) or Client User (Scoped to Company).
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateUser} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Full Name *</label>
+              <label className="text-xs font-medium text-foreground">Full Name *</label>
               <input 
                 type="text" 
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 placeholder="E.g., Michael Scott"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">User Email Address *</label>
+              <label className="text-xs font-medium text-foreground">User Email Address *</label>
               <input 
                 type="email" 
                 value={userEmail}
                 onChange={(e) => setUserEmail(e.target.value)}
                 placeholder="michael@dundermifflin.com"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Account Type</label>
+              <label className="text-xs font-medium text-foreground">Account Type</label>
               <select 
                 value={userRoleType}
                 onChange={(e: any) => setUserRoleType(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               >
                 <option value="Client User">Client User (Scoped to 1 Client Company)</option>
                 <option value="KAA Internal Staff">KAA Internal Staff (Admin Command Access)</option>
@@ -440,20 +440,20 @@ export default function MastersPage() {
             </div>
 
             {userRoleType === 'Client User' && (
-              <div className="space-y-1 p-3 bg-zinc-900/80 rounded-lg border border-amber-500/30">
+              <div className="space-y-1 p-3 bg-secondary/40 rounded-lg border border-amber-500/30">
                 <label className="text-xs font-bold text-amber-400 flex items-center gap-1">
                   <Lock className="w-3.5 h-3.5" /> Map User to Client Company *
                 </label>
                 <select 
                   value={userMappedCompany}
                   onChange={(e) => setUserMappedCompany(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary text-white font-semibold"
+                  className="w-full bg-card border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground font-semibold"
                 >
                   {companiesList.map(c => (
                     <option key={c.id} value={c.name}>{c.name} ({c.code})</option>
                   ))}
                 </select>
-                <p className="text-[10px] text-zinc-400 mt-1">When logging in, this user will only see tickets and equipment belonging to {userMappedCompany}.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">When logging in, this user will only see tickets and equipment belonging to {userMappedCompany}.</p>
               </div>
             )}
 
@@ -471,60 +471,60 @@ export default function MastersPage() {
 
       {/* Modal 3: Map Asset/Product to Company */}
       <Dialog open={assetModalOpen} onOpenChange={setAssetModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <Cpu className="w-5 h-5 text-emerald-400" /> Map Machinery Asset to Client
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Assign an equipment model/serial number to a client company so their users can raise support tickets.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateAssetMapping} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Equipment / Product Name *</label>
+              <label className="text-xs font-medium text-foreground">Equipment / Product Name *</label>
               <input 
                 type="text" 
                 value={assetName}
                 onChange={(e) => setAssetName(e.target.value)}
                 placeholder="E.g., Siemens S7-1500 Controller Rack"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-300">Asset Tag Code</label>
+                <label className="text-xs font-medium text-foreground">Asset Tag Code</label>
                 <input 
                   type="text" 
                   value={assetTag}
                   onChange={(e) => setAssetTag(e.target.value)}
                   placeholder="AST-2026-991"
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-300">Model / Specs</label>
+                <label className="text-xs font-medium text-foreground">Model / Specs</label>
                 <input 
                   type="text" 
                   value={assetModel}
                   onChange={(e) => setAssetModel(e.target.value)}
                   placeholder="CPU 1518-4 PN/DP"
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
                 />
               </div>
             </div>
 
-            <div className="space-y-1 p-3 bg-zinc-900/80 rounded-lg border border-emerald-500/30">
+            <div className="space-y-1 p-3 bg-secondary/40 rounded-lg border border-emerald-500/30">
               <label className="text-xs font-bold text-emerald-400 flex items-center gap-1">
                 <Building2 className="w-3.5 h-3.5" /> Assign Owner Client Company *
               </label>
               <select 
                 value={assetMappedCompany}
                 onChange={(e) => setAssetMappedCompany(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary text-white font-semibold"
+                className="w-full bg-card border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground font-semibold"
               >
                 {companiesList.map(c => (
                   <option key={c.id} value={c.name}>{c.name} ({c.code})</option>

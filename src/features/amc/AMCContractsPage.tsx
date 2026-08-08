@@ -111,21 +111,21 @@ export default function AMCContractsPage() {
 
       {/* New AMC Contract Modal */}
       <Dialog open={newContractModalOpen} onOpenChange={setNewContractModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold">New Annual Maintenance Contract</DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Register a new AMC service agreement with response SLA terms.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateContractSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Client Organization</label>
+              <label className="text-xs font-medium text-foreground">Client Organization</label>
               <select 
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               >
                 <option value="Acme Corp">Acme Corp</option>
                 <option value="Globex Ltd">Globex Ltd</option>
@@ -135,22 +135,22 @@ export default function AMCContractsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-300">Annual Visit Quota</label>
+                <label className="text-xs font-medium text-foreground">Annual Visit Quota</label>
                 <input 
                   type="number" 
                   value={visits}
                   onChange={(e) => setVisits(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-zinc-300">Contract Value</label>
+                <label className="text-xs font-medium text-foreground">Contract Value</label>
                 <input 
                   type="text" 
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
                 />
               </div>
             </div>

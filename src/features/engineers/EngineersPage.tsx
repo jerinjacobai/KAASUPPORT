@@ -145,23 +145,23 @@ export default function EngineersPage() {
 
       {/* Assign Ticket Modal */}
       <Dialog open={assignModalOpen} onOpenChange={setAssignModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <Wrench className="w-4 h-4 text-primary" /> Assign Ticket to {selectedEngineer?.name}
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Select an unassigned or pending ticket to dispatch to {selectedEngineer?.name}.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 pt-2">
             {mockTickets.slice(0, 4).map((ticket) => (
-              <div key={ticket.id} className="p-3 bg-zinc-900 rounded-lg border border-zinc-800 flex items-center justify-between hover:border-primary/50 transition-colors">
+              <div key={ticket.id} className="p-3 bg-secondary/50 rounded-lg border border-border flex items-center justify-between hover:border-primary/50 transition-colors">
                 <div>
                   <span className="font-mono text-xs font-bold text-primary">{ticket.id}</span>
-                  <p className="text-xs font-medium text-white truncate max-w-[220px]">{ticket.title}</p>
-                  <p className="text-[10px] text-zinc-400">{ticket.company}</p>
+                  <p className="text-xs font-medium text-foreground truncate max-w-[220px]">{ticket.title}</p>
+                  <p className="text-[10px] text-muted-foreground">{ticket.company}</p>
                 </div>
                 <Button 
                   size="sm" 
@@ -178,32 +178,32 @@ export default function EngineersPage() {
 
       {/* Add Engineer Modal */}
       <Dialog open={addEngineerModalOpen} onOpenChange={setAddEngineerModalOpen}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 space-y-4">
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold">Onboard New Field Engineer</DialogTitle>
-            <DialogDescription className="text-xs text-zinc-400">
+            <DialogDescription className="text-xs text-muted-foreground">
               Register a new field staff profile and assign specialization skills.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleAddEngineerSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Full Name</label>
+              <label className="text-xs font-medium text-foreground">Full Name</label>
               <input 
                 type="text" 
                 value={newEngineerName}
                 onChange={(e) => setNewEngineerName(e.target.value)}
                 placeholder="E.g., Marcus Vance"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Role / Specialization</label>
+              <label className="text-xs font-medium text-foreground">Role / Specialization</label>
               <select 
                 value={newEngineerRole}
                 onChange={(e) => setNewEngineerRole(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               >
                 <option value="Senior PLC Engineer">Senior PLC Engineer</option>
                 <option value="Hardware Specialist">Hardware Specialist</option>

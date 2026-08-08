@@ -60,29 +60,34 @@ export default function CreateTicketPage() {
 
       {/* Responsive Stepper */}
       <div className="glass rounded-xl p-6 border-border/50">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="relative flex justify-between">
+          <div className="absolute top-4 left-0 w-full h-0.5 bg-secondary -z-10">
+            <div 
+              className="h-full bg-primary transition-all duration-300" 
+              style={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
+            />
+          </div>
           {STEPS.map((step, idx) => {
             const isCompleted = idx < currentStep;
             const isActive = idx === currentStep;
             
             return (
-              <div key={step} className="flex items-center gap-3">
+              <div key={step} className="flex flex-col items-center gap-2 bg-card px-2">
                 <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 shrink-0",
-                  isActive ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105" : 
-                  isCompleted ? "bg-emerald-500 border-emerald-500 text-white" : 
-                  "bg-secondary border-border text-muted-foreground"
+                  "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 shrink-0 z-10 bg-card",
+                  isActive ? "border-primary text-primary shadow-lg shadow-primary/30 scale-110" : 
+                  isCompleted ? "border-emerald-500 text-emerald-500" : 
+                  "border-border text-muted-foreground"
                 )}>
                   {isCompleted ? <Check className="w-4 h-4" /> : idx + 1}
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col items-center text-center">
                   <span className={cn(
                     "text-xs font-semibold leading-tight",
                     isActive ? "text-primary" : isCompleted ? "text-foreground" : "text-muted-foreground"
                   )}>
                     {step}
                   </span>
-                  <span className="text-[10px] text-muted-foreground">Step {idx + 1}</span>
                 </div>
               </div>
             );
@@ -115,7 +120,8 @@ export default function CreateTicketPage() {
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   disabled={!isKaaInternal}
-                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none disabled:bg-secondary/50 disabled:text-emerald-400 disabled:font-semibold"
+                  className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:bg-secondary/50 disabled:text-emerald-400 disabled:font-semibold text-sm"
+                  style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}
                 >
                   <option value="Acme Corp">Acme Corp</option>
                   <option value="Globex Ltd">Globex Ltd</option>
@@ -128,7 +134,8 @@ export default function CreateTicketPage() {
                 <select 
                   value={assetId}
                   onChange={(e) => setAssetId(e.target.value)}
-                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none"
+                  className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                  style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}
                 >
                   <option value="">Select Equipment</option>
                   {availableAssets.map(ast => (
@@ -141,7 +148,7 @@ export default function CreateTicketPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Branch / Location</label>
-                <select className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none">
+                <select className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                   <option>HQ - Primary Plant</option>
                   <option>Branch Office - Zone 2</option>
                 </select>
@@ -149,7 +156,7 @@ export default function CreateTicketPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Department</label>
-                <select className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none">
+                <select className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                   <option>IT & Infrastructure</option>
                   <option>Plant Maintenance</option>
                   <option>Operations</option>
@@ -172,14 +179,14 @@ export default function CreateTicketPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="E.g., Siemens PLC input module failure on line 3" 
-                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none" 
+                  className="w-full bg-background border border-border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" 
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Category</label>
-                  <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none">
+                  <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                     <option value="Hardware">Hardware / Machinery</option>
                     <option value="Software">Software / Firmware</option>
                     <option value="Electrical">Electrical / PLC</option>
@@ -189,7 +196,7 @@ export default function CreateTicketPage() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Priority Level</label>
-                  <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none">
+                  <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                     <option value="low">Low (Standard response)</option>
                     <option value="medium">Medium (4-hour SLA)</option>
                     <option value="high">High (2-hour SLA)</option>
@@ -205,7 +212,7 @@ export default function CreateTicketPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe error codes, physical condition, LED status, or steps to reproduce..."
-                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none"
+                  className="w-full bg-background border border-border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
             </div>
