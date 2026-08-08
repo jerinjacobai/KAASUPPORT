@@ -6,6 +6,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useUIStore } from '@/stores/ui-store';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useInactivityTimer } from '@/hooks/useInactivityTimer';
 
 // Lazy loaded pages
 const LoginPage = lazy(() => import('@/features/auth/LoginPage'));
@@ -33,10 +34,12 @@ const PlaceholderPage = ({ title }: { title: string }) => (
   </div>
 );
 
+// Create TanStack Query client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5, // 5 minutes
+      refetchOnWindowFocus: false,
       retry: 1,
     },
   },
@@ -47,7 +50,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuthStore();
   
   if (isLoading) {
-    return <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
   }
   
   if (!user) {
@@ -72,6 +79,9 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
 export function App() {
   const { checkSession } = useAuthStore();
+
+  // Active 10-minute inactivity auto-logout hook
+  useInactivityTimer();
 
   useEffect(() => {
     checkSession();
@@ -118,7 +128,7 @@ export function App() {
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 
-                {/* Catch all */}
+                {/* Catch all redirects to login if unauthenticated or dashboard if authenticated */}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Routes>

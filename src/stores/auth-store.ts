@@ -37,13 +37,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   session: null,
   profile: null,
-  roles: ['super_admin', 'internal'],
-  permissions: ['*'],
+  roles: [],
+  permissions: [],
   companyIds: [],
-  userCompany: null, // Null for admin (sees all), or 'Acme Corp' for client
+  userCompany: null,
   activeCompanyId: null,
   isLoading: false,
-  isKaaInternal: true,
+  isKaaInternal: false,
 
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
@@ -67,14 +67,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({
           session,
           user: session.user,
+          isKaaInternal: true,
+          roles: ['super_admin', 'internal'],
+          permissions: ['*'],
           isLoading: false,
         })
       } else {
-        // Default to Admin session if none saved
-        get().loginAsAdmin()
+        // User must log in first via Login Page
+        set({ user: null, session: null, isLoading: false })
       }
     } catch {
-      get().loginAsAdmin()
+      set({ user: null, session: null, isLoading: false })
     }
   },
 
