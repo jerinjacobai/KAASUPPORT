@@ -13,6 +13,7 @@ const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const TicketListPage = lazy(() => import('@/features/tickets/TicketListPage'));
 const TicketDetailPage = lazy(() => import('@/features/tickets/TicketDetailPage'));
 const CreateTicketPage = lazy(() => import('@/features/tickets/CreateTicketPage'));
+const KanbanPage = lazy(() => import('@/features/tickets/KanbanPage'));
 const EngineersPage = lazy(() => import('@/features/engineers/EngineersPage'));
 const FieldVisitsPage = lazy(() => import('@/features/engineers/FieldVisitsPage'));
 const AssetsPage = lazy(() => import('@/features/assets/AssetsPage'));
@@ -100,7 +101,7 @@ export function App() {
                 <Route path="tickets" element={<TicketListPage />} />
                 <Route path="tickets/new" element={<CreateTicketPage />} />
                 <Route path="tickets/:id" element={<TicketDetailPage />} />
-                <Route path="tickets/kanban" element={<TicketListPage />} />
+                <Route path="tickets/kanban" element={<KanbanPage />} />
                 
                 {/* Field Operations */}
                 <Route path="engineers" element={<EngineersPage />} />
