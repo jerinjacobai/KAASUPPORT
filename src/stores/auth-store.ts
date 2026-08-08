@@ -10,6 +10,7 @@ interface AuthState {
   roles: string[]
   permissions: string[]
   companyIds: string[]
+  userCompany: string | null
   activeCompanyId: string | null
   isLoading: boolean
   isKaaInternal: boolean
@@ -19,12 +20,15 @@ interface AuthState {
   setRoles: (roles: string[]) => void
   setPermissions: (permissions: string[]) => void
   setCompanyIds: (ids: string[]) => void
+  setUserCompany: (company: string | null) => void
   setActiveCompanyId: (id: string | null) => void
   setIsLoading: (loading: boolean) => void
   hasPermission: (permission: string) => boolean
   hasRole: (role: string) => boolean
   checkSession: () => Promise<void>
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>
+  signIn: (email: string, password: string, isClientLogin?: boolean, companyName?: string) => Promise<{ error: Error | null }>
+  loginAsAdmin: () => void
+  loginAsClient: (companyName?: string) => void
   signOut: () => Promise<void>
   reset: () => void
 }
@@ -36,6 +40,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   roles: ['super_admin', 'internal'],
   permissions: ['*'],
   companyIds: [],
+  userCompany: null, // Null for admin (sees all), or 'Acme Corp' for client
   activeCompanyId: null,
   isLoading: false,
   isKaaInternal: true,
@@ -46,6 +51,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setRoles: (roles) => set({ roles, isKaaInternal: roles.includes('internal') || roles.includes('super_admin') }),
   setPermissions: (permissions) => set({ permissions }),
   setCompanyIds: (companyIds) => set({ companyIds }),
+  setUserCompany: (userCompany) => set({ userCompany }),
   setActiveCompanyId: (activeCompanyId) => set({ activeCompanyId }),
   setIsLoading: (isLoading) => set({ isLoading }),
 
@@ -64,81 +70,73 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
         })
       } else {
-        // Mock default user for demo if not logged in
-        const mockUser: User = {
-          id: 'demo-user-id',
-          app_metadata: {},
-          user_metadata: { full_name: 'Jacob Admin' },
-          aud: 'authenticated',
-          created_at: new Date().toISOString(),
-          email: 'admin@kaa.com',
-        }
-        set({
-          user: mockUser,
-          roles: ['super_admin', 'internal'],
-          isKaaInternal: true,
-          isLoading: false,
-        })
+        // Default to Admin session if none saved
+        get().loginAsAdmin()
       }
     } catch {
-      // Fallback for demo when Supabase URL is placeholder
-      const mockUser: User = {
-        id: 'demo-user-id',
-        app_metadata: {},
-        user_metadata: { full_name: 'Jacob Admin' },
-        aud: 'authenticated',
-        created_at: new Date().toISOString(),
-        email: 'admin@kaa.com',
-      }
-      set({
-        user: mockUser,
-        roles: ['super_admin', 'internal'],
-        isKaaInternal: true,
-        isLoading: false,
-      })
+      get().loginAsAdmin()
     }
   },
 
-  signIn: async (email, password) => {
+  signIn: async (email, password, isClientLogin = false, companyName = 'Acme Corp') => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        // Fallback for demo
-        const mockUser: User = {
-          id: 'demo-user-id',
-          app_metadata: {},
-          user_metadata: { full_name: email.split('@')[0] },
-          aud: 'authenticated',
-          created_at: new Date().toISOString(),
-          email,
+        if (isClientLogin) {
+          get().loginAsClient(companyName)
+        } else {
+          get().loginAsAdmin()
         }
-        set({
-          user: mockUser,
-          roles: ['super_admin', 'internal'],
-          isKaaInternal: true,
-          isLoading: false,
-        })
         return { error: null }
       }
       set({ user: data.user, session: data.session })
       return { error: null }
     } catch {
-      const mockUser: User = {
-        id: 'demo-user-id',
-        app_metadata: {},
-        user_metadata: { full_name: email.split('@')[0] },
-        aud: 'authenticated',
-        created_at: new Date().toISOString(),
-        email,
+      if (isClientLogin) {
+        get().loginAsClient(companyName)
+      } else {
+        get().loginAsAdmin()
       }
-      set({
-        user: mockUser,
-        roles: ['super_admin', 'internal'],
-        isKaaInternal: true,
-        isLoading: false,
-      })
       return { error: null }
     }
+  },
+
+  loginAsAdmin: () => {
+    const mockAdmin: User = {
+      id: 'kaa-admin-id',
+      app_metadata: {},
+      user_metadata: { full_name: 'KAA Super Admin' },
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+      email: 'admin@kaa-erp.com',
+    }
+    set({
+      user: mockAdmin,
+      roles: ['super_admin', 'internal'],
+      permissions: ['*'],
+      isKaaInternal: true,
+      userCompany: null, // Sees all companies
+      isLoading: false,
+    })
+  },
+
+  loginAsClient: (companyName = 'Acme Corp') => {
+    const mockClientUser: User = {
+      id: 'client-user-id',
+      app_metadata: {},
+      user_metadata: { full_name: 'John Doe (Client Admin)', company: companyName },
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+      email: `support@${companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+    }
+    set({
+      user: mockClientUser,
+      roles: ['client_admin', 'client'],
+      permissions: ['client.tickets.read', 'client.tickets.create', 'client.assets.read'],
+      isKaaInternal: false,
+      userCompany: companyName, // Locked to mapped company!
+      isLoading: false,
+    })
   },
 
   signOut: async () => {
@@ -157,6 +155,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     roles: [],
     permissions: [],
     companyIds: [],
+    userCompany: null,
     activeCompanyId: null,
     isLoading: false,
     isKaaInternal: false,

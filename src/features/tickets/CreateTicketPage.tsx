@@ -1,15 +1,29 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { ArrowLeft, Check, ChevronRight, UploadCloud } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, UploadCloud, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/stores/auth-store';
+import { mockAssets } from '@/lib/mock-data';
 
 const STEPS = ['Context', 'Issue Details', 'Attachments', 'Review'];
 
 export default function CreateTicketPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const navigate = useNavigate();
+  const { isKaaInternal, userCompany } = useAuthStore();
+
+  const [company, setCompany] = useState(isKaaInternal ? '' : (userCompany || 'Acme Corp'));
+  const [assetId, setAssetId] = useState('');
+  const [title, setTitle] = useState('');
+  const [priority, setPriority] = useState('medium');
+  const [category, setCategory] = useState('Hardware');
+
+  // Filter assets to mapped company if client login
+  const availableAssets = mockAssets.filter(ast => 
+    isKaaInternal ? true : (company ? ast.company === company : true)
+  );
 
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
@@ -32,7 +46,7 @@ export default function CreateTicketPage() {
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-12">
       <PageHeader 
         title="Create New Ticket" 
-        description="Follow the steps to submit a new service or support request."
+        description={isKaaInternal ? "Submit a new service or support ticket on behalf of a client." : `Raise a new support ticket for ${userCompany || 'your mapped organization'}.`}
       >
         <button onClick={() => navigate('/tickets')} className="p-2 bg-secondary hover:bg-secondary/80 rounded-md transition-colors text-muted-foreground">
           <ArrowLeft className="w-4 h-4" />
@@ -80,32 +94,64 @@ export default function CreateTicketPage() {
         {/* Step 1: Context */}
         {currentStep === 0 && (
           <div className="space-y-6 animate-slide-in-right">
-            <h2 className="text-xl font-semibold mb-6">Select Organization Context</h2>
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h2 className="text-xl font-semibold">Select Organization Context</h2>
+              {!isKaaInternal && (
+                <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <Lock className="w-3 h-3" /> Scope Locked to {userCompany}
+                </span>
+              )}
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Company <span className="text-destructive">*</span></label>
-                <select className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 outline-none">
-                  <option value="">Select Company</option>
-                  <option>Acme Corp</option>
-                  <option>Globex</option>
+                <label className="text-sm font-medium flex items-center justify-between">
+                  Company <span className="text-destructive">*</span>
+                  {!isKaaInternal && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+                </label>
+                <select 
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  disabled={!isKaaInternal}
+                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none disabled:opacity-75"
+                >
+                  <option value="Acme Corp">Acme Corp</option>
+                  <option value="Globex Ltd">Globex Ltd</option>
+                  <option value="Initech Inc">Initech Inc</option>
                 </select>
               </div>
+
               <div className="space-y-2">
-                <label className="text-sm font-medium">Project</label>
-                <select className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 outline-none" disabled>
-                  <option>Select Company First</option>
+                <label className="text-sm font-medium">Mapped Equipment / Asset (Optional)</label>
+                <select 
+                  value={assetId}
+                  onChange={(e) => setAssetId(e.target.value)}
+                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none"
+                >
+                  <option value="">Select Equipment</option>
+                  {availableAssets.map(ast => (
+                    <option key={ast.id} value={ast.id}>
+                      {ast.tag} - {ast.name} ({ast.amcStatus})
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-medium">Branch / Location</label>
-                <select className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 outline-none">
-                  <option>HQ - New York</option>
+                <select className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none">
+                  <option>HQ - Primary Plant</option>
+                  <option>Branch Office - Zone 2</option>
                 </select>
               </div>
+
               <div className="space-y-2">
-                <label className="text-sm font-medium">Related Asset (Optional)</label>
-                <input type="text" placeholder="Search by Asset ID..." className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 outline-none" />
+                <label className="text-sm font-medium">Department</label>
+                <select className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none">
+                  <option>IT & Infrastructure</option>
+                  <option>Plant Maintenance</option>
+                  <option>Operations</option>
+                </select>
               </div>
             </div>
           </div>
@@ -114,29 +160,45 @@ export default function CreateTicketPage() {
         {/* Step 2: Issue Details */}
         {currentStep === 1 && (
           <div className="space-y-6 animate-slide-in-right">
-            <h2 className="text-xl font-semibold mb-6">Issue Details</h2>
+            <h2 className="text-xl font-semibold mb-6">Issue Category & Details</h2>
             
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Priority <span className="text-destructive">*</span></label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {['Low', 'Medium', 'High', 'Critical'].map((p) => (
-                    <label key={p} className="relative flex cursor-pointer rounded-lg border bg-background p-3 hover:bg-secondary/50 transition-colors focus-within:ring-2 focus-within:ring-primary border-border">
-                      <input type="radio" name="priority" className="sr-only" />
-                      <span className="text-sm font-medium text-center w-full">{p}</span>
-                    </label>
-                  ))}
+                <label className="text-sm font-medium">Subject / Title <span className="text-destructive">*</span></label>
+                <input 
+                  type="text" 
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="E.g., Siemens PLC input module failure on line 3" 
+                  className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none" 
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Category</label>
+                  <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none">
+                    <option>Hardware</option>
+                    <option>Electrical</option>
+                    <option>PLC</option>
+                    <option>Software / ERP</option>
+                    <option>Biometric</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Priority Level</label>
+                  <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none">
+                    <option value="low">Low (Standard SLA)</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical (Immediate SLA Alert)</option>
+                  </select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Title <span className="text-destructive">*</span></label>
-                <input type="text" placeholder="Brief summary of the issue" className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 outline-none" />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Description <span className="text-destructive">*</span></label>
-                <textarea rows={6} placeholder="Provide detailed information about the issue, steps to reproduce, etc." className="w-full bg-background border border-border focus:border-primary rounded-lg p-3 outline-none resize-none"></textarea>
+                <label className="text-sm font-medium">Problem Description</label>
+                <textarea rows={4} placeholder="Describe the error code, machine symptoms, or breakdown in detail..." className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 text-sm outline-none resize-none"></textarea>
               </div>
             </div>
           </div>
@@ -145,25 +207,12 @@ export default function CreateTicketPage() {
         {/* Step 3: Attachments */}
         {currentStep === 2 && (
           <div className="space-y-6 animate-slide-in-right">
-            <h2 className="text-xl font-semibold mb-6">Attachments & Contact</h2>
+            <h2 className="text-xl font-semibold mb-6">Upload Photos & Documents</h2>
             
-            <div className="border-2 border-dashed border-border hover:border-primary/50 transition-colors rounded-xl p-10 flex flex-col items-center justify-center text-center bg-secondary/20 cursor-pointer">
-              <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
-                <UploadCloud className="w-6 h-6" />
-              </div>
-              <p className="font-medium mb-1">Click to upload or drag and drop</p>
-              <p className="text-xs text-muted-foreground">SVG, PNG, JPG, PDF or LOG files (max 10MB)</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Contact Person</label>
-                <input type="text" placeholder="Name" className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 outline-none" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Contact Phone</label>
-                <input type="text" placeholder="+1 (555) 000-0000" className="w-full bg-background border border-border focus:border-primary rounded-lg p-2.5 outline-none" />
-              </div>
+            <div className="border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-8 text-center bg-secondary/20 transition-all cursor-pointer">
+              <UploadCloud className="w-10 h-10 text-primary mx-auto mb-3" />
+              <p className="font-medium text-sm">Drag and drop photos of error logs or equipment here</p>
+              <p className="text-xs text-muted-foreground mt-1">Supports PNG, JPG, PDF, ZIP up to 25MB</p>
             </div>
           </div>
         )}
@@ -171,48 +220,41 @@ export default function CreateTicketPage() {
         {/* Step 4: Review */}
         {currentStep === 3 && (
           <div className="space-y-6 animate-slide-in-right">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Review & Submit</h2>
-            </div>
+            <h2 className="text-xl font-semibold mb-4">Review Ticket Before Submission</h2>
             
-            <div className="bg-secondary/30 rounded-lg p-6 border border-border space-y-6">
-              <div className="grid grid-cols-2 gap-y-4 text-sm">
-                <div className="text-muted-foreground">Company:</div>
-                <div className="font-medium">Acme Corp</div>
-                
-                <div className="text-muted-foreground">Priority:</div>
-                <div className="font-medium text-amber-500">Medium</div>
-                
-                <div className="text-muted-foreground">Title:</div>
-                <div className="font-medium">Software installation failing on POS register</div>
+            <div className="bg-secondary/30 p-4 rounded-xl border border-border space-y-3 text-sm">
+              <div className="flex justify-between border-b border-border/50 pb-2">
+                <span className="text-muted-foreground">Mapped Client:</span>
+                <span className="font-semibold text-foreground">{company}</span>
               </div>
-              
-              <div className="pt-4 border-t border-border">
-                <div className="text-muted-foreground text-sm mb-2">Description:</div>
-                <p className="text-sm bg-background p-4 rounded border border-border">When trying to update the POS software to v2.4, it errors out with code E-505. Needs immediate attention as the terminal is down.</p>
+              <div className="flex justify-between border-b border-border/50 pb-2">
+                <span className="text-muted-foreground">Title:</span>
+                <span className="font-medium text-foreground">{title || 'Equipment Issue'}</span>
+              </div>
+              <div className="flex justify-between border-b border-border/50 pb-2">
+                <span className="text-muted-foreground">Priority:</span>
+                <span className="font-semibold uppercase text-primary">{priority}</span>
               </div>
             </div>
           </div>
         )}
 
-      </div>
+        {/* Navigation Buttons */}
+        <div className="flex items-center justify-between pt-8 border-t border-border mt-8">
+          <button
+            onClick={handleBack}
+            className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors"
+          >
+            Back
+          </button>
+          <button
+            onClick={handleNext}
+            className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-medium transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+          >
+            {currentStep === STEPS.length - 1 ? 'Submit Ticket' : 'Continue'} <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-between items-center mt-6">
-        <button 
-          onClick={handleBack}
-          className="px-5 py-2.5 bg-secondary text-foreground hover:bg-secondary/80 rounded-lg font-medium transition-colors"
-        >
-          {currentStep === 0 ? 'Cancel' : 'Back'}
-        </button>
-        
-        <button 
-          onClick={handleNext}
-          className="px-5 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary/25"
-        >
-          {currentStep === STEPS.length - 1 ? 'Submit Ticket' : 'Continue'}
-          {currentStep !== STEPS.length - 1 && <ChevronRight className="w-4 h-4" />}
-        </button>
       </div>
     </div>
   );

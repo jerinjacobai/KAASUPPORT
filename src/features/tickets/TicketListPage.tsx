@@ -4,29 +4,43 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
 import { mockTickets } from '@/lib/mock-data';
-import { Plus, Search, Filter, SlidersHorizontal, Download, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, Filter, SlidersHorizontal, Download, MoreHorizontal, Lock, Building2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuthStore } from '@/stores/auth-store';
+import { Badge } from '@/components/ui/badge';
 
 export default function TicketListPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  
+  const { isKaaInternal, userCompany } = useAuthStore();
+
+  // Multi-tenant Row-Level Security Filtering
+  const filteredTickets = mockTickets.filter(ticket => {
+    const matchesTenant = isKaaInternal ? true : (ticket.company === userCompany);
+    const matchesSearch = 
+      ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.assignee.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesTenant && matchesSearch;
+  });
+
   return (
     <div className="space-y-6 h-full flex flex-col">
       <PageHeader 
-        title="Tickets" 
-        description="Manage and track customer support requests."
+        title={isKaaInternal ? "Support Tickets (All Clients)" : `My Tickets (${userCompany})`} 
+        description={isKaaInternal ? "Manage and track customer support requests across all KAA client companies." : `Track status, field engineer visits, and updates for ${userCompany} tickets.`}
       >
         <Link 
           to="/tickets/new" 
           className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-lg shadow-primary/20"
         >
-          <Plus className="w-4 h-4" /> New Ticket
+          <Plus className="w-4 h-4" /> Raise Ticket
         </Link>
       </PageHeader>
 
       <div className="glass rounded-xl border border-border flex flex-col flex-1 min-h-0 overflow-hidden animate-slide-in-up">
         
-        {/* Toolbar */}
+        {/* Toolbar & RLS Status Header */}
         <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-4 items-center justify-between bg-secondary/10">
           
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -46,91 +60,109 @@ export default function TicketListPage() {
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+            {!isKaaInternal && (
+              <Badge variant="outline" className="text-xs py-1 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-semibold gap-1">
+                <Lock className="w-3 h-3" /> Mapped to {userCompany} Only
+              </Badge>
+            )}
+            
             <button className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-secondary-foreground text-xs font-medium rounded-md whitespace-nowrap">
               <Filter className="w-3.5 h-3.5" /> Status: All
             </button>
             <button className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border text-foreground hover:bg-secondary text-xs font-medium rounded-md whitespace-nowrap transition-colors">
               Priority: All
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-background border border-border text-foreground hover:bg-secondary text-xs font-medium rounded-md whitespace-nowrap transition-colors">
-              Company: All
-            </button>
             <div className="w-px h-6 bg-border mx-1 hidden sm:block"></div>
             <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors hidden sm:block" title="Export">
               <Download className="w-4 h-4" />
             </button>
           </div>
-
         </div>
 
-        {/* Table wrapper */}
+        {/* Table */}
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-sm text-left border-collapse">
-            <thead className="text-xs text-muted-foreground uppercase bg-background sticky top-0 z-10 border-b border-border shadow-sm">
+          <table className="w-full text-left border-collapse text-sm">
+            <thead className="sticky top-0 bg-secondary/80 backdrop-blur border-b border-border z-10 text-xs font-semibold text-muted-foreground uppercase">
               <tr>
-                <th className="px-4 py-3 font-medium w-10">
-                  <input type="checkbox" className="rounded border-border text-primary focus:ring-primary bg-secondary/50 w-4 h-4" />
+                <th className="p-4 w-10">
+                  <input type="checkbox" className="rounded border-border" />
                 </th>
-                <th className="px-4 py-3 font-medium cursor-pointer hover:text-foreground">Ticket ID</th>
-                <th className="px-4 py-3 font-medium cursor-pointer hover:text-foreground">Details</th>
-                <th className="px-4 py-3 font-medium cursor-pointer hover:text-foreground">Status</th>
-                <th className="px-4 py-3 font-medium cursor-pointer hover:text-foreground">Priority</th>
-                <th className="px-4 py-3 font-medium cursor-pointer hover:text-foreground">Assignee</th>
-                <th className="px-4 py-3 font-medium cursor-pointer hover:text-foreground">Created</th>
-                <th className="px-4 py-3 font-medium text-right">Actions</th>
+                <th className="p-4">Ticket ID</th>
+                <th className="p-4">Title</th>
+                {isKaaInternal && <th className="p-4">Client Company</th>}
+                <th className="p-4">Priority</th>
+                <th className="p-4">Status</th>
+                <th className="p-4">Assignee</th>
+                <th className="p-4">Created</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
-              {mockTickets.map((ticket) => (
+              {filteredTickets.map((ticket) => (
                 <tr key={ticket.id} className="hover:bg-secondary/30 transition-colors group">
-                  <td className="px-4 py-3">
-                    <input type="checkbox" className="rounded border-border text-primary focus:ring-primary bg-secondary/50 w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <td className="p-4">
+                    <input type="checkbox" className="rounded border-border" />
                   </td>
-                  <td className="px-4 py-3 font-medium">
-                    <Link to={`/tickets/${ticket.id}`} className="text-primary hover:underline">
+                  <td className="p-4 font-mono font-medium text-primary">
+                    <Link to={`/tickets/${ticket.id}`} className="hover:underline flex items-center gap-1">
                       {ticket.id}
+                      {ticket.slaBreached && (
+                        <span className="w-2 h-2 rounded-full bg-destructive animate-ping" title="SLA Breached" />
+                      )}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 max-w-[300px]">
-                    <div className="font-medium truncate mb-0.5">{ticket.title}</div>
-                    <div className="text-xs text-muted-foreground truncate">{ticket.company}</div>
+                  <td className="p-4 max-w-md font-medium text-foreground">
+                    <Link to={`/tickets/${ticket.id}`} className="hover:text-primary transition-colors block truncate">
+                      {ticket.title}
+                    </Link>
                   </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={ticket.status} />
-                  </td>
-                  <td className="px-4 py-3">
+                  {isKaaInternal && (
+                    <td className="p-4 text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Building2 className="w-3.5 h-3.5 text-primary" /> {ticket.company}
+                      </span>
+                    </td>
+                  )}
+                  <td className="p-4">
                     <PriorityBadge priority={ticket.priority} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="p-4">
+                    <StatusBadge status={ticket.status} />
+                  </td>
+                  <td className="p-4">
                     <div className="flex items-center gap-2">
-                      <img src={ticket.assignee.avatar} alt="" className="w-6 h-6 rounded-full border border-border" />
-                      <span className="text-xs font-medium truncate max-w-[120px]">{ticket.assignee.name}</span>
+                      <img src={ticket.assignee.avatar} alt={ticket.assignee.name} className="w-6 h-6 rounded-full border border-border" />
+                      <span className="text-xs text-foreground font-medium">{ticket.assignee.name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs whitespace-nowrap">
+                  <td className="p-4 text-xs text-muted-foreground whitespace-nowrap">
                     {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <button className="p-1.5 text-muted-foreground hover:text-foreground rounded transition-colors opacity-0 group-hover:opacity-100">
+                  <td className="p-4 text-right">
+                    <button className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground">
                       <MoreHorizontal className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>
               ))}
+
+              {filteredTickets.length === 0 && (
+                <tr>
+                  <td colSpan={isKaaInternal ? 9 : 8} className="p-8 text-center text-muted-foreground">
+                    No tickets found matching your scope or search query.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination Footer */}
-        <div className="p-3 border-t border-border flex items-center justify-between bg-secondary/10 text-sm text-muted-foreground">
-          <div>Showing 1 to 20 of 1,248 entries</div>
-          <div className="flex gap-1">
-            <button className="px-3 py-1 border border-border rounded-md bg-background hover:bg-secondary disabled:opacity-50" disabled>Previous</button>
-            <button className="px-3 py-1 border border-border rounded-md bg-primary/10 text-primary font-medium">1</button>
-            <button className="px-3 py-1 border border-border rounded-md bg-background hover:bg-secondary">2</button>
-            <button className="px-3 py-1 border border-border rounded-md bg-background hover:bg-secondary">3</button>
-            <span className="px-2 py-1">...</span>
-            <button className="px-3 py-1 border border-border rounded-md bg-background hover:bg-secondary">Next</button>
+        {/* Footer */}
+        <div className="p-4 border-t border-border flex items-center justify-between text-xs text-muted-foreground bg-secondary/10">
+          <span>Showing {filteredTickets.length} tickets</span>
+          <div className="flex items-center gap-2">
+            <button className="px-2.5 py-1 rounded border border-border bg-background hover:bg-secondary disabled:opacity-50" disabled>Previous</button>
+            <button className="px-2.5 py-1 rounded border border-border bg-background hover:bg-secondary disabled:opacity-50" disabled>Next</button>
           </div>
         </div>
 
