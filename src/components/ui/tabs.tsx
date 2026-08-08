@@ -1,18 +1,27 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
-// A minimal implementation of Tabs using standard React Context
 const TabsContext = React.createContext<{
   activeTab: string
   setActiveTab: (val: string) => void
 } | null>(null)
 
 export interface TabsProps extends React.HTMLAttributes<HTMLDivElement> {
-  defaultValue: string
+  defaultValue?: string
+  value?: string
+  onValueChange?: (val: string) => void
 }
 
-export function Tabs({ defaultValue, children, className, ...props }: TabsProps) {
-  const [activeTab, setActiveTab] = React.useState(defaultValue)
+export function Tabs({ defaultValue = 'companies', value, onValueChange, children, className, ...props }: TabsProps) {
+  const [internalTab, setInternalTab] = React.useState(defaultValue)
+  const activeTab = value !== undefined ? value : internalTab
+
+  const setActiveTab = (val: string) => {
+    if (value === undefined) {
+      setInternalTab(val)
+    }
+    onValueChange?.(val)
+  }
 
   return (
     <TabsContext.Provider value={{ activeTab, setActiveTab }}>

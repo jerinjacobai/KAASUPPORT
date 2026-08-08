@@ -23,6 +23,7 @@ const InventoryPage = lazy(() => import('@/features/inventory/InventoryPage'));
 const KnowledgeBasePage = lazy(() => import('@/features/knowledge-base/KnowledgeBasePage'));
 const ReportsPage = lazy(() => import('@/features/reports/ReportsPage'));
 const SettingsPage = lazy(() => import('@/features/admin/SettingsPage'));
+const MastersPage = lazy(() => import('@/features/admin/MastersPage'));
 
 // Placeholder page for remaining static views
 const PlaceholderPage = ({ title }: { title: string }) => (
@@ -122,9 +123,10 @@ export function App() {
                 <Route path="assets/:id" element={<AssetsPage />} />
                 <Route path="amc" element={<AMCContractsPage />} />
                 
-                {/* Inventory, KB, Reports & Settings */}
+                {/* Inventory, KB, Admin Masters, Reports & Settings */}
                 <Route path="inventory" element={<InventoryPage />} />
                 <Route path="knowledge-base" element={<KnowledgeBasePage />} />
+                <Route path="admin/masters" element={<MastersPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 
