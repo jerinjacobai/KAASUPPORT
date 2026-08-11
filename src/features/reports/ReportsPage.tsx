@@ -44,20 +44,20 @@ export default function ReportsPage() {
           <span className="text-sm font-medium text-foreground">Date Range:</span>
           <div className="flex bg-background border border-border rounded-lg p-0.5 text-xs font-semibold">
             <button 
-              onClick={() => setRange('7d')}
-              className={`px-3 py-1 rounded-md transition-colors ${range === '7d' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              onClick={() => { setRange('7d'); toast.info('Filtering analytics for Last 7 Days'); }}
+              className={`px-3 py-1 rounded-md transition-colors ${range === '7d' ? 'bg-primary text-primary-foreground font-bold shadow-xs' : 'text-muted-foreground hover:text-foreground'}`}
             >
               7 Days
             </button>
             <button 
-              onClick={() => setRange('30d')}
-              className={`px-3 py-1 rounded-md transition-colors ${range === '30d' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              onClick={() => { setRange('30d'); toast.info('Filtering analytics for Last 30 Days'); }}
+              className={`px-3 py-1 rounded-md transition-colors ${range === '30d' ? 'bg-primary text-primary-foreground font-bold shadow-xs' : 'text-muted-foreground hover:text-foreground'}`}
             >
               30 Days
             </button>
             <button 
-              onClick={() => setRange('90d')}
-              className={`px-3 py-1 rounded-md transition-colors ${range === '90d' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              onClick={() => { setRange('90d'); toast.info('Filtering analytics for Last 90 Days'); }}
+              className={`px-3 py-1 rounded-md transition-colors ${range === '90d' ? 'bg-primary text-primary-foreground font-bold shadow-xs' : 'text-muted-foreground hover:text-foreground'}`}
             >
               90 Days
             </button>

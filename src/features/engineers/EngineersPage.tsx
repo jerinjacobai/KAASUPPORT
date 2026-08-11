@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { mockEngineers, mockTickets } from '@/lib/mock-data';
-import { UserCheck, MapPin, Star, Wrench, Mail, Search, CheckCircle2 } from 'lucide-react';
+import { UserCheck, MapPin, Star, Wrench, Mail, Search, CheckCircle2, Users, UserPlus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -76,8 +76,18 @@ export default function EngineersPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {filteredEngineers.map((engineer) => (
+      {filteredEngineers.length === 0 ? (
+        <div className="glass rounded-xl p-12 text-center border border-border flex flex-col items-center justify-center">
+          <Users className="w-12 h-12 text-muted-foreground/40 mb-3" />
+          <h3 className="text-base font-bold text-foreground">No Field Engineers Onboarded</h3>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm">Click "Add Field Engineer" above to register service technicians and dispatch engineers.</p>
+          <Button onClick={() => setAddEngineerModalOpen(true)} size="sm" className="mt-4 gap-2 text-xs">
+            <UserPlus className="w-4 h-4" /> Add Field Engineer
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {filteredEngineers.map((engineer: any) => (
           <div key={engineer.id} className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all group flex flex-col justify-between shadow-lg">
             <div>
               <div className="flex items-start justify-between mb-4">
@@ -142,6 +152,7 @@ export default function EngineersPage() {
           </div>
         ))}
       </div>
+    )}
 
       {/* Assign Ticket Modal */}
       <Dialog open={assignModalOpen} onOpenChange={setAssignModalOpen}>

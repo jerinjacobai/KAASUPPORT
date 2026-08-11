@@ -85,7 +85,17 @@ export default function InventoryPage() {
         </div>
 
         <div className="divide-y divide-border">
-          {filteredParts.map((part: any) => (
+          {filteredParts.length === 0 ? (
+            <div className="p-12 text-center text-muted-foreground flex flex-col items-center justify-center">
+              <Package className="w-12 h-12 text-muted-foreground/40 mb-3" />
+              <h3 className="text-base font-bold text-foreground">No Spare Parts Registered</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">Click "Add Spare Part" above to add new components and track warehouse inventory stock.</p>
+              <Button onClick={() => setAddPartModalOpen(true)} size="sm" className="mt-4 gap-2 text-xs">
+                <Plus className="w-4 h-4" /> Add Spare Part
+              </Button>
+            </div>
+          ) : (
+            filteredParts.map((part: any) => (
             <div key={part.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-secondary/30 transition-colors">
               <div className="flex items-start gap-3">
                 <div className="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
@@ -133,7 +143,8 @@ export default function InventoryPage() {
                 </Button>
               </div>
             </div>
-          ))}
+          ))
+        )}
         </div>
       </div>
 

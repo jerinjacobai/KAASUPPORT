@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
-import { Plus, Search, Download, MoreHorizontal, Lock, Building2, RefreshCw, Eye, CheckCircle2, UserCheck } from 'lucide-react';
+import { Plus, Search, Download, MoreHorizontal, Lock, Building2, RefreshCw, Eye, CheckCircle2, UserCheck, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/stores/auth-store';
 import { Badge } from '@/components/ui/badge';
@@ -177,7 +177,21 @@ export default function TicketListPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {filteredTickets.map((ticket: any) => (
+                {filteredTickets.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="p-12 text-center text-muted-foreground">
+                      <div className="flex flex-col items-center justify-center max-w-sm mx-auto">
+                        <FileText className="w-12 h-12 text-muted-foreground/30 mb-3" />
+                        <h3 className="text-base font-bold text-foreground">No Support Tickets Found</h3>
+                        <p className="text-xs text-muted-foreground mt-1 mb-4">No tickets match your filter criteria or no tickets have been raised yet.</p>
+                        <Link to="/tickets/new" className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-all shadow-md">
+                          + Raise New Ticket
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTickets.map((ticket: any) => (
                   <tr key={ticket.id} className="hover:bg-secondary/40 transition-all duration-200 group">
                     <td className="p-4">
                       <input type="checkbox" className="rounded border-border" />
@@ -240,15 +254,8 @@ export default function TicketListPage() {
                       </DropdownMenu>
                     </td>
                   </tr>
-                ))}
-
-                {filteredTickets.length === 0 && (
-                  <tr>
-                    <td colSpan={isKaaInternal ? 9 : 8} className="p-8 text-center text-muted-foreground">
-                      No tickets found matching your active filters.
-                    </td>
-                  </tr>
-                )}
+                ))
+              )}
               </tbody>
             </table>
           )}

@@ -32,7 +32,7 @@ export function Sidebar() {
       { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     ]},
     { group: 'Support Desk', items: [
-      { name: isKaaInternal ? 'All Tickets' : 'My Tickets', path: '/tickets', icon: Ticket, badge: 12 },
+      { name: isKaaInternal ? 'All Tickets' : 'My Tickets', path: '/tickets', icon: Ticket },
       { name: 'Raise Ticket', path: '/tickets/new', icon: PlusCircle },
       ...(isKaaInternal ? [
         { name: 'Engineers', path: '/engineers', icon: Users },
@@ -111,14 +111,6 @@ export function Sidebar() {
                   <Icon className={cn("w-4 h-4 shrink-0 transition-transform group-hover:scale-110", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
                   {!sidebarCollapsed && (
                     <span className="truncate flex-1">{item.name}</span>
-                  )}
-                  {!sidebarCollapsed && item.badge && (
-                    <span className={cn(
-                      "text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-auto",
-                      isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary border border-border text-muted-foreground"
-                    )}>
-                      {item.badge}
-                    </span>
                   )}
                   {sidebarCollapsed ? (
                     <div className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 pointer-events-none">

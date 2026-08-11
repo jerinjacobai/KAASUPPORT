@@ -168,6 +168,15 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <div className="pt-4 border-t border-border flex justify-end gap-3">
+        <Button variant="outline" size="sm" onClick={() => toast.info('Changes discarded')} className="text-xs">
+          Reset Changes
+        </Button>
+        <Button variant="default" size="sm" onClick={() => toast.success('System Settings Saved Successfully!')} className="text-xs gap-2">
+          <Save className="w-4 h-4" /> Save Configuration
+        </Button>
+      </div>
     </div>
   );
 }
