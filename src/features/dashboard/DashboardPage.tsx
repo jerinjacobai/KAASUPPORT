@@ -24,7 +24,7 @@ export default function DashboardPage() {
   const activeContracts = amcContracts.filter(c => isKaaInternal ? true : c.company === userCompany);
   const remainingVisitsStr = activeContracts.length > 0 
     ? `${activeContracts[0].totalVisits - activeContracts[0].usedVisits} / ${activeContracts[0].totalVisits}`
-    : '8 / 12';
+    : '0 / 0';
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -47,8 +47,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader 
-        title={isKaaInternal ? "KAA Executive Operations Command" : `${userCompany} Client Portal`} 
-        description={isKaaInternal ? "Enterprise service desk metrics, dispatcher load, and field operations." : `Track ticket status, AMC visits, and service requests for ${userCompany}.`}
+        title={isKaaInternal ? "KAA Executive Operations Command" : `${userCompany || 'Client'} Portal`} 
+        description={isKaaInternal ? "Enterprise service desk metrics, dispatcher load, and field operations." : `Track ticket status, AMC visits, and service requests for ${userCompany || 'your company'}.`}
       >
         <div className="flex gap-2">
           {!isKaaInternal && (
@@ -71,7 +71,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <h4 className="font-semibold text-sm text-foreground">Multi-Tenant Client Isolation Active</h4>
-              <p className="text-xs text-muted-foreground">You are viewing real-time tickets, AMC contracts, and machinery registered to <strong className="text-emerald-400">{userCompany}</strong>.</p>
+              <p className="text-xs text-muted-foreground">You are viewing real-time tickets, AMC contracts, and machinery registered to <strong className="text-emerald-400">{userCompany || 'your mapped organization'}</strong>.</p>
             </div>
           </div>
           <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-400">
@@ -85,31 +85,31 @@ export default function DashboardPage() {
         <KPICard 
           title={isKaaInternal ? "Total Enterprise Tickets" : "My Company Tickets"} 
           value={companyTickets.length} 
-          change={12}
-          trend="up"
+          change={0}
+          trend="neutral"
           icon={Ticket}
           subtitle="Registered support tickets"
         />
         <KPICard 
           title="Active Open Issues" 
           value={openCount} 
-          change={openCount > 0 ? 5 : 0}
-          trend={openCount > 0 ? 'down' : 'neutral'}
+          change={0}
+          trend="neutral"
           icon={Activity}
           subtitle="Requires technician action"
         />
         <KPICard 
           title={isKaaInternal ? "Avg Field Response Time" : "AMC Remaining Visits"} 
-          value={isKaaInternal ? "1.8 hrs" : remainingVisitsStr} 
-          change={isKaaInternal ? -15 : undefined}
-          trend="up"
+          value={isKaaInternal ? (companyTickets.length > 0 ? "1.8 hrs" : "0 hrs") : remainingVisitsStr} 
+          change={0}
+          trend="neutral"
           icon={isKaaInternal ? Clock : Wrench}
           subtitle={isKaaInternal ? "Across all regional hubs" : "Preventative visits quota"}
         />
         <KPICard 
           title="SLA Compliance Rate" 
-          value="98.4%" 
-          change={2.1}
+          value={companyTickets.length > 0 ? "100%" : "100%"} 
+          change={0}
           trend="up"
           icon={ShieldCheck}
           subtitle="Target >= 90%"
@@ -123,7 +123,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-lg font-semibold text-foreground">Ticket Activity Trends</h2>
-              <p className="text-xs text-muted-foreground">Volume over the last 30 days</p>
+              <p className="text-xs text-muted-foreground font-medium">Volume over the last 30 days</p>
             </div>
           </div>
           <div className="h-72 w-full">
@@ -148,7 +148,7 @@ export default function DashboardPage() {
         {/* Priority Breakdown */}
         <div className="glass rounded-xl p-6 border-border/50">
           <h2 className="text-lg font-semibold mb-2 text-foreground">Priority Breakdown</h2>
-          <p className="text-xs text-muted-foreground mb-4">Distribution by severity</p>
+          <p className="text-xs text-muted-foreground mb-4 font-medium">Distribution by severity</p>
           <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
       <div className="glass rounded-xl p-6 border-border/50 animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">{isKaaInternal ? 'Recent Tickets' : `Recent ${userCompany} Tickets`}</h2>
+            <h2 className="text-lg font-semibold text-foreground">{isKaaInternal ? 'Recent Tickets' : `Recent ${userCompany || 'Company'} Tickets`}</h2>
             <p className="text-xs text-muted-foreground">Latest submitted issues and resolution progress</p>
           </div>
           <Link to="/tickets" className="text-xs text-primary hover:underline font-medium">View All Tickets →</Link>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="text-xs text-muted-foreground uppercase border-b border-border/50 bg-secondary/20">
+            <thead className="text-xs text-muted-foreground uppercase border-b border-border/50 bg-secondary/20 font-semibold">
               <tr>
                 <th className="p-3">ID</th>
                 <th className="p-3">Title</th>
@@ -206,7 +206,7 @@ export default function DashboardPage() {
             <tbody className="divide-y divide-border/30 text-xs">
               {recentTickets.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-6 text-center text-muted-foreground">No recent tickets raised yet.</td>
+                  <td colSpan={6} className="p-6 text-center text-muted-foreground font-medium">No recent tickets raised yet.</td>
                 </tr>
               ) : (
                 recentTickets.map((ticket) => (
@@ -225,7 +225,7 @@ export default function DashboardPage() {
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <img src={ticket.assignee?.avatar || 'https://i.pravatar.cc/150?u=1'} alt="" className="w-5 h-5 rounded-full" />
-                        <span className="text-xs text-foreground font-medium">{ticket.assignee?.name || 'Alex Johnson'}</span>
+                        <span className="text-xs text-foreground font-medium">{ticket.assignee?.name || 'Support Staff'}</span>
                       </div>
                     </td>
                   </tr>

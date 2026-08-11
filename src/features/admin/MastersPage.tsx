@@ -96,7 +96,7 @@ export default function MastersPage() {
 
     const selectedCompany = userRoleType === 'KAA Internal Staff' 
       ? 'Global (All Companies)' 
-      : (userMappedCompany || (companiesList[0]?.name || 'Acme Corp'));
+      : (userMappedCompany || (companiesList[0]?.name || ''));
 
     const createdUser = addUser({
       name: userName,
@@ -154,7 +154,7 @@ export default function MastersPage() {
       return;
     }
 
-    const targetCompany = assetMappedCompany || (companiesList[0]?.name || 'Acme Corp');
+    const targetCompany = assetMappedCompany || (companiesList[0]?.name || '');
 
     const createdAsset = addAsset({
       tag: assetTag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,

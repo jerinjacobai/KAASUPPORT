@@ -7,15 +7,25 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useMasterStore } from '@/stores/master-store';
+import { Link } from 'react-router-dom';
 
 export default function AMCContractsPage() {
   const { amcContracts: contracts, companies, addAMCContract } = useMasterStore();
   const [modalOpen, setModalOpen] = useState(false);
   
   const [contractName, setContractName] = useState('');
-  const [companyName, setCompanyName] = useState(companies[0]?.name || 'Acme Corp');
+  const [companyName, setCompanyName] = useState('');
   const [totalVisits, setTotalVisits] = useState('12');
   const [includedLabor, setIncludedLabor] = useState(true);
+
+  const handleOpenModal = () => {
+    if (companies.length === 0) {
+      toast.error('No companies registered yet. Onboard a company in Admin Masters first.');
+      return;
+    }
+    setCompanyName(companies[0].name);
+    setModalOpen(true);
+  };
 
   const handleCreateContract = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +34,11 @@ export default function AMCContractsPage() {
       return;
     }
 
-    const selectedComp = companyName || companies[0]?.name || 'Acme Corp';
+    const selectedComp = companyName || companies[0]?.name;
+    if (!selectedComp) {
+      toast.error('Please select a company');
+      return;
+    }
 
     const newContract = addAMCContract({
       name: contractName.trim(),
@@ -50,7 +64,7 @@ export default function AMCContractsPage() {
         title="AMC Maintenance Contracts"
         description="Manage Annual Maintenance Contracts, preventative visit quotas, SLA agreements, and renewals"
       >
-        <Button variant="default" onClick={() => setModalOpen(true)} className="gap-2 text-xs">
+        <Button variant="default" onClick={handleOpenModal} className="gap-2 text-xs">
           <Plus className="w-4 h-4" /> New AMC Contract
         </Button>
       </PageHeader>
@@ -59,10 +73,22 @@ export default function AMCContractsPage() {
         <div className="glass rounded-xl p-12 text-center border border-border flex flex-col items-center justify-center">
           <ShieldCheck className="w-12 h-12 text-muted-foreground/40 mb-3" />
           <h3 className="text-base font-bold text-foreground">No Active AMC Contracts</h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-sm">Click "New AMC Contract" above to register an Annual Maintenance Contract for client equipment.</p>
-          <Button onClick={() => setModalOpen(true)} size="sm" className="mt-4 gap-2 text-xs">
-            <Plus className="w-4 h-4" /> New AMC Contract
-          </Button>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+            {companies.length === 0 
+              ? "Onboard a client company in Admin Masters first, then click below to register an AMC contract." 
+              : "Click 'New AMC Contract' above to register an Annual Maintenance Contract for client equipment."}
+          </p>
+          {companies.length === 0 ? (
+            <Link to="/masters">
+              <Button size="sm" className="mt-4 gap-2 text-xs">
+                <Building2 className="w-4 h-4" /> Go to Admin Masters
+              </Button>
+            </Link>
+          ) : (
+            <Button onClick={handleOpenModal} size="sm" className="mt-4 gap-2 text-xs">
+              <Plus className="w-4 h-4" /> New AMC Contract
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

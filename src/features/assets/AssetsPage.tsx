@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useMasterStore } from '@/stores/master-store';
+import { Link } from 'react-router-dom';
 
 export default function AssetsPage() {
   const { assets: assetsList, companies: companiesList, addAsset } = useMasterStore();
@@ -20,7 +21,16 @@ export default function AssetsPage() {
   const [newAssetTag, setNewAssetTag] = useState('');
   const [newAssetModel, setNewAssetModel] = useState('');
   const [newAssetCategory] = useState('Machinery');
-  const [newAssetCompany, setNewAssetCompany] = useState(companiesList[0]?.name || 'Acme Corp');
+  const [newAssetCompany, setNewAssetCompany] = useState('');
+
+  const handleOpenRegister = () => {
+    if (companiesList.length === 0) {
+      toast.error('No companies registered yet. Onboard a company in Admin Masters first.');
+      return;
+    }
+    setNewAssetCompany(companiesList[0].name);
+    setRegisterModalOpen(true);
+  };
 
   const filteredAssets = assetsList.filter(asset =>
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -41,7 +51,11 @@ export default function AssetsPage() {
       return;
     }
 
-    const selectedComp = newAssetCompany || companiesList[0]?.name || 'Acme Corp';
+    const selectedComp = newAssetCompany || companiesList[0]?.name;
+    if (!selectedComp) {
+      toast.error('Please select an owner company');
+      return;
+    }
 
     const created = addAsset({
       tag: newAssetTag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
@@ -81,7 +95,7 @@ export default function AssetsPage() {
           <Button variant="outline" onClick={() => setQrModalOpen(true)} className="gap-2 text-xs">
             <QrCode className="w-4 h-4 text-primary" /> Scan / Print QR
           </Button>
-          <Button variant="default" onClick={() => setRegisterModalOpen(true)} className="gap-2 text-xs">
+          <Button variant="default" onClick={handleOpenRegister} className="gap-2 text-xs">
             <Plus className="w-4 h-4" /> Register Asset
           </Button>
         </div>
@@ -104,10 +118,22 @@ export default function AssetsPage() {
         <div className="glass rounded-xl p-12 text-center border border-border flex flex-col items-center justify-center">
           <Cpu className="w-12 h-12 text-muted-foreground/40 mb-3" />
           <h3 className="text-base font-bold text-foreground">No Machinery Assets Found</h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-sm">Click "Register Asset" above to add machinery to your client registry.</p>
-          <Button onClick={() => setRegisterModalOpen(true)} size="sm" className="mt-4 gap-2 text-xs">
-            <Plus className="w-4 h-4" /> Register Asset
-          </Button>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+            {companiesList.length === 0 
+              ? "Onboard a client company in Admin Masters first, then click below to register an asset."
+              : "Click 'Register Asset' above to add machinery to your client registry."}
+          </p>
+          {companiesList.length === 0 ? (
+            <Link to="/masters">
+              <Button size="sm" className="mt-4 gap-2 text-xs">
+                <Building2 className="w-4 h-4" /> Go to Admin Masters
+              </Button>
+            </Link>
+          ) : (
+            <Button onClick={handleOpenRegister} size="sm" className="mt-4 gap-2 text-xs">
+              <Plus className="w-4 h-4" /> Register Asset
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -282,20 +308,8 @@ export default function AssetsPage() {
           <div className="space-y-3 pt-2">
             <div className="p-3 bg-secondary/50 rounded-lg border border-border space-y-1">
               <div className="flex justify-between text-xs">
-                <span className="font-bold text-primary">TKT-1064</span>
-                <span className="text-emerald-400 font-semibold">Resolved</span>
+                <span className="font-bold text-primary">No previous service logs recorded.</span>
               </div>
-              <p className="text-xs font-medium text-foreground">PLC module replacement & firmware flash</p>
-              <p className="text-[10px] text-muted-foreground">Serviced by Alex Johnson on 2026-08-01</p>
-            </div>
-
-            <div className="p-3 bg-secondary/50 rounded-lg border border-border space-y-1">
-              <div className="flex justify-between text-xs">
-                <span className="font-bold text-primary">TKT-1052</span>
-                <span className="text-emerald-400 font-semibold">Preventive Maintenance</span>
-              </div>
-              <p className="text-xs font-medium text-foreground">Quarterly AMC inspection & calibration</p>
-              <p className="text-[10px] text-muted-foreground">Serviced by Priya Sharma on 2026-06-15</p>
             </div>
           </div>
         </DialogContent>

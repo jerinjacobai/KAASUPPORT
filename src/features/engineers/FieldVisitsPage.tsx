@@ -7,13 +7,19 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { ServiceReportModal } from '@/features/engineers/ServiceReportModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useMasterStore } from '@/stores/master-store';
 
 export default function FieldVisitsPage() {
+  const { users } = useMasterStore();
+  const engineersList = users.filter(u => u.roleType === 'KAA Internal Staff');
+
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const [visitEngineer, setVisitEngineer] = useState('Alex Johnson');
-  const [visitLocation, setVisitLocation] = useState('Acme Corp Plant 3, Bangalore');
+  const [visitsList, setVisitsList] = useState<any[]>(mockFieldVisits);
+
+  const [visitEngineer, setVisitEngineer] = useState(engineersList[0]?.name || '');
+  const [visitLocation, setVisitLocation] = useState('');
 
   const handleOpenReport = (visit: any) => {
     setSelectedVisit(visit);
@@ -28,10 +34,30 @@ export default function FieldVisitsPage() {
 
   const handleScheduleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!visitEngineer || !visitLocation.trim()) {
+      toast.error('Please select an engineer and enter location');
+      return;
+    }
+
+    const newVisit = {
+      id: `VISIT-${visitsList.length + 1}`,
+      ticketId: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
+      engineerName: visitEngineer,
+      engineerAvatar: 'https://i.pravatar.cc/150?u=1',
+      companyName: 'Client Site',
+      location: visitLocation,
+      scheduledStart: 'Today, 02:00 PM',
+      status: 'En Route',
+      GPSConfirmed: true,
+      checkInTime: '01:55 PM'
+    };
+
+    setVisitsList([newVisit, ...visitsList]);
     toast.success('Field Visit Scheduled', {
       description: `Dispatched ${visitEngineer} to ${visitLocation}.`
     });
     setScheduleModalOpen(false);
+    setVisitLocation('');
   };
 
   return (
@@ -40,7 +66,7 @@ export default function FieldVisitsPage() {
         title="Field Visits & Schedule"
         description="Real-time engineer location tracking, dispatch schedule, and GPS check-ins"
       >
-        <Button variant="default" onClick={() => setScheduleModalOpen(true)} className="gap-2">
+        <Button variant="default" onClick={() => setScheduleModalOpen(true)} className="gap-2 text-xs">
           <Navigation className="w-4 h-4" /> Schedule Field Visit
         </Button>
       </PageHeader>
@@ -48,71 +74,82 @@ export default function FieldVisitsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between bg-card p-4 rounded-xl border border-border">
-            <h3 className="font-semibold text-base">Today's Visits ({mockFieldVisits.length})</h3>
+            <h3 className="font-semibold text-base text-foreground">Scheduled Visits ({visitsList.length})</h3>
             <span className="text-xs text-muted-foreground">Live GPS Sync Active</span>
           </div>
 
-          <div className="space-y-4">
-            {mockFieldVisits.map((visit) => (
-              <div key={visit.id} className="glass rounded-xl p-5 border border-border hover:border-primary/40 transition-all space-y-4 shadow-lg">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border/50">
-                  <div className="flex items-center gap-3">
-                    <img src={visit.engineerAvatar} alt={visit.engineerName} className="w-10 h-10 rounded-full border border-primary/30 object-cover" />
-                    <div>
-                      <h4 className="font-semibold text-sm">{visit.engineerName}</h4>
-                      <p className="text-xs text-muted-foreground">Ticket: <span className="font-medium text-primary">{visit.ticketId}</span> ({visit.companyName})</p>
+          {visitsList.length === 0 ? (
+            <div className="glass rounded-xl p-12 text-center border border-border flex flex-col items-center justify-center">
+              <Navigation className="w-12 h-12 text-muted-foreground/40 mb-3" />
+              <h3 className="text-base font-bold text-foreground">No Field Visits Scheduled</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">Click "Schedule Field Visit" above to dispatch engineers to client locations.</p>
+              <Button onClick={() => setScheduleModalOpen(true)} size="sm" className="mt-4 gap-2 text-xs">
+                <Navigation className="w-4 h-4" /> Schedule Field Visit
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {visitsList.map((visit) => (
+                <div key={visit.id} className="glass rounded-xl p-5 border border-border hover:border-primary/40 transition-all space-y-4 shadow-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border/50">
+                    <div className="flex items-center gap-3">
+                      <img src={visit.engineerAvatar} alt={visit.engineerName} className="w-10 h-10 rounded-full border border-primary/30 object-cover" />
+                      <div>
+                        <h4 className="font-semibold text-sm text-foreground">{visit.engineerName}</h4>
+                        <p className="text-xs text-muted-foreground">Ticket: <span className="font-medium text-primary">{visit.ticketId}</span> ({visit.companyName})</p>
+                      </div>
+                    </div>
+                    <Badge variant={visit.status === 'Arrived On Site' ? 'success' : 'warning'}>
+                      {visit.status}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-primary shrink-0" />
+                      <span>{visit.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-primary shrink-0" />
+                      <span>Scheduled: {visit.scheduledStart}</span>
                     </div>
                   </div>
-                  <Badge variant={visit.status === 'Arrived On Site' ? 'success' : 'warning'}>
-                    {visit.status}
-                  </Badge>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-primary shrink-0" />
-                    <span>{visit.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-primary shrink-0" />
-                    <span>Scheduled: {visit.scheduledStart}</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/40">
-                  <div className="flex items-center gap-2 text-xs">
-                    {visit.GPSConfirmed ? (
-                      <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> GPS Checked In ({visit.checkInTime})
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-amber-400 font-semibold">
-                        <AlertCircle className="w-3.5 h-3.5" /> Pending Check In
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => handleTrackLocation(visit.engineerName, visit.location)}
-                      className="text-xs gap-1"
-                    >
-                      <Navigation className="w-3 h-3 text-primary" /> Track
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      onClick={() => handleOpenReport(visit)}
-                      className="text-xs gap-1"
-                    >
-                      <FileText className="w-3 h-3" /> PDF Report
-                    </Button>
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/40">
+                    <div className="flex items-center gap-2 text-xs">
+                      {visit.GPSConfirmed ? (
+                        <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> GPS Checked In ({visit.checkInTime})
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-amber-400 font-semibold">
+                          <AlertCircle className="w-3.5 h-3.5" /> Pending Check In
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleTrackLocation(visit.engineerName, visit.location)}
+                        className="text-xs gap-1"
+                      >
+                        <Navigation className="w-3 h-3 text-primary" /> Track
+                      </Button>
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        onClick={() => handleOpenReport(visit)}
+                        className="text-xs gap-1"
+                      >
+                        <FileText className="w-3 h-3" /> PDF Report
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Live Engineer Map Widget */}
@@ -121,7 +158,7 @@ export default function FieldVisitsPage() {
             <Navigation className="w-8 h-8" />
           </div>
           <div>
-            <h3 className="font-semibold text-lg">Live Engineer Geo Map</h3>
+            <h3 className="font-semibold text-lg text-foreground">Live Engineer Geo Map</h3>
             <p className="text-xs text-muted-foreground max-w-xs mt-1">
               Real-time GPS tracking enabled for active field engineers across regional hubs.
             </p>
@@ -156,24 +193,31 @@ export default function FieldVisitsPage() {
           <form onSubmit={handleScheduleSubmit} className="space-y-4">
             <div className="space-y-1">
               <label className="text-xs font-medium text-foreground">Assign Engineer</label>
-              <select 
-                value={visitEngineer}
-                onChange={(e) => setVisitEngineer(e.target.value)}
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
-              >
-                <option value="Alex Johnson">Alex Johnson (Senior PLC Specialist)</option>
-                <option value="Priya Sharma">Priya Sharma (Hardware Engineer)</option>
-                <option value="David Chen">David Chen (Network Field Tech)</option>
-              </select>
+              {engineersList.length === 0 ? (
+                <p className="text-xs text-amber-400 p-2 bg-amber-500/10 rounded border border-amber-500/20">
+                  No internal staff engineers onboarded yet. Create a user in Admin Masters with role "KAA Internal Staff".
+                </p>
+              ) : (
+                <select 
+                  value={visitEngineer}
+                  onChange={(e) => setVisitEngineer(e.target.value)}
+                  className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
+                >
+                  {engineersList.map(u => (
+                    <option key={u.id} value={u.name}>{u.name} ({u.roleName})</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Site Location / Address</label>
+              <label className="text-xs font-medium text-foreground">Site Location / Address *</label>
               <input 
                 type="text" 
                 value={visitLocation}
                 onChange={(e) => setVisitLocation(e.target.value)}
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                placeholder="E.g., Client Plant 3, Bangalore"
+                className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 

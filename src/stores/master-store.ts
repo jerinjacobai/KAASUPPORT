@@ -75,198 +75,6 @@ export interface TicketMaster {
   slaBreached?: boolean
 }
 
-const seedCompanies: CompanyMaster[] = [
-  {
-    id: 'COMP-1',
-    name: 'Acme Corp',
-    code: 'ACME',
-    industry: 'Industrial Manufacturing',
-    email: 'admin@acme.com',
-    phone: '+91 98765 43210',
-    assetsCount: 3,
-    usersCount: 5,
-    is_active: true,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 'COMP-2',
-    name: 'Globex Ltd',
-    code: 'GLBX',
-    industry: 'Electronics & Automation',
-    email: 'support@globex.com',
-    phone: '+91 98111 22233',
-    assetsCount: 2,
-    usersCount: 3,
-    is_active: true,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 'COMP-3',
-    name: 'Initech Inc',
-    code: 'INTC',
-    industry: 'Pharma & Healthcare',
-    email: 'contact@initech.com',
-    phone: '+91 98444 55566',
-    assetsCount: 2,
-    usersCount: 2,
-    is_active: true,
-    created_at: new Date().toISOString()
-  }
-]
-
-const seedUsers: UserMaster[] = [
-  {
-    id: 'USR-1',
-    name: 'Alex Johnson',
-    email: 'alex.johnson@kaasupport.com',
-    roleType: 'KAA Internal Staff',
-    roleName: 'Senior Field Engineer',
-    mappedCompany: 'Global (All Companies)',
-    status: 'Active',
-    password: 'KaaPass2026!#',
-    defaultPassword: 'KaaPass2026!#',
-    isPasswordResetRequired: false,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 'USR-2',
-    name: 'Priya Sharma',
-    email: 'priya.sharma@kaasupport.com',
-    roleType: 'KAA Internal Staff',
-    roleName: 'Service Coordinator',
-    mappedCompany: 'Global (All Companies)',
-    status: 'Active',
-    password: 'KaaPass2026!#',
-    defaultPassword: 'KaaPass2026!#',
-    isPasswordResetRequired: false,
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 'USR-3',
-    name: 'Robert Vance',
-    email: 'robert@acme.com',
-    roleType: 'Client User',
-    roleName: 'Company Admin',
-    mappedCompany: 'Acme Corp',
-    status: 'Active',
-    password: 'AcmePass2026!',
-    defaultPassword: 'AcmePass2026!',
-    isPasswordResetRequired: false,
-    created_at: new Date().toISOString()
-  }
-]
-
-const seedAssets: AssetMaster[] = [
-  {
-    id: 'AST-1',
-    tag: 'AST-2026-901',
-    name: 'Siemens S7-1500 Controller Rack',
-    company: 'Acme Corp',
-    category: 'Machinery',
-    model: 'CPU 1518-4 PN/DP',
-    serial: 'SN-99481A',
-    status: 'Active',
-    amcStatus: 'Active AMC',
-    warrantyExpires: '2027-12-31'
-  },
-  {
-    id: 'AST-2',
-    tag: 'AST-2026-902',
-    name: 'ABB Industrial Robotic Arm IRB 6700',
-    company: 'Acme Corp',
-    category: 'Robotics',
-    model: 'IRB 6700-235/2.65',
-    serial: 'SN-88120B',
-    status: 'Active',
-    amcStatus: 'Active AMC',
-    warrantyExpires: '2026-11-30'
-  },
-  {
-    id: 'AST-3',
-    tag: 'AST-2026-903',
-    name: 'Schneider Electric Variable Frequency Drive',
-    company: 'Globex Ltd',
-    category: 'Electrical',
-    model: 'Altivar Process ATV930',
-    serial: 'SN-77301C',
-    status: 'Active',
-    amcStatus: 'No AMC Coverage',
-    warrantyExpires: '2025-08-15'
-  }
-]
-
-const seedAMCContracts: AMCContractMaster[] = [
-  {
-    id: 'AMC-2026-001',
-    contractNumber: 'AMC-2026-001',
-    name: 'Annual Comprehensive Automation Support',
-    company: 'Acme Corp',
-    startDate: '2026-01-01',
-    endDate: '2026-12-31',
-    totalVisits: 12,
-    usedVisits: 4,
-    status: 'Active',
-    includedLabor: true
-  },
-  {
-    id: 'AMC-2026-002',
-    contractNumber: 'AMC-2026-002',
-    name: 'Preventative Robotics Maintenance Plan',
-    company: 'Globex Ltd',
-    startDate: '2026-03-01',
-    endDate: '2027-02-28',
-    totalVisits: 8,
-    usedVisits: 2,
-    status: 'Active',
-    includedLabor: true
-  }
-]
-
-const seedTickets: TicketMaster[] = [
-  {
-    id: 'TKT-1064',
-    ticket_number: 'TKT-1064',
-    title: 'Siemens PLC input module failure on line 3',
-    description: 'Input module LED blinking red. Machinery halted on main assembly line.',
-    company: 'Acme Corp',
-    assetId: 'AST-1',
-    priority: 'critical',
-    status: 'in_progress',
-    category: 'Hardware',
-    assignee: { name: 'Alex Johnson', avatar: 'https://i.pravatar.cc/150?u=1' },
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-    slaBreached: false
-  },
-  {
-    id: 'TKT-1063',
-    ticket_number: 'TKT-1063',
-    title: 'VFD overcurrent alarm trip during startup',
-    description: 'Drive trips immediately upon motor excitation. Suspected parameter drift.',
-    company: 'Globex Ltd',
-    assetId: 'AST-3',
-    priority: 'high',
-    status: 'open',
-    category: 'Electrical',
-    assignee: { name: 'Priya Sharma', avatar: 'https://i.pravatar.cc/150?u=2' },
-    createdAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-    slaBreached: false
-  },
-  {
-    id: 'TKT-1062',
-    ticket_number: 'TKT-1062',
-    title: 'Robotic arm calibration error after power restore',
-    description: 'Axis 3 offset mismatch by +1.4mm. Requires zero-point calibration.',
-    company: 'Acme Corp',
-    assetId: 'AST-2',
-    priority: 'medium',
-    status: 'resolved',
-    category: 'Robotics',
-    assignee: { name: 'Alex Johnson', avatar: 'https://i.pravatar.cc/150?u=1' },
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-    slaBreached: false
-  }
-]
-
 interface MasterState {
   companies: CompanyMaster[]
   users: UserMaster[]
@@ -295,17 +103,39 @@ interface MasterState {
   updateTicket: (id: string, updates: Partial<TicketMaster>) => void
   setTickets: (tickets: TicketMaster[]) => void
 
+  purgeMockData: () => void
   syncFromSupabase: () => Promise<void>
+}
+
+// Clear any stale mock data if present
+const cleanMockFilter = <T extends { company?: string; mappedCompany?: string; title?: string; name?: string }>(items: T[]) => {
+  return items.filter(item => {
+    const comp = item.company || item.mappedCompany || ''
+    const name = item.name || item.title || ''
+    const isMockComp = ['Acme Corp', 'Globex Ltd', 'Initech Inc'].includes(comp)
+    const isMockName = ['Siemens PLC input module failure on line 3', 'VFD overcurrent alarm trip during startup', 'Robotic arm calibration error after power restore', 'Alex Johnson', 'Priya Sharma', 'Robert Vance'].includes(name)
+    return !isMockComp && !isMockName
+  })
 }
 
 export const useMasterStore = create<MasterState>()(
   persist(
     (set, get) => ({
-      companies: seedCompanies,
-      users: seedUsers,
-      assets: seedAssets,
-      amcContracts: seedAMCContracts,
-      tickets: seedTickets,
+      companies: [],
+      users: [],
+      assets: [],
+      amcContracts: [],
+      tickets: [],
+
+      purgeMockData: () => {
+        set(state => ({
+          companies: cleanMockFilter(state.companies),
+          users: cleanMockFilter(state.users),
+          assets: cleanMockFilter(state.assets),
+          amcContracts: cleanMockFilter(state.amcContracts),
+          tickets: cleanMockFilter(state.tickets)
+        }))
+      },
 
       addCompany: (compData) => {
         const newId = compData.id || `COMP-${get().companies.length + 1}`
@@ -324,7 +154,6 @@ export const useMasterStore = create<MasterState>()(
 
         set((state) => ({ companies: [newCompany, ...state.companies] }))
 
-        // Async insert to Supabase if reachable
         supabase.from('companies').insert([{
           name: newCompany.name,
           code: newCompany.code,
@@ -369,7 +198,6 @@ export const useMasterStore = create<MasterState>()(
         }
 
         set((state) => {
-          // Increment company user count if mapped
           const updatedCompanies = state.companies.map(c => 
             c.name === newUser.mappedCompany ? { ...c, usersCount: c.usersCount + 1 } : c
           )
@@ -499,7 +327,7 @@ export const useMasterStore = create<MasterState>()(
       },
 
       addTicket: (ticketData) => {
-        const nextIdNum = 1065 + get().tickets.length
+        const nextIdNum = 1001 + get().tickets.length
         const ticketId = ticketData.id || `TKT-${nextIdNum}`
         const newTicket: TicketMaster = {
           id: ticketId,
@@ -511,7 +339,7 @@ export const useMasterStore = create<MasterState>()(
           priority: ticketData.priority || 'medium',
           status: ticketData.status || 'open',
           category: ticketData.category || 'Hardware',
-          assignee: ticketData.assignee || { name: 'Alex Johnson', avatar: 'https://i.pravatar.cc/150?u=1' },
+          assignee: ticketData.assignee || { name: 'Support Staff', avatar: 'https://i.pravatar.cc/150?u=1' },
           createdAt: new Date().toISOString(),
           slaBreached: false
         }
@@ -555,10 +383,9 @@ export const useMasterStore = create<MasterState>()(
               priority: t.priority || 'medium',
               status: t.status || 'open',
               category: t.category || 'General',
-              assignee: { name: 'Alex Johnson', avatar: 'https://i.pravatar.cc/150?u=1' },
+              assignee: { name: 'Support Staff', avatar: 'https://i.pravatar.cc/150?u=1' },
               createdAt: t.created_at || new Date().toISOString()
             }))
-            // Merge unique tickets
             const existingIds = new Set(get().tickets.map(t => t.id))
             const newToAdd = mappedDbTickets.filter(t => !existingIds.has(t.id))
             if (newToAdd.length > 0) {
@@ -566,7 +393,7 @@ export const useMasterStore = create<MasterState>()(
             }
           }
         } catch {
-          // preserve local store
+          // preserve store
         }
       }
     }),

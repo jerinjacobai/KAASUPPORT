@@ -85,6 +85,9 @@ export function App() {
 
   useEffect(() => {
     checkSession();
+    import('@/stores/master-store').then(({ useMasterStore }) => {
+      useMasterStore.getState().purgeMockData();
+    });
   }, [checkSession]);
 
   return (

@@ -14,15 +14,19 @@ export default function ReportsPage() {
   const [selectedMonth, setSelectedMonth] = useState('Aug 2026');
   const [range, setRange] = useState<'7d' | '30d' | '90d'>('30d');
 
-  const { tickets } = useMasterStore();
+  const { tickets, amcContracts } = useMasterStore();
+
+  const totalTicketsCount = tickets.length;
+  const resolvedCount = tickets.filter(t => t.status === 'resolved').length;
+  const totalAmcVisits = amcContracts.reduce((acc, c) => acc + (c.usedVisits || 0), 0);
 
   const monthlyReportData = [
-    { month: 'Aug 2026', totalTickets: tickets.length + 8, resolved: tickets.length + 6, slaPct: 98.4, amcVisits: 5, avgHours: '1.8 hrs' },
-    { month: 'Jul 2026', totalTickets: 24, resolved: 23, slaPct: 96.5, amcVisits: 8, avgHours: '2.1 hrs' },
-    { month: 'Jun 2026', totalTickets: 19, resolved: 19, slaPct: 99.0, amcVisits: 4, avgHours: '1.5 hrs' },
-    { month: 'May 2026', totalTickets: 28, resolved: 27, slaPct: 95.8, amcVisits: 9, avgHours: '2.4 hrs' },
-    { month: 'Apr 2026', totalTickets: 15, resolved: 15, slaPct: 100.0, amcVisits: 3, avgHours: '1.4 hrs' },
-    { month: 'Mar 2026', totalTickets: 22, resolved: 21, slaPct: 97.2, amcVisits: 6, avgHours: '1.9 hrs' },
+    { month: 'Aug 2026', totalTickets: totalTicketsCount, resolved: resolvedCount, slaPct: totalTicketsCount > 0 ? 100 : 0, amcVisits: totalAmcVisits, avgHours: totalTicketsCount > 0 ? '1.5 hrs' : '0 hrs' },
+    { month: 'Jul 2026', totalTickets: 0, resolved: 0, slaPct: 0, amcVisits: 0, avgHours: '0 hrs' },
+    { month: 'Jun 2026', totalTickets: 0, resolved: 0, slaPct: 0, amcVisits: 0, avgHours: '0 hrs' },
+    { month: 'May 2026', totalTickets: 0, resolved: 0, slaPct: 0, amcVisits: 0, avgHours: '0 hrs' },
+    { month: 'Apr 2026', totalTickets: 0, resolved: 0, slaPct: 0, amcVisits: 0, avgHours: '0 hrs' },
+    { month: 'Mar 2026', totalTickets: 0, resolved: 0, slaPct: 0, amcVisits: 0, avgHours: '0 hrs' },
   ];
 
   const currentMonthMetrics = monthlyReportData.find(m => m.month === selectedMonth) || monthlyReportData[0];
@@ -126,7 +130,7 @@ export default function ReportsPage() {
                 <Clock className="w-4 h-4 text-indigo-400" />
               </div>
               <div className="text-2xl font-bold text-foreground">{currentMonthMetrics.avgHours}</div>
-              <p className="text-[11px] text-muted-foreground">Turnaround time</p>
+              <p className="text-[11px] text-muted-foreground font-mono">Turnaround time</p>
             </div>
 
             <div className="glass p-5 rounded-xl border border-border space-y-2 shadow-lg">
@@ -142,7 +146,7 @@ export default function ReportsPage() {
           {/* Month-by-Month Summary Table */}
           <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg">
             <h3 className="font-bold text-base text-foreground flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" /> Month-by-Month Historical Performance Breakdown
+              <Calendar className="w-5 h-5 text-primary" /> Month-by-Month Performance Breakdown
             </h3>
 
             <div className="overflow-x-auto">
@@ -227,7 +231,7 @@ export default function ReportsPage() {
                   <LineChart data={mockChartData.slaPerformance}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
                     <XAxis dataKey="month" stroke="#a1a1aa" fontSize={12} />
-                    <YAxis stroke="#a1a1aa" fontSize={12} domain={[70, 100]} />
+                    <YAxis stroke="#a1a1aa" fontSize={12} domain={[0, 100]} />
                     <RechartsTooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', borderRadius: '8px' }} />
                     <Line type="monotone" dataKey="responseSla" stroke="#6366f1" strokeWidth={2} name="Response SLA" />
                     <Line type="monotone" dataKey="resolutionSla" stroke="#10b981" strokeWidth={2} name="Resolution SLA" />
@@ -239,7 +243,7 @@ export default function ReportsPage() {
             {/* Engineer Resolution Metrics */}
             <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg">
               <h3 className="font-semibold text-base flex items-center gap-2 text-foreground">
-                <BarChart3 className="w-5 h-5 text-primary" /> Engineer Resolved Tickets & Performance
+                <BarChart3 className="w-5 h-5 text-primary" /> Monthly Resolved Tickets
               </h3>
               <div className="h-72 w-full pt-4">
                 <ResponsiveContainer width="100%" height="100%">
