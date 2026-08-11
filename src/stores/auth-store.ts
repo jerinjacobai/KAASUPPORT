@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import type { User, Session } from '@supabase/supabase-js'
 import type { Profile } from '@/types/database'
 import { supabase } from '@/lib/supabase'
@@ -31,96 +32,117 @@ interface AuthState {
   reset: () => void
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  session: null,
-  profile: null,
-  roles: [],
-  permissions: [],
-  companyIds: [],
-  userCompany: null,
-  activeCompanyId: null,
-  isLoading: false,
-  isKaaInternal: true, // Default KAA staff perspective
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      session: null,
+      profile: null,
+      roles: [],
+      permissions: [],
+      companyIds: [],
+      userCompany: null,
+      activeCompanyId: null,
+      isLoading: false,
+      isKaaInternal: true,
 
-  setUser: (user) => set({ user }),
-  setSession: (session) => set({ session }),
-  setProfile: (profile) => set({ profile }),
-  setRoles: (roles) => set({ roles, isKaaInternal: roles.includes('internal') || roles.includes('super_admin') }),
-  setPermissions: (permissions) => set({ permissions }),
-  setCompanyIds: (companyIds) => set({ companyIds }),
-  setUserCompany: (userCompany) => set({ userCompany }),
-  setActiveCompanyId: (activeCompanyId) => set({ activeCompanyId }),
-  setIsLoading: (isLoading) => set({ isLoading }),
+      setUser: (user) => set({ user }),
+      setSession: (session) => set({ session }),
+      setProfile: (profile) => set({ profile }),
+      setRoles: (roles) => set({ roles, isKaaInternal: roles.includes('internal') || roles.includes('super_admin') }),
+      setPermissions: (permissions) => set({ permissions }),
+      setCompanyIds: (companyIds) => set({ companyIds }),
+      setUserCompany: (userCompany) => set({ userCompany }),
+      setActiveCompanyId: (activeCompanyId) => set({ activeCompanyId }),
+      setIsLoading: (isLoading) => set({ isLoading }),
 
-  hasPermission: (permission) => get().permissions.includes('*') || get().permissions.includes(permission),
-  hasRole: (role) => get().roles.includes(role),
+      hasPermission: (permission) => get().permissions.includes('*') || get().permissions.includes(permission),
+      hasRole: (role) => get().roles.includes(role),
 
-  checkSession: async () => {
-    set({ isLoading: true })
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession()
-      if (error) throw error
-      if (session) {
-        set({
-          session,
-          user: session.user,
-          isKaaInternal: true,
-          roles: ['super_admin', 'internal'],
-          permissions: ['*'],
-          isLoading: false,
-        })
-      } else {
-        set({ user: null, session: null, isLoading: false })
-      }
-    } catch {
-      set({ user: null, session: null, isLoading: false })
+      checkSession: async () => {
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession()
+          if (!error && session) {
+            const isInternal = session.user.email?.endsWith('@kaasupport.com') || 
+                               session.user.email?.endsWith('@kaa-erp.com') || 
+                               session.user.user_metadata?.is_kaa_internal;
+
+            set({
+              session,
+              user: session.user,
+              isKaaInternal: !!isInternal,
+              roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
+              permissions: ['*'],
+              userCompany: session.user.user_metadata?.company || get().userCompany || null,
+              isLoading: false,
+            })
+          } else if (!get().user) {
+            set({ user: null, session: null, isLoading: false })
+          }
+        } catch {
+          // If offline or network glitch, preserve persisted user session
+          set({ isLoading: false })
+        }
+      },
+
+      signIn: async (email, password) => {
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+          if (error) {
+            return { error }
+          }
+          
+          const isInternal = email.endsWith('@kaasupport.com') || email.endsWith('@kaa-erp.com') || data.user?.user_metadata?.is_kaa_internal;
+          
+          set({ 
+            user: data.user, 
+            session: data.session,
+            isKaaInternal: !!isInternal,
+            roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
+            permissions: ['*'],
+            userCompany: data.user?.user_metadata?.company || null,
+            isLoading: false
+          })
+          
+          return { error: null }
+        } catch (err: any) {
+          return { error: err }
+        }
+      },
+
+      signOut: async () => {
+        try {
+          await supabase.auth.signOut()
+        } catch {
+          // ignore
+        }
+        get().reset()
+      },
+
+      reset: () => set({
+        user: null,
+        session: null,
+        profile: null,
+        roles: [],
+        permissions: [],
+        companyIds: [],
+        userCompany: null,
+        activeCompanyId: null,
+        isLoading: false,
+        isKaaInternal: true,
+      }),
+    }),
+    {
+      name: 'kaa-auth-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        user: state.user,
+        session: state.session,
+        roles: state.roles,
+        permissions: state.permissions,
+        isKaaInternal: state.isKaaInternal,
+        userCompany: state.userCompany,
+      }),
     }
-  },
-
-  signIn: async (email, password) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        return { error }
-      }
-      
-      const isInternal = email.endsWith('@kaasupport.com') || email.endsWith('@kaa-erp.com') || data.user?.user_metadata?.is_kaa_internal;
-      
-      set({ 
-        user: data.user, 
-        session: data.session,
-        isKaaInternal: !!isInternal,
-        roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
-        permissions: ['*'],
-        userCompany: data.user?.user_metadata?.company || null
-      })
-      
-      return { error: null }
-    } catch (err: any) {
-      return { error: err }
-    }
-  },
-
-  signOut: async () => {
-    try {
-      await supabase.auth.signOut()
-    } catch {
-      // ignore
-    }
-    get().reset()
-  },
-
-  reset: () => set({
-    user: null,
-    session: null,
-    profile: null,
-    roles: [],
-    permissions: [],
-    companyIds: [],
-    userCompany: null,
-    activeCompanyId: null,
-    isLoading: false,
-    isKaaInternal: true,
-  }),
-}))
+  )
+)
