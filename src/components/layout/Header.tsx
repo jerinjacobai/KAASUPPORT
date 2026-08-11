@@ -192,7 +192,7 @@ export function Header() {
 
       {/* Spotlight Command Palette Search Modal */}
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent className="p-0 border-border bg-card text-card-foreground max-w-2xl gap-0 overflow-hidden shadow-2xl rounded-2xl">
+        <DialogContent hideClose className="p-0 border-border bg-card text-card-foreground max-w-2xl gap-0 overflow-hidden shadow-2xl rounded-2xl">
           
           {/* Search Header Input */}
           <div className="flex items-center px-4 py-3.5 border-b border-border bg-secondary/30">

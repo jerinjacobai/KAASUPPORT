@@ -1,13 +1,19 @@
 import * as React from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { X } from 'lucide-react'
 
-// Simple Dialog Implementation based on native concepts + React portal
 export interface DialogProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   children: React.ReactNode
 }
+
+const DialogContext = React.createContext<{
+  isOpen: boolean
+  setIsOpen: (open: boolean) => void
+  onOpenChange?: (open: boolean) => void
+} | null>(null)
 
 export function Dialog({ open, onOpenChange, children }: DialogProps) {
   const [isOpen, setIsOpen] = React.useState(open || false)
@@ -27,19 +33,12 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
     return () => document.removeEventListener('keydown', handleEscape)
   }, [isOpen, onOpenChange])
 
-  // Provide state to children
   return (
     <DialogContext.Provider value={{ isOpen, setIsOpen, onOpenChange }}>
       {children}
     </DialogContext.Provider>
   )
 }
-
-const DialogContext = React.createContext<{
-  isOpen: boolean
-  setIsOpen: (open: boolean) => void
-  onOpenChange?: (open: boolean) => void
-} | null>(null)
 
 export function DialogTrigger({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) {
   const ctx = React.useContext(DialogContext)
@@ -63,58 +62,70 @@ export function DialogTrigger({ children, asChild }: { children: React.ReactNode
   )
 }
 
-export const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, children, ...props }, ref) => {
+export const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & { hideClose?: boolean }>(
+  ({ className, children, hideClose = false, ...props }, ref) => {
     const ctx = React.useContext(DialogContext)
-    if (!ctx?.isOpen) return null
+    const [mounted, setMounted] = React.useState(false)
 
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+    React.useEffect(() => {
+      setMounted(true)
+    }, [])
+
+    if (!ctx?.isOpen || !mounted) return null
+
+    return createPortal(
+      <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 overflow-y-auto">
+        {/* Backdrop */}
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity"
           onClick={() => { ctx.setIsOpen(false); ctx.onOpenChange?.(false) }}
         />
+        
+        {/* Modal Container */}
         <div
           ref={ref}
           className={cn(
-            'relative z-50 grid w-full max-w-lg gap-4 rounded-xl border border-white/10 bg-zinc-950 p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200',
+            'relative z-50 w-full max-w-xl rounded-2xl border border-border bg-card text-card-foreground shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden my-auto',
             className
           )}
           {...props}
         >
           {children}
-          <button
-            onClick={() => { ctx.setIsOpen(false); ctx.onOpenChange?.(false) }}
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          >
-            <X className="h-4 w-4 text-zinc-400 hover:text-zinc-100" />
-            <span className="sr-only">Close</span>
-          </button>
+          {!hideClose && (
+            <button
+              onClick={() => { ctx.setIsOpen(false); ctx.onOpenChange?.(false) }}
+              className="absolute right-4 top-4 rounded-lg p-1.5 opacity-70 transition-opacity hover:opacity-100 hover:bg-secondary text-muted-foreground hover:text-foreground focus:outline-none"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </button>
+          )}
         </div>
-      </div>
+      </div>,
+      document.body
     )
   }
 )
 DialogContent.displayName = 'DialogContent'
 
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props} />
+  return <div className={cn('flex flex-col space-y-1.5 p-6 border-b border-border text-center sm:text-left', className)} {...props} />
 }
 
 export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2', className)} {...props} />
+  return <div className={cn('flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-6 border-t border-border bg-secondary/20', className)} {...props} />
 }
 
 export const DialogTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h2 ref={ref} className={cn('text-lg font-semibold leading-none tracking-tight text-zinc-100', className)} {...props} />
+    <h2 ref={ref} className={cn('text-lg font-bold leading-none tracking-tight text-foreground', className)} {...props} />
   )
 )
 DialogTitle.displayName = 'DialogTitle'
 
 export const DialogDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => (
-    <p ref={ref} className={cn('text-sm text-zinc-400', className)} {...props} />
+    <p ref={ref} className={cn('text-xs text-muted-foreground mt-1', className)} {...props} />
   )
 )
 DialogDescription.displayName = 'DialogDescription'
