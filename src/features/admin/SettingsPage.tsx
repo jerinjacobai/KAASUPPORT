@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Settings, Shield, Bell, Key, Palette, CheckCircle2, Send, Save, Copy } from 'lucide-react';
+import { Settings, Shield, Bell, Palette, CheckCircle2, Send, Save } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -30,18 +30,11 @@ export default function SettingsPage() {
     });
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} Copied`, {
-      description: 'Copied to clipboard successfully.'
-    });
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader
         title="Admin & System Settings"
-        description="Configure ticket statuses, automation rules, RLS multi-tenancy, and Supabase integration"
+        description="Configure ticket statuses, automation rules, RLS multi-tenancy, and notifications"
       >
         <Button variant="default" onClick={handleSaveSettings} className="gap-2">
           <Save className="w-4 h-4" /> Save System Configuration
@@ -53,7 +46,6 @@ export default function SettingsPage() {
           <TabsTrigger value="general" className="gap-2 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"><Settings className="w-3.5 h-3.5" /> General & Branding</TabsTrigger>
           <TabsTrigger value="security" className="gap-2 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"><Shield className="w-3.5 h-3.5" /> Multi-Tenant RLS</TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"><Bell className="w-3.5 h-3.5" /> Notification Channels</TabsTrigger>
-          <TabsTrigger value="api" className="gap-2 text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"><Key className="w-3.5 h-3.5" /> API Keys & Supabase</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="mt-6 space-y-6">
@@ -96,7 +88,7 @@ export default function SettingsPage() {
               <Shield className="w-5 h-5 text-primary" /> Supabase Row-Level Security (RLS) Status
             </h3>
             <p className="text-xs text-muted-foreground">
-              Multi-tenant company data isolation enforced across 15 PostgreSQL schema tables.
+              Multi-tenant company data isolation enforced across PostgreSQL schema tables.
             </p>
             <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -134,34 +126,6 @@ export default function SettingsPage() {
                     <Send className="w-3 h-3 text-emerald-400" /> Test
                   </Button>
                   <Switch checked={whatsappAlerts} onCheckedChange={setWhatsappAlerts} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="api" className="mt-6 space-y-6">
-          <div className="glass rounded-xl p-6 border border-border space-y-4 shadow-lg hover:border-primary/30 transition-all duration-300">
-            <h3 className="font-semibold text-base flex items-center gap-2">
-              <Key className="w-5 h-5 text-primary" /> Supabase Connection & API Token
-            </h3>
-            <div className="space-y-3 font-mono text-xs">
-              <div>
-                <label className="text-muted-foreground">SUPABASE_URL</label>
-                <div className="relative mt-1">
-                  <input type="text" readOnly value="https://pqiboqctyzvjdxqtxilp.supabase.co" className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 pr-10 text-xs font-bold" />
-                  <button onClick={() => copyToClipboard("https://pqiboqctyzvjdxqtxilp.supabase.co", "Supabase URL")} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-background transition-colors">
-                    <Copy className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="text-muted-foreground">SUPABASE_ANON_KEY</label>
-                <div className="relative mt-1">
-                  <input type="password" readOnly value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." className="w-full bg-secondary/50 border border-border text-muted-foreground rounded-lg p-2.5 pr-10 text-xs" />
-                  <button onClick={() => copyToClipboard("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", "Anon Key")} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-background transition-colors">
-                    <Copy className="w-3.5 h-3.5" />
-                  </button>
                 </div>
               </div>
             </div>
