@@ -1,44 +1,44 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { mockAMCContracts as initialContracts } from '@/lib/mock-data';
-import { Plus, CheckCircle2, ShieldCheck, Download, Calendar } from 'lucide-react';
+import { Plus, CheckCircle2, ShieldCheck, Download, Calendar, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useMasterStore } from '@/stores/master-store';
 
 export default function AMCContractsPage() {
-  const [contracts, setContracts] = useState<any[]>(initialContracts);
+  const { amcContracts: contracts, companies, addAMCContract } = useMasterStore();
   const [modalOpen, setModalOpen] = useState(false);
   
   const [contractName, setContractName] = useState('');
-  const [companyName, setCompanyName] = useState('Acme Corp');
+  const [companyName, setCompanyName] = useState(companies[0]?.name || 'Acme Corp');
   const [totalVisits, setTotalVisits] = useState('12');
+  const [includedLabor, setIncludedLabor] = useState(true);
 
   const handleCreateContract = (e: React.FormEvent) => {
     e.preventDefault();
     if (!contractName.trim()) {
-      toast.error('Please enter contract name');
+      toast.error('Please enter contract title');
       return;
     }
 
-    const newContract = {
-      id: `AMC-2026-00${contracts.length + 1}`,
-      contractNumber: `AMC-2026-00${contracts.length + 1}`,
-      name: contractName,
-      company: companyName,
-      startDate: '2026-01-01',
+    const selectedComp = companyName || companies[0]?.name || 'Acme Corp';
+
+    const newContract = addAMCContract({
+      name: contractName.trim(),
+      company: selectedComp,
+      startDate: new Date().toISOString().split('T')[0],
       endDate: '2026-12-31',
       totalVisits: parseInt(totalVisits) || 12,
       usedVisits: 0,
       status: 'Active',
-      includedLabor: true
-    };
+      includedLabor: includedLabor
+    });
 
-    setContracts([newContract, ...contracts]);
     toast.success(`AMC Contract ${newContract.contractNumber} Activated!`, {
-      description: `Registered for ${companyName} with ${newContract.totalVisits} annual maintenance visits.`
+      description: `Registered for ${newContract.company} with ${newContract.totalVisits} annual maintenance visits.`
     });
     setModalOpen(false);
     setContractName('');
@@ -67,7 +67,7 @@ export default function AMCContractsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {contracts.map((contract: any) => {
-            const usedPct = Math.round((contract.usedVisits / contract.totalVisits) * 100);
+            const usedPct = Math.round(((contract.usedVisits || 0) / (contract.totalVisits || 1)) * 100);
             return (
               <div key={contract.id} className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all flex flex-col justify-between space-y-6 shadow-lg">
                 <div className="space-y-4">
@@ -82,7 +82,9 @@ export default function AMCContractsPage() {
 
                   <div>
                     <h3 className="font-bold text-base text-foreground">{contract.name}</h3>
-                    <p className="text-xs text-muted-foreground font-medium">{contract.company}</p>
+                    <p className="text-xs text-muted-foreground font-medium flex items-center gap-1 mt-1">
+                      <Building2 className="w-3.5 h-3.5 text-primary" /> {contract.company}
+                    </p>
                     <p className="text-[11px] font-mono text-primary mt-1">{contract.contractNumber}</p>
                   </div>
 
@@ -110,8 +112,13 @@ export default function AMCContractsPage() {
                   <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Covered by SLA
                   </span>
-                  <Button variant="ghost" size="sm" onClick={() => toast.success(`Downloading Agreement PDF for ${contract.contractNumber}`)} className="text-xs gap-1">
-                    <Download className="w-3.5 h-3.5" /> PDF
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => toast.success(`Downloading Agreement PDF for ${contract.contractNumber}`)} 
+                    className="text-xs gap-1"
+                  >
+                    <Download className="w-3.5 h-3.5" /> PDF Agreement
                   </Button>
                 </div>
               </div>
@@ -146,24 +153,42 @@ export default function AMCContractsPage() {
 
             <div className="space-y-1">
               <label className="text-xs font-medium text-foreground">Client Company *</label>
-              <input 
-                type="text" 
+              <select 
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Acme Corp"
-                className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
-              />
+                className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
+              >
+                {companies.map(c => (
+                  <option key={c.id} value={c.name}>{c.name} ({c.code})</option>
+                ))}
+              </select>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Total Preventative Visits Quota</label>
-              <input 
-                type="number" 
-                value={totalVisits}
-                onChange={(e) => setTotalVisits(e.target.value)}
-                placeholder="12"
-                className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Total Visit Quota</label>
+                <input 
+                  type="number" 
+                  value={totalVisits}
+                  onChange={(e) => setTotalVisits(e.target.value)}
+                  placeholder="12"
+                  className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="space-y-1 flex flex-col justify-end pb-1">
+                <label className="text-xs font-medium text-foreground mb-2">Labor Inclusion</label>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="checkbox" 
+                    id="laborCheck"
+                    checked={includedLabor} 
+                    onChange={(e) => setIncludedLabor(e.target.checked)}
+                    className="rounded border-border"
+                  />
+                  <label htmlFor="laborCheck" className="text-xs text-foreground cursor-pointer">Includes Onsite Labor</label>
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">

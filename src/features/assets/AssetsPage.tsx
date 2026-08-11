@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { mockAssets } from '@/lib/mock-data';
-import { Cpu, QrCode, Search, ShieldCheck, Wrench, Plus, AlertTriangle, Printer, History } from 'lucide-react';
+import { Cpu, QrCode, Search, ShieldCheck, Wrench, Plus, AlertTriangle, Printer, History, Building2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useMasterStore } from '@/stores/master-store';
 
 export default function AssetsPage() {
+  const { assets: assetsList, companies: companiesList, addAsset } = useMasterStore();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
@@ -15,10 +17,12 @@ export default function AssetsPage() {
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
 
   const [newAssetName, setNewAssetName] = useState('');
+  const [newAssetTag, setNewAssetTag] = useState('');
   const [newAssetModel, setNewAssetModel] = useState('');
-  const [newAssetCompany, setNewAssetCompany] = useState('Acme Corp');
+  const [newAssetCategory] = useState('Machinery');
+  const [newAssetCompany, setNewAssetCompany] = useState(companiesList[0]?.name || 'Acme Corp');
 
-  const filteredAssets = mockAssets.filter(asset =>
+  const filteredAssets = assetsList.filter(asset =>
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     asset.tag.toLowerCase().includes(searchTerm.toLowerCase()) ||
     asset.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -33,14 +37,31 @@ export default function AssetsPage() {
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAssetName.trim()) {
-      toast.error('Please enter asset name');
+      toast.error('Please enter equipment name');
       return;
     }
-    toast.success(`Asset ${newAssetName} Registered!`, {
-      description: `Tag AST-2026-${Math.floor(100 + Math.random() * 900)} assigned under ${newAssetCompany}.`
+
+    const selectedComp = newAssetCompany || companiesList[0]?.name || 'Acme Corp';
+
+    const created = addAsset({
+      tag: newAssetTag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
+      name: newAssetName.trim(),
+      company: selectedComp,
+      category: newAssetCategory,
+      model: newAssetModel || 'Standard Machinery Unit',
+      serial: `SN-${Math.floor(100000 + Math.random() * 900000)}`,
+      status: 'Active',
+      amcStatus: 'Active AMC',
+      warrantyExpires: '2027-12-31'
     });
+
+    toast.success(`Asset ${created.name} Registered!`, {
+      description: `Tag ${created.tag} assigned under ${selectedComp}.`
+    });
+
     setRegisterModalOpen(false);
     setNewAssetName('');
+    setNewAssetTag('');
     setNewAssetModel('');
   };
 
@@ -57,10 +78,10 @@ export default function AssetsPage() {
         description="Track machinery, servers, hardware components, warranties and AMC contract links"
       >
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setQrModalOpen(true)} className="gap-2">
+          <Button variant="outline" onClick={() => setQrModalOpen(true)} className="gap-2 text-xs">
             <QrCode className="w-4 h-4 text-primary" /> Scan / Print QR
           </Button>
-          <Button variant="default" onClick={() => setRegisterModalOpen(true)} className="gap-2">
+          <Button variant="default" onClick={() => setRegisterModalOpen(true)} className="gap-2 text-xs">
             <Plus className="w-4 h-4" /> Register Asset
           </Button>
         </div>
@@ -74,68 +95,81 @@ export default function AssetsPage() {
             placeholder="Search by asset tag, name, serial number or company..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-background border border-border rounded-lg pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-primary"
+            className="w-full bg-background border border-border rounded-lg pl-9 pr-4 py-2 text-xs focus:outline-none focus:border-primary text-foreground"
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAssets.map((asset) => (
-          <div key={asset.id} className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all flex flex-col justify-between space-y-4 shadow-lg">
-            <div>
-              <div className="flex items-start justify-between mb-3">
-                <div className="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
-                  <Cpu className="w-6 h-6" />
+      {filteredAssets.length === 0 ? (
+        <div className="glass rounded-xl p-12 text-center border border-border flex flex-col items-center justify-center">
+          <Cpu className="w-12 h-12 text-muted-foreground/40 mb-3" />
+          <h3 className="text-base font-bold text-foreground">No Machinery Assets Found</h3>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm">Click "Register Asset" above to add machinery to your client registry.</p>
+          <Button onClick={() => setRegisterModalOpen(true)} size="sm" className="mt-4 gap-2 text-xs">
+            <Plus className="w-4 h-4" /> Register Asset
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredAssets.map((asset) => (
+            <div key={asset.id} className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all flex flex-col justify-between space-y-4 shadow-lg">
+              <div>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                    <Cpu className="w-6 h-6" />
+                  </div>
+                  <Badge variant={asset.status === 'Active' ? 'success' : 'warning'}>
+                    {asset.status}
+                  </Badge>
                 </div>
-                <Badge variant={asset.status === 'Active' ? 'success' : 'warning'}>
-                  {asset.status}
-                </Badge>
+
+                <span className="text-xs font-mono text-primary font-bold">{asset.tag}</span>
+                <h3 className="font-semibold text-base text-foreground mt-1 mb-1">{asset.name}</h3>
+                <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1">
+                  <Building2 className="w-3.5 h-3.5 text-primary" /> Client: <span className="font-medium text-foreground">{asset.company}</span>
+                </p>
+
+                <div className="space-y-2 text-xs text-muted-foreground bg-secondary/40 p-3 rounded-lg border border-border/50 font-mono">
+                  <div className="flex justify-between">
+                    <span>Model:</span>
+                    <span className="font-medium text-foreground">{asset.model}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Serial:</span>
+                    <span className="text-foreground">{asset.serial}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Warranty:</span>
+                    <span className="text-foreground">{asset.warrantyExpires}</span>
+                  </div>
+                </div>
               </div>
 
-              <span className="text-xs font-mono text-primary font-bold">{asset.tag}</span>
-              <h3 className="font-semibold text-base text-foreground mt-1 mb-1">{asset.name}</h3>
-              <p className="text-xs text-muted-foreground mb-4">Client: <span className="font-medium text-foreground">{asset.company}</span></p>
-
-              <div className="space-y-2 text-xs text-muted-foreground bg-secondary/40 p-3 rounded-lg border border-border/50 font-mono">
-                <div className="flex justify-between">
-                  <span>Model:</span>
-                  <span className="font-medium text-foreground">{asset.model}</span>
+              <div className="pt-3 border-t border-border/50 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs">
+                  {asset.amcStatus === 'Active AMC' ? (
+                    <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                      <ShieldCheck className="w-3.5 h-3.5" /> Covered under AMC
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-rose-400 font-semibold">
+                      <AlertTriangle className="w-3.5 h-3.5" /> No AMC Coverage
+                    </span>
+                  )}
                 </div>
-                <div className="flex justify-between">
-                  <span>Serial:</span>
-                  <span className="text-foreground">{asset.serial}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Warranty:</span>
-                  <span className="text-foreground">{asset.warrantyExpires}</span>
-                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleOpenHistory(asset)}
+                  className="text-xs gap-1 hover:text-primary"
+                >
+                  <Wrench className="w-3.5 h-3.5" /> History
+                </Button>
               </div>
             </div>
-
-            <div className="pt-3 border-t border-border/50 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs">
-                {asset.amcStatus === 'Active AMC' ? (
-                  <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Covered under AMC
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-rose-400 font-semibold">
-                    <AlertTriangle className="w-3.5 h-3.5" /> No AMC Coverage
-                  </span>
-                )}
-              </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => handleOpenHistory(asset)}
-                className="text-xs gap-1 hover:text-primary"
-              >
-                <Wrench className="w-3.5 h-3.5" /> History
-              </Button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Register Asset Modal */}
       <Dialog open={registerModalOpen} onOpenChange={setRegisterModalOpen}>
@@ -149,37 +183,50 @@ export default function AssetsPage() {
 
           <form onSubmit={handleRegisterSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Equipment Name</label>
+              <label className="text-xs font-medium text-foreground">Equipment Name *</label>
               <input 
                 type="text" 
                 value={newAssetName}
                 onChange={(e) => setNewAssetName(e.target.value)}
                 placeholder="E.g., Siemens S7-1500 PLC Rack"
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Model / Serial Number</label>
-              <input 
-                type="text" 
-                value={newAssetModel}
-                onChange={(e) => setNewAssetModel(e.target.value)}
-                placeholder="E.g., S7-1518-4 PN/DP (SN: 99481A)"
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Asset Tag Code</label>
+                <input 
+                  type="text" 
+                  value={newAssetTag}
+                  onChange={(e) => setNewAssetTag(e.target.value)}
+                  placeholder="AST-2026-991"
+                  className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Model / Specs</label>
+                <input 
+                  type="text" 
+                  value={newAssetModel}
+                  onChange={(e) => setNewAssetModel(e.target.value)}
+                  placeholder="CPU 1518-4 PN/DP"
+                  className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                />
+              </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Owner Company</label>
+              <label className="text-xs font-medium text-foreground">Owner Client Company *</label>
               <select 
                 value={newAssetCompany}
                 onChange={(e) => setNewAssetCompany(e.target.value)}
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
               >
-                <option value="Acme Corp">Acme Corp</option>
-                <option value="Globex Ltd">Globex Ltd</option>
-                <option value="Initech Inc">Initech Inc</option>
+                {companiesList.map(c => (
+                  <option key={c.id} value={c.name}>{c.name} ({c.code})</option>
+                ))}
               </select>
             </div>
 

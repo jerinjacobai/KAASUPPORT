@@ -1,48 +1,65 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Building2, Users, Package, Search, Lock, Edit3, CheckCircle2, UserPlus, Cpu } from 'lucide-react';
+import { Building2, Users, Package, Search, Lock, CheckCircle2, UserPlus, Cpu, KeyRound, Copy, Check, Eye, EyeOff, ShieldAlert, Trash2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { mockAssets } from '@/lib/mock-data';
-
-// Live Master Datasets
-const initialCompanies: any[] = [];
-const initialUsers: any[] = [];
+import { useMasterStore, type UserMaster } from '@/stores/master-store';
 
 export default function MastersPage() {
   const [activeTab, setActiveTab] = useState('companies');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Master Store State
+  const { 
+    companies: companiesList, 
+    users: usersList, 
+    assets: assetsList, 
+    addCompany, 
+    addUser, 
+    resetUserPassword,
+    deleteUser,
+    addAsset, 
+    deleteCompany,
+    deleteAsset
+  } = useMasterStore();
+
   // Modals state
   const [companyModalOpen, setCompanyModalOpen] = useState(false);
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [assetModalOpen, setAssetModalOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [selectedUserForPassword, setSelectedUserForPassword] = useState<UserMaster | null>(null);
 
-  // Form states
-  const [companiesList, setCompaniesList] = useState(initialCompanies);
-  const [usersList, setUsersList] = useState(initialUsers);
-  const [assetsList, setAssetsList] = useState(mockAssets);
-
-  // New Company Form
+  // New Company Form State
   const [compName, setCompName] = useState('');
   const [compCode, setCompCode] = useState('');
   const [compIndustry, setCompIndustry] = useState('Industrial Manufacturing');
   const [compEmail, setCompEmail] = useState('');
+  const [compPhone, setCompPhone] = useState('');
 
-  // New User Form
+  // New User Form State
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [userRoleType, setUserRoleType] = useState<'KAA Internal Staff' | 'Client User'>('Client User');
-  const [userMappedCompany, setUserMappedCompany] = useState('Acme Corp');
+  const [userRoleName, setUserRoleName] = useState('Client Requester');
+  const [userMappedCompany, setUserMappedCompany] = useState('');
+  const [userPassword, setUserPassword] = useState('KaaPass2026!#');
+  const [showPassword, setShowPassword] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  // New Asset Form
+  // Password Reset Modal State
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+
+  // New Asset Form State
   const [assetName, setAssetName] = useState('');
   const [assetTag, setAssetTag] = useState('');
   const [assetModel, setAssetModel] = useState('');
-  const [assetMappedCompany, setAssetMappedCompany] = useState('Acme Corp');
+  const [assetCategory] = useState('Machinery');
+  const [assetMappedCompany, setAssetMappedCompany] = useState('');
 
   // Handlers
   const handleCreateCompany = (e: React.FormEvent) => {
@@ -51,84 +68,128 @@ export default function MastersPage() {
       toast.error('Please enter company name');
       return;
     }
-    const newComp = {
-      id: `COMP-${companiesList.length + 1}`,
+    const createdComp = addCompany({
       name: compName,
       code: compCode || compName.slice(0, 4).toUpperCase(),
       industry: compIndustry,
       email: compEmail || `admin@${compName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-      phone: '+91 98000 11111',
-      assetsCount: 0,
-      usersCount: 0,
+      phone: compPhone || '+91 98000 11111',
       is_active: true
-    };
-    setCompaniesList([newComp, ...companiesList]);
-    toast.success(`Company ${compName} Master Created!`, {
-      description: `Tenant short code ${newComp.code} initialized with RLS isolation policies.`
+    });
+
+    toast.success(`Company ${createdComp.name} Master Created!`, {
+      description: `Tenant short code ${createdComp.code} initialized with RLS isolation policies.`
     });
     setCompanyModalOpen(false);
     setCompName('');
     setCompCode('');
+    setCompEmail('');
+    setCompPhone('');
   };
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!userName.trim() || !userEmail.trim()) {
-      toast.error('Please enter user name and email');
+      toast.error('Please enter user name and email address');
       return;
     }
-    const newUser = {
-      id: `USR-${usersList.length + 1}`,
+
+    const selectedCompany = userRoleType === 'KAA Internal Staff' 
+      ? 'Global (All Companies)' 
+      : (userMappedCompany || (companiesList[0]?.name || 'Acme Corp'));
+
+    const createdUser = addUser({
       name: userName,
       email: userEmail,
       roleType: userRoleType,
-      roleName: userRoleType === 'KAA Internal Staff' ? 'Field Engineer' : 'Client Requester',
-      mappedCompany: userRoleType === 'KAA Internal Staff' ? 'Global (All Companies)' : userMappedCompany,
-      status: 'Active'
-    };
-    setUsersList([newUser, ...usersList]);
-    toast.success(`User ${userName} Onboarded & Mapped!`, {
+      roleName: userRoleName,
+      mappedCompany: selectedCompany,
+      status: 'Active',
+      password: userPassword || 'KaaPass2026!#',
+      defaultPassword: userPassword || 'KaaPass2026!#',
+      isPasswordResetRequired: true
+    });
+
+    toast.success(`User ${createdUser.name} Onboarded & Role Mapped!`, {
       description: userRoleType === 'Client User' 
-        ? `Mapped strictly to tenant ${userMappedCompany}.` 
+        ? `Mapped strictly to tenant ${selectedCompany} with default password.` 
         : 'Granted global KAA internal staff access.'
     });
+
     setUserModalOpen(false);
     setUserName('');
     setUserEmail('');
+    setUserPassword('KaaPass2026!#');
+  };
+
+  const handleOpenPasswordReset = (usr: UserMaster) => {
+    setSelectedUserForPassword(usr);
+    setResetNewPassword(`KaaReset${Math.floor(1000 + Math.random() * 9000)}!`);
+    setPasswordModalOpen(true);
+  };
+
+  const handleSavePasswordReset = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUserForPassword) return;
+    if (!resetNewPassword.trim()) {
+      toast.error('Please enter a new password');
+      return;
+    }
+
+    const updatedPass = resetUserPassword(selectedUserForPassword.id, resetNewPassword);
+
+    toast.success(`Password Reset for ${selectedUserForPassword.name}!`, {
+      description: `New password updated: ${updatedPass}`
+    });
+
+    setPasswordModalOpen(false);
+    setSelectedUserForPassword(null);
+    setResetNewPassword('');
   };
 
   const handleCreateAssetMapping = (e: React.FormEvent) => {
     e.preventDefault();
     if (!assetName.trim()) {
-      toast.error('Please enter asset name');
+      toast.error('Please enter equipment name');
       return;
     }
-    const newAsset: any = {
-      id: `AST-${assetsList.length + 1}`,
+
+    const targetCompany = assetMappedCompany || (companiesList[0]?.name || 'Acme Corp');
+
+    const createdAsset = addAsset({
       tag: assetTag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
       name: assetName,
-      company: assetMappedCompany,
-      category: 'Machinery',
+      company: targetCompany,
+      category: assetCategory,
       model: assetModel || 'Standard Industrial Unit',
       serial: `SN-${Math.floor(100000 + Math.random() * 900000)}`,
       status: 'Active',
       amcStatus: 'Active AMC',
       warrantyExpires: '2027-12-31'
-    };
-    setAssetsList([newAsset, ...assetsList]);
-    toast.success(`Asset ${assetName} Mapped to ${assetMappedCompany}!`, {
-      description: `Equipment Tag ${newAsset.tag} is now available for ${assetMappedCompany} users to raise support tickets.`
     });
+
+    toast.success(`Asset ${createdAsset.name} Mapped to ${targetCompany}!`, {
+      description: `Tag ${createdAsset.tag} is now available for ${targetCompany} users.`
+    });
+
     setAssetModalOpen(false);
     setAssetName('');
     setAssetTag('');
+    setAssetModel('');
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    toast.info('Password copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Admin Master Management & Asset Mapping"
-        description="Master registry to onboard companies, create users, map tenant access, and assign machinery assets"
+        description="Master registry to onboard companies, create users, manage passwords & roles, and map machinery assets"
       >
         <div className="flex gap-2">
           {activeTab === 'companies' && (
@@ -151,9 +212,15 @@ export default function MastersPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-secondary/40 p-1 border border-border rounded-xl">
-          <TabsTrigger value="companies" className="gap-2 text-xs"><Building2 className="w-3.5 h-3.5 text-primary" /> Company Master ({companiesList.length})</TabsTrigger>
-          <TabsTrigger value="users" className="gap-2 text-xs"><Users className="w-3.5 h-3.5 text-amber-400" /> User & Role Mapping ({usersList.length})</TabsTrigger>
-          <TabsTrigger value="assets" className="gap-2 text-xs"><Package className="w-3.5 h-3.5 text-emerald-400" /> Asset & Equipment Mapping ({assetsList.length})</TabsTrigger>
+          <TabsTrigger value="companies" className="gap-2 text-xs">
+            <Building2 className="w-3.5 h-3.5 text-primary" /> Company Master ({companiesList.length})
+          </TabsTrigger>
+          <TabsTrigger value="users" className="gap-2 text-xs">
+            <Users className="w-3.5 h-3.5 text-amber-400" /> User & Role Mapping ({usersList.length})
+          </TabsTrigger>
+          <TabsTrigger value="assets" className="gap-2 text-xs">
+            <Package className="w-3.5 h-3.5 text-emerald-400" /> Asset & Equipment Mapping ({assetsList.length})
+          </TabsTrigger>
         </TabsList>
 
         {/* Search Bar */}
@@ -165,7 +232,7 @@ export default function MastersPage() {
               placeholder={`Search in ${activeTab}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-background border border-border rounded-lg pl-9 pr-4 py-1.5 text-xs outline-none focus:border-primary"
+              className="w-full bg-background border border-border rounded-lg pl-9 pr-4 py-1.5 text-xs outline-none focus:border-primary text-foreground"
             />
           </div>
         </div>
@@ -207,21 +274,25 @@ export default function MastersPage() {
                         </div>
                         <div className="flex justify-between">
                           <span>Mapped Users:</span>
-                          <span className="font-bold text-amber-400">{comp.usersCount} users</span>
+                          <span className="font-bold text-amber-400">
+                            {usersList.filter(u => u.mappedCompany === comp.name).length} users
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Mapped Assets:</span>
-                          <span className="font-bold text-emerald-400">{comp.assetsCount} assets</span>
+                          <span className="font-bold text-emerald-400">
+                            {assetsList.filter(a => a.company === comp.name).length} assets
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     <div className="pt-3 border-t border-border/50 flex items-center justify-between">
                       <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Tenant Isolated
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Tenant Active
                       </span>
-                      <Button variant="ghost" size="sm" onClick={() => toast.info(`Editing ${comp.name} Master`)} className="text-xs gap-1">
-                        <Edit3 className="w-3.5 h-3.5" /> Edit Master
+                      <Button variant="ghost" size="sm" onClick={() => { deleteCompany(comp.id); toast.info(`Deleted ${comp.name}`); }} className="text-xs text-destructive hover:text-destructive gap-1">
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
                       </Button>
                     </div>
                   </div>
@@ -241,6 +312,7 @@ export default function MastersPage() {
                   <th className="p-3">Role Type</th>
                   <th className="p-3">Role Designation</th>
                   <th className="p-3">Mapped Tenant Scope</th>
+                  <th className="p-3">Password Provision</th>
                   <th className="p-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -264,9 +336,33 @@ export default function MastersPage() {
                           <span className="text-emerald-400 flex items-center gap-1"><Lock className="w-3 h-3" /> Mapped to {usr.mappedCompany}</span>
                         )}
                       </td>
-                      <td className="p-3 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => toast.info(`Re-mapping ${usr.name}`)} className="text-xs gap-1">
-                          <Edit3 className="w-3 h-3 text-primary" /> Edit Mapping
+                      <td className="p-3">
+                        <div className="flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+                          <KeyRound className="w-3 h-3 text-primary shrink-0" />
+                          <span>{usr.password ? '••••••••' : 'Default Set'}</span>
+                          {usr.isPasswordResetRequired && (
+                            <span className="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded ml-1">
+                              Reset Required
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-3 text-right flex items-center justify-end gap-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleOpenPasswordReset(usr)} 
+                          className="text-[11px] gap-1 py-1 h-7 border-primary/30 text-primary hover:bg-primary/10"
+                        >
+                          <KeyRound className="w-3 h-3" /> Reset Pass
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => { deleteUser(usr.id); toast.info(`Removed user ${usr.name}`); }} 
+                          className="text-[11px] py-1 h-7 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-3 h-3" />
                         </Button>
                       </td>
                     </tr>
@@ -307,8 +403,8 @@ export default function MastersPage() {
                         </Badge>
                       </td>
                       <td className="p-3 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => toast.info(`Re-mapping asset ${ast.tag}`)} className="text-xs gap-1">
-                          <Edit3 className="w-3 h-3 text-primary" /> Re-map Company
+                        <Button variant="ghost" size="sm" onClick={() => { deleteAsset(ast.id); toast.info(`Deleted asset ${ast.tag}`); }} className="text-xs text-destructive hover:bg-destructive/10">
+                          <Trash2 className="w-3.5 h-3.5" /> Remove
                         </Button>
                       </td>
                     </tr>
@@ -339,7 +435,7 @@ export default function MastersPage() {
                 value={compName}
                 onChange={(e) => setCompName(e.target.value)}
                 placeholder="E.g., Umbrella Corporation"
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
               />
             </div>
 
@@ -351,7 +447,7 @@ export default function MastersPage() {
                   value={compCode}
                   onChange={(e) => setCompCode(e.target.value)}
                   placeholder="UMBR"
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
                 />
               </div>
 
@@ -360,7 +456,7 @@ export default function MastersPage() {
                 <select 
                   value={compIndustry}
                   onChange={(e) => setCompIndustry(e.target.value)}
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
                 >
                   <option value="Industrial Manufacturing">Industrial Manufacturing</option>
                   <option value="Electronics & Automation">Electronics & Automation</option>
@@ -377,7 +473,7 @@ export default function MastersPage() {
                 value={compEmail}
                 onChange={(e) => setCompEmail(e.target.value)}
                 placeholder="admin@umbrella.com"
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
               />
             </div>
 
@@ -398,10 +494,10 @@ export default function MastersPage() {
         <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-amber-400" /> Create User & Assign Access Scope
+              <UserPlus className="w-5 h-5 text-amber-400" /> Create User & Provision Password
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Set user role as KAA Admin/Staff (Global) or Client User (Scoped to Company).
+              Assign role scope (Internal vs Client) and default initial password.
             </DialogDescription>
           </DialogHeader>
 
@@ -413,7 +509,7 @@ export default function MastersPage() {
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 placeholder="E.g., Michael Scott"
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
               />
             </div>
 
@@ -424,20 +520,46 @@ export default function MastersPage() {
                 value={userEmail}
                 onChange={(e) => setUserEmail(e.target.value)}
                 placeholder="michael@dundermifflin.com"
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Account Type</label>
-              <select 
-                value={userRoleType}
-                onChange={(e: any) => setUserRoleType(e.target.value)}
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
-              >
-                <option value="Client User">Client User (Scoped to 1 Client Company)</option>
-                <option value="KAA Internal Staff">KAA Internal Staff (Admin Command Access)</option>
-              </select>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Account Scope</label>
+                <select 
+                  value={userRoleType}
+                  onChange={(e: any) => setUserRoleType(e.target.value)}
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                >
+                  <option value="Client User">Client User (Scoped)</option>
+                  <option value="KAA Internal Staff">KAA Internal Staff</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Role Designation</label>
+                <select 
+                  value={userRoleName}
+                  onChange={(e) => setUserRoleName(e.target.value)}
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                >
+                  {userRoleType === 'KAA Internal Staff' ? (
+                    <>
+                      <option value="Senior Field Engineer">Senior Field Engineer</option>
+                      <option value="Service Coordinator">Service Coordinator</option>
+                      <option value="Support Manager">Support Manager</option>
+                      <option value="Super Admin">Super Admin</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="Client Requester">Client Requester</option>
+                      <option value="Company Admin">Company Admin</option>
+                      <option value="Plant Manager">Plant Manager</option>
+                    </>
+                  )}
+                </select>
+              </div>
             </div>
 
             {userRoleType === 'Client User' && (
@@ -454,9 +576,44 @@ export default function MastersPage() {
                     <option key={c.id} value={c.name}>{c.name} ({c.code})</option>
                   ))}
                 </select>
-                <p className="text-[10px] text-muted-foreground mt-1">When logging in, this user will only see tickets and equipment belonging to {userMappedCompany}.</p>
               </div>
             )}
+
+            {/* Password Provision Section */}
+            <div className="space-y-1 p-3 bg-primary/5 rounded-lg border border-primary/20">
+              <label className="text-xs font-bold text-primary flex items-center gap-1">
+                <KeyRound className="w-3.5 h-3.5" /> Initial Password Provision
+              </label>
+              <div className="relative">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  value={userPassword}
+                  onChange={(e) => setUserPassword(e.target.value)}
+                  className="w-full bg-background border border-border rounded-lg p-2 pr-20 text-xs font-mono outline-none focus:border-primary text-foreground"
+                />
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="p-1 text-muted-foreground hover:text-foreground text-[10px]"
+                    title={showPassword ? "Hide" : "Show"}
+                  >
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(userPassword)}
+                    className="p-1 text-primary hover:text-primary/80 text-[10px]"
+                    title="Copy Password"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                User will be required to update/reset this default password upon first login.
+              </p>
+            </div>
 
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" size="sm" onClick={() => setUserModalOpen(false)} className="text-xs">
@@ -470,7 +627,66 @@ export default function MastersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal 3: Map Asset/Product to Company */}
+      {/* Modal 3: Password Reset Provision */}
+      <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-primary" /> Reset User Password
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Update or issue a new temporary password for <strong>{selectedUserForPassword?.name}</strong> ({selectedUserForPassword?.email}).
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSavePasswordReset} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">New Temporary Password *</label>
+              <div className="relative">
+                <input 
+                  type={showResetPassword ? "text" : "password"} 
+                  value={resetNewPassword}
+                  onChange={(e) => setResetNewPassword(e.target.value)}
+                  placeholder="Enter new password..."
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 pr-20 text-xs font-mono outline-none focus:border-primary text-foreground"
+                />
+                <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassword(!showResetPassword)}
+                    className="p-1 text-muted-foreground hover:text-foreground"
+                  >
+                    {showResetPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(resetNewPassword)}
+                    className="p-1 text-primary hover:text-primary/80"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2 text-xs text-amber-300">
+              <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>Resetting will flag the account to prompt password change on next sign-in.</span>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setPasswordModalOpen(false)} className="text-xs">
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" className="text-xs">
+                Update & Reset Password
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal 4: Map Asset/Product to Company */}
       <Dialog open={assetModalOpen} onOpenChange={setAssetModalOpen}>
         <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
@@ -490,7 +706,7 @@ export default function MastersPage() {
                 value={assetName}
                 onChange={(e) => setAssetName(e.target.value)}
                 placeholder="E.g., Siemens S7-1500 Controller Rack"
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
               />
             </div>
 
@@ -502,7 +718,7 @@ export default function MastersPage() {
                   value={assetTag}
                   onChange={(e) => setAssetTag(e.target.value)}
                   placeholder="AST-2026-991"
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
                 />
               </div>
 
@@ -513,7 +729,7 @@ export default function MastersPage() {
                   value={assetModel}
                   onChange={(e) => setAssetModel(e.target.value)}
                   placeholder="CPU 1518-4 PN/DP"
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
                 />
               </div>
             </div>

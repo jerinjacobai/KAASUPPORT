@@ -2,30 +2,40 @@ import { KPICard } from '@/components/shared/KPICard';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { mockStats, mockChartData, mockTickets } from '@/lib/mock-data';
+import { mockChartData } from '@/lib/mock-data';
 import { Ticket, Activity, Clock, ShieldCheck, Download, Building2, Wrench, Lock, PlusCircle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAuthStore } from '@/stores/auth-store';
+import { useMasterStore } from '@/stores/master-store';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 
 export default function DashboardPage() {
   const { isKaaInternal, userCompany } = useAuthStore();
+  const { tickets, amcContracts } = useMasterStore();
 
-  const recentTickets = mockTickets.filter(ticket => 
+  const companyTickets = tickets.filter(ticket => 
     isKaaInternal ? true : (ticket.company === userCompany)
-  ).slice(0, 5);
+  );
+
+  const openCount = companyTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
+  const recentTickets = companyTickets.slice(0, 5);
+
+  const activeContracts = amcContracts.filter(c => isKaaInternal ? true : c.company === userCompany);
+  const remainingVisitsStr = activeContracts.length > 0 
+    ? `${activeContracts[0].totalVisits - activeContracts[0].usedVisits} / ${activeContracts[0].totalVisits}`
+    : '8 / 12';
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="glass p-3 rounded-lg border-border/50 text-sm shadow-xl">
-          <p className="font-medium mb-1">{label}</p>
+          <p className="font-medium mb-1 text-foreground">{label}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-2 mt-1">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
               <span className="text-muted-foreground">{entry.name}:</span>
-              <span className="font-medium">{entry.value}</span>
+              <span className="font-medium text-foreground">{entry.value}</span>
             </div>
           ))}
         </div>
@@ -42,12 +52,12 @@ export default function DashboardPage() {
       >
         <div className="flex gap-2">
           {!isKaaInternal && (
-            <Link to="/tickets/new" className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-lg shadow-primary/20">
+            <Link to="/tickets/new" className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-2 shadow-lg shadow-primary/20">
               <PlusCircle className="w-4 h-4" /> Raise Ticket
             </Link>
           )}
-          <button className="bg-secondary hover:bg-secondary/80 text-foreground px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2">
-            <Download className="w-4 h-4" /> Export Report
+          <button className="bg-secondary hover:bg-secondary/80 text-foreground px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-2">
+            <Download className="w-4 h-4" /> Export Summary
           </button>
         </div>
       </PageHeader>
@@ -74,33 +84,33 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
         <KPICard 
           title={isKaaInternal ? "Total Enterprise Tickets" : "My Company Tickets"} 
-          value={isKaaInternal ? mockStats.totalTickets.value : 14} 
-          change={mockStats.totalTickets.change}
-          trend={mockStats.totalTickets.trend as any}
+          value={companyTickets.length} 
+          change={12}
+          trend="up"
           icon={Ticket}
-          subtitle="In the last 30 days"
+          subtitle="Registered support tickets"
         />
         <KPICard 
           title="Active Open Issues" 
-          value={isKaaInternal ? mockStats.openTickets.value : 3} 
-          change={mockStats.openTickets.change}
-          trend={mockStats.openTickets.trend as any}
+          value={openCount} 
+          change={openCount > 0 ? 5 : 0}
+          trend={openCount > 0 ? 'down' : 'neutral'}
           icon={Activity}
-          subtitle="Requires action"
+          subtitle="Requires technician action"
         />
         <KPICard 
           title={isKaaInternal ? "Avg Field Response Time" : "AMC Remaining Visits"} 
-          value={isKaaInternal ? mockStats.avgResponseTime.value : "8 / 12"} 
-          change={isKaaInternal ? mockStats.avgResponseTime.change : undefined}
-          trend="down"
+          value={isKaaInternal ? "1.8 hrs" : remainingVisitsStr} 
+          change={isKaaInternal ? -15 : undefined}
+          trend="up"
           icon={isKaaInternal ? Clock : Wrench}
-          subtitle={isKaaInternal ? "Across all regional hubs" : "4 visits completed"}
+          subtitle={isKaaInternal ? "Across all regional hubs" : "Preventative visits quota"}
         />
         <KPICard 
           title="SLA Compliance Rate" 
-          value={`${mockStats.slaCompliance.value}%`} 
-          change={mockStats.slaCompliance.change}
-          trend={mockStats.slaCompliance.trend as any}
+          value="98.4%" 
+          change={2.1}
+          trend="up"
           icon={ShieldCheck}
           subtitle="Target >= 90%"
         />
@@ -112,7 +122,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 glass rounded-xl p-6 border-border/50">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-semibold">Ticket Activity Trends</h2>
+              <h2 className="text-lg font-semibold text-foreground">Ticket Activity Trends</h2>
               <p className="text-xs text-muted-foreground">Volume over the last 30 days</p>
             </div>
           </div>
@@ -137,7 +147,7 @@ export default function DashboardPage() {
 
         {/* Priority Breakdown */}
         <div className="glass rounded-xl p-6 border-border/50">
-          <h2 className="text-lg font-semibold mb-2">Priority Breakdown</h2>
+          <h2 className="text-lg font-semibold mb-2 text-foreground">Priority Breakdown</h2>
           <p className="text-xs text-muted-foreground mb-4">Distribution by severity</p>
           <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -175,7 +185,7 @@ export default function DashboardPage() {
       <div className="glass rounded-xl p-6 border-border/50 animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-semibold">{isKaaInternal ? 'Recent Tickets' : `Recent ${userCompany} Tickets`}</h2>
+            <h2 className="text-lg font-semibold text-foreground">{isKaaInternal ? 'Recent Tickets' : `Recent ${userCompany} Tickets`}</h2>
             <p className="text-xs text-muted-foreground">Latest submitted issues and resolution progress</p>
           </div>
           <Link to="/tickets" className="text-xs text-primary hover:underline font-medium">View All Tickets →</Link>
@@ -193,28 +203,34 @@ export default function DashboardPage() {
                 <th className="p-3">Assignee</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border/30">
-              {recentTickets.map((ticket) => (
-                <tr key={ticket.id} className="hover:bg-secondary/20 transition-colors">
-                  <td className="p-3 font-mono font-medium text-primary">
-                    <Link to={`/tickets/${ticket.id}`} className="hover:underline">{ticket.id}</Link>
-                  </td>
-                  <td className="p-3 font-medium max-w-xs truncate">{ticket.title}</td>
-                  {isKaaInternal && (
-                    <td className="p-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><Building2 className="w-3 h-3 text-primary" /> {ticket.company}</span>
-                    </td>
-                  )}
-                  <td className="p-3"><PriorityBadge priority={ticket.priority} /></td>
-                  <td className="p-3"><StatusBadge status={ticket.status} /></td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <img src={ticket.assignee.avatar} alt="" className="w-5 h-5 rounded-full" />
-                      <span className="text-xs">{ticket.assignee.name}</span>
-                    </div>
-                  </td>
+            <tbody className="divide-y divide-border/30 text-xs">
+              {recentTickets.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-6 text-center text-muted-foreground">No recent tickets raised yet.</td>
                 </tr>
-              ))}
+              ) : (
+                recentTickets.map((ticket) => (
+                  <tr key={ticket.id} className="hover:bg-secondary/20 transition-colors">
+                    <td className="p-3 font-mono font-bold text-primary">
+                      <Link to={`/tickets/${ticket.id}`} className="hover:underline">{ticket.id}</Link>
+                    </td>
+                    <td className="p-3 font-medium max-w-xs truncate text-foreground">{ticket.title}</td>
+                    {isKaaInternal && (
+                      <td className="p-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><Building2 className="w-3 h-3 text-primary" /> {ticket.company}</span>
+                      </td>
+                    )}
+                    <td className="p-3"><PriorityBadge priority={ticket.priority || 'medium'} /></td>
+                    <td className="p-3"><StatusBadge status={ticket.status || 'open'} /></td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <img src={ticket.assignee?.avatar || 'https://i.pravatar.cc/150?u=1'} alt="" className="w-5 h-5 rounded-full" />
+                        <span className="text-xs text-foreground font-medium">{ticket.assignee?.name || 'Alex Johnson'}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { mockTickets } from '@/lib/mock-data';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
 import { Plus, Search, Lock, Building2, MoreHorizontal, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/auth-store';
+import { useMasterStore } from '@/stores/master-store';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -18,16 +18,16 @@ const KANBAN_COLUMNS = [
 export default function KanbanPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const { isKaaInternal, userCompany } = useAuthStore();
-  const [tickets, setTickets] = useState(mockTickets);
+  const { tickets, updateTicket } = useMasterStore();
   const [draggedTicket, setDraggedTicket] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesTenant = isKaaInternal ? true : (ticket.company === userCompany);
     const matchesSearch = 
-      ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.company.toLowerCase().includes(searchTerm.toLowerCase());
+      (ticket.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (ticket.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (ticket.company || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesTenant && matchesSearch;
   });
 
@@ -53,9 +53,7 @@ export default function KanbanPage() {
     setDragOverCol(null);
     if (!draggedTicket) return;
     
-    setTickets(prev => prev.map(t => 
-      t.id === draggedTicket ? { ...t, status: statusId } : t
-    ));
+    updateTicket(draggedTicket, { status: statusId });
     setDraggedTicket(null);
   };
 
@@ -68,7 +66,7 @@ export default function KanbanPage() {
         <div className="flex gap-2">
           <Link
             to="/tickets"
-            className="px-3 py-1.5 border border-border rounded-lg text-xs font-medium hover:bg-secondary transition-colors"
+            className="px-3 py-1.5 border border-border rounded-lg text-xs font-medium hover:bg-secondary transition-colors text-foreground"
           >
             Table View
           </Link>
@@ -90,7 +88,7 @@ export default function KanbanPage() {
             placeholder="Filter Kanban tickets..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-background border border-border rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-primary"
+            className="w-full bg-background border border-border rounded-lg pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-primary text-foreground"
           />
         </div>
 
@@ -104,7 +102,7 @@ export default function KanbanPage() {
       {/* Kanban Board Columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 flex-1 min-h-[500px]">
         {KANBAN_COLUMNS.map((col) => {
-          const colTickets = filteredTickets.filter(t => t.status === col.id);
+          const colTickets = filteredTickets.filter(t => (t.status || 'open') === col.id);
           const isDraggingOver = dragOverCol === col.id;
 
           return (
@@ -144,7 +142,7 @@ export default function KanbanPage() {
                       <Link to={`/tickets/${ticket.id}`} className="font-mono text-xs font-bold text-primary hover:underline">
                         {ticket.id}
                       </Link>
-                      <PriorityBadge priority={ticket.priority} />
+                      <PriorityBadge priority={ticket.priority || 'medium'} />
                     </div>
 
                     <h4 className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors line-clamp-2">
@@ -159,11 +157,11 @@ export default function KanbanPage() {
 
                     <div className="pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground">
                       <div className="flex items-center gap-1.5">
-                        <img src={ticket.assignee.avatar} alt="" className="w-5 h-5 rounded-full border border-border" />
-                        <span className="truncate max-w-[90px]">{ticket.assignee.name}</span>
+                        <img src={ticket.assignee?.avatar || 'https://i.pravatar.cc/150?u=1'} alt="" className="w-5 h-5 rounded-full border border-border" />
+                        <span className="truncate max-w-[90px] text-foreground font-medium">{ticket.assignee?.name || 'Alex Johnson'}</span>
                       </div>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
+                        <Clock className="w-3 h-3" /> {formatDistanceToNow(new Date(ticket.createdAt || Date.now()), { addSuffix: true })}
                       </span>
                     </div>
                   </div>

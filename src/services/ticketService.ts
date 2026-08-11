@@ -1,26 +1,37 @@
 import { supabase } from '@/lib/supabase'
-import { mockTickets } from '@/lib/mock-data'
+import { useMasterStore } from '@/stores/master-store'
 
 export async function fetchTickets(isKaaInternal: boolean, userCompany: string | null) {
   try {
-    let query = supabase.from('tickets').select('*')
+    const { data, error } = await supabase.from('tickets').select('*')
+    const storeTickets = useMasterStore.getState().tickets
 
-    if (!isKaaInternal && userCompany) {
-      query = query.eq('company_id', userCompany) // Or company name match
+    if (!error && data && data.length > 0) {
+      const dbMapped = data.map((t: any) => ({
+        id: t.ticket_number || t.id,
+        ticket_number: t.ticket_number || t.id,
+        title: t.title || 'Support Request',
+        description: t.description || '',
+        company: t.contact_name || 'KAA Client',
+        priority: t.priority || 'medium',
+        status: t.status || 'open',
+        category: t.category || 'General',
+        assignee: { name: 'Alex Johnson', avatar: 'https://i.pravatar.cc/150?u=1' },
+        createdAt: t.created_at || new Date().toISOString()
+      }))
+
+      // Merge store & db tickets
+      const allMap = new Map()
+      storeTickets.forEach(t => allMap.set(t.id, t))
+      dbMapped.forEach((t: any) => allMap.set(t.id, t))
+      const combined = Array.from(allMap.values())
+
+      return combined.filter(t => isKaaInternal ? true : t.company === userCompany)
     }
 
-    const { data, error } = await query
-    if (error || !data || data.length === 0) {
-      // Return filtered mock tickets if DB table is empty or error
-      return mockTickets.filter(ticket => 
-        isKaaInternal ? true : (ticket.company === userCompany)
-      )
-    }
-    return data
+    return storeTickets.filter(t => isKaaInternal ? true : t.company === userCompany)
   } catch {
-    return mockTickets.filter(ticket => 
-      isKaaInternal ? true : (ticket.company === userCompany)
-    )
+    return useMasterStore.getState().tickets.filter(t => isKaaInternal ? true : t.company === userCompany)
   }
 }
 
@@ -34,7 +45,7 @@ export async function createTicket(ticketData: {
 }) {
   try {
     const { data, error } = await supabase.from('tickets').insert([{
-      ticket_number: `TICK-2026-${Math.floor(100000 + Math.random() * 900000)}`,
+      ticket_number: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
       title: ticketData.title,
       description: ticketData.description || '',
       source: 'portal',

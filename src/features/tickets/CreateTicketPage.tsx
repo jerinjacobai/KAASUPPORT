@@ -1,32 +1,51 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { ArrowLeft, Check, ChevronRight, UploadCloud, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
-import { mockAssets } from '@/lib/mock-data';
+import { useMasterStore } from '@/stores/master-store';
+import { createTicket } from '@/services/ticketService';
 
 const STEPS = ['Context', 'Issue Details', 'Attachments', 'Review & Submit'];
 
 export default function CreateTicketPage() {
   const navigate = useNavigate();
   const { isKaaInternal, userCompany } = useAuthStore();
+  const { companies, assets, addTicket } = useMasterStore();
   
   const [currentStep, setCurrentStep] = useState(0);
-  const [company, setCompany] = useState(isKaaInternal ? 'Acme Corp' : (userCompany || 'Acme Corp'));
+  const [company, setCompany] = useState('');
   const [assetId, setAssetId] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('medium');
   const [category, setCategory] = useState('Hardware');
 
-  // Filter available equipment based on company scope
-  const availableAssets = mockAssets.filter(ast => 
-    isKaaInternal ? true : (ast.company === userCompany)
+  // Initialize company state once companies are loaded
+  useEffect(() => {
+    if (!company) {
+      if (!isKaaInternal && userCompany) {
+        setCompany(userCompany);
+      } else if (companies.length > 0) {
+        setCompany(companies[0].name);
+      } else {
+        setCompany('Acme Corp');
+      }
+    }
+  }, [companies, isKaaInternal, userCompany, company]);
+
+  // Filter available equipment based on selected company
+  const availableAssets = assets.filter(ast => 
+    ast.company === company
   );
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    if (currentStep === 0 && !company) {
+      toast.error('Please select a client company');
+      return;
+    }
     if (currentStep === 1 && !title.trim()) {
       toast.error('Please enter a ticket title');
       return;
@@ -34,11 +53,37 @@ export default function CreateTicketPage() {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(s => s + 1);
     } else {
-      // Submit
-      toast.success('Ticket created successfully', {
-        description: 'TKT-1064 has been generated and assigned.'
+      // Submit Ticket to master store & Supabase
+      const newTicket = addTicket({
+        title: title.trim(),
+        description: description.trim() || 'No additional details provided.',
+        company: company,
+        assetId: assetId,
+        priority: priority,
+        category: category,
+        status: 'open',
+        assignee: { name: 'Alex Johnson', avatar: 'https://i.pravatar.cc/150?u=1' }
       });
-      navigate('/tickets/TKT-1064');
+
+      // Background sync with Supabase table
+      try {
+        await createTicket({
+          title: title.trim(),
+          description: description.trim(),
+          priority: priority,
+          category: category,
+          company: company,
+          assetId: assetId
+        });
+      } catch (err) {
+        console.warn('Supabase sync note:', err);
+      }
+
+      toast.success('Ticket created successfully', {
+        description: `${newTicket.id} has been generated and logged under ${company}.`
+      });
+
+      navigate(`/tickets/${newTicket.id}`);
     }
   };
 
@@ -58,7 +103,7 @@ export default function CreateTicketPage() {
         </button>
       </PageHeader>
 
-      {/* Responsive Stepper */}
+      {/* Stepper */}
       <div className="glass rounded-xl p-6 border-border/50">
         <div className="relative flex justify-between">
           <div className="absolute top-4 left-0 w-full h-0.5 bg-secondary -z-10">
@@ -112,32 +157,35 @@ export default function CreateTicketPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium flex items-center justify-between">
-                  Company <span className="text-destructive">*</span>
+                <label className="text-sm font-medium flex items-center justify-between text-foreground">
+                  Client Company <span className="text-destructive">*</span>
                   {!isKaaInternal && <Lock className="w-3.5 h-3.5 text-emerald-400" />}
                 </label>
                 <select 
                   value={company}
-                  onChange={(e) => setCompany(e.target.value)}
+                  onChange={(e) => {
+                    setCompany(e.target.value);
+                    setAssetId('');
+                  }}
                   disabled={!isKaaInternal}
                   className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all disabled:bg-secondary/50 disabled:text-emerald-400 disabled:font-semibold text-sm"
                   style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}
                 >
-                  <option value="Acme Corp">Acme Corp</option>
-                  <option value="Globex Ltd">Globex Ltd</option>
-                  <option value="Initech Inc">Initech Inc</option>
+                  {companies.map(c => (
+                    <option key={c.id} value={c.name}>{c.name} ({c.code})</option>
+                  ))}
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Mapped Equipment / Asset (Optional)</label>
+                <label className="text-sm font-medium text-foreground">Mapped Equipment / Asset (Optional)</label>
                 <select 
                   value={assetId}
                   onChange={(e) => setAssetId(e.target.value)}
                   className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                   style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}
                 >
-                  <option value="">{availableAssets.length === 0 ? "No registered assets yet (Optional)" : "Select Equipment"}</option>
+                  <option value="">{availableAssets.length === 0 ? `No registered assets for ${company} yet (Optional)` : "Select Equipment"}</option>
                   {availableAssets.map((ast: any) => (
                     <option key={ast.id} value={ast.id}>
                       {ast.tag} - {ast.name} ({ast.amcStatus})
@@ -147,7 +195,7 @@ export default function CreateTicketPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Branch / Location</label>
+                <label className="text-sm font-medium text-foreground">Branch / Location</label>
                 <select className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                   <option>HQ - Primary Plant</option>
                   <option>Branch Office - Zone 2</option>
@@ -155,7 +203,7 @@ export default function CreateTicketPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Department</label>
+                <label className="text-sm font-medium text-foreground">Department</label>
                 <select className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                   <option>IT & Infrastructure</option>
                   <option>Plant Maintenance</option>
@@ -173,19 +221,19 @@ export default function CreateTicketPage() {
             
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Subject / Title <span className="text-destructive">*</span></label>
+                <label className="text-sm font-medium text-foreground">Subject / Title <span className="text-destructive">*</span></label>
                 <input 
                   type="text" 
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="E.g., Siemens PLC input module failure on line 3" 
-                  className="w-full bg-background border border-border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" 
+                  className="w-full bg-background border border-border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground" 
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Category</label>
+                  <label className="text-sm font-medium text-foreground">Category</label>
                   <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                     <option value="Hardware">Hardware / Machinery</option>
                     <option value="Software">Software / Firmware</option>
@@ -195,7 +243,7 @@ export default function CreateTicketPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Priority Level</label>
+                  <label className="text-sm font-medium text-foreground">Priority Level</label>
                   <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                     <option value="low">Low (Standard response)</option>
                     <option value="medium">Medium (4-hour SLA)</option>
@@ -206,13 +254,13 @@ export default function CreateTicketPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Detailed Symptom Description</label>
+                <label className="text-sm font-medium text-foreground">Detailed Symptom Description</label>
                 <textarea 
                   rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe error codes, physical condition, LED status, or steps to reproduce..."
-                  className="w-full bg-background border border-border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full bg-background border border-border rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-foreground"
                 />
               </div>
             </div>
@@ -253,11 +301,11 @@ export default function CreateTicketPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground text-xs block">TITLE</span>
-                  <span className="font-medium">{title || 'Siemens PLC module error'}</span>
+                  <span className="font-medium text-foreground">{title || 'Siemens PLC module error'}</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground text-xs block">CATEGORY</span>
-                  <span className="font-medium">{category}</span>
+                  <span className="font-medium text-foreground">{category}</span>
                 </div>
               </div>
             </div>
@@ -269,7 +317,7 @@ export default function CreateTicketPage() {
       <div className="flex items-center justify-between pt-2">
         <button
           onClick={handleBack}
-          className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors"
+          className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground"
         >
           {currentStep === 0 ? 'Cancel' : 'Back'}
         </button>

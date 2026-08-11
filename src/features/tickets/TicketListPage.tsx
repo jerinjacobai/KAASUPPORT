@@ -6,6 +6,7 @@ import { PriorityBadge } from '@/components/shared/PriorityBadge';
 import { Plus, Search, Download, MoreHorizontal, Lock, Building2, RefreshCw, Eye, CheckCircle2, UserCheck, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/stores/auth-store';
+import { useMasterStore } from '@/stores/master-store';
 import { Badge } from '@/components/ui/badge';
 import { useTickets } from '@/hooks/useTickets';
 import { toast } from 'sonner';
@@ -24,10 +25,21 @@ export default function TicketListPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   
   const { isKaaInternal, userCompany } = useAuthStore();
-  const { data: tickets = [], isLoading, refetch, isRefetching } = useTickets();
+  const { tickets: storeTickets, updateTicket } = useMasterStore();
+  const { data: remoteTickets = [], isLoading, refetch, isRefetching } = useTickets();
+
+  // Combine store tickets and remote tickets avoiding duplicates
+  const allTicketsMap = new Map();
+  storeTickets.forEach(t => allTicketsMap.set(t.id, t));
+  remoteTickets.forEach((t: any) => {
+    if (!allTicketsMap.has(t.id || t.ticket_number)) {
+      allTicketsMap.set(t.id || t.ticket_number, t);
+    }
+  });
+  const tickets = Array.from(allTicketsMap.values());
 
   // Multi-tenant Row-Level Security Filtering + Status & Priority Filters
-  const filteredTickets = (tickets || []).filter((ticket: any) => {
+  const filteredTickets = tickets.filter((ticket: any) => {
     const matchesTenant = isKaaInternal ? true : (ticket.company === userCompany || !ticket.company);
     
     const matchesStatus = statusFilter === 'all' ? true : 
@@ -59,6 +71,7 @@ export default function TicketListPage() {
   };
 
   const handleQuickStatusChange = (ticketId: string, newStatus: string) => {
+    updateTicket(ticketId, { status: newStatus });
     toast.success(`Ticket ${ticketId} updated`, {
       description: `Status changed to ${newStatus}.`
     });
@@ -101,7 +114,7 @@ export default function TicketListPage() {
                 placeholder="Search by ID, title, or assignee..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-lg py-2 pl-9 pr-4 text-sm outline-none transition-all"
+                className="w-full bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-lg py-2 pl-9 pr-4 text-sm outline-none transition-all text-foreground"
               />
             </div>
           </div>
@@ -122,8 +135,8 @@ export default function TicketListPage() {
             >
               <option value="all">Status: All</option>
               <option value="open">Status: Open</option>
-              <option value="in progress">Status: In Progress</option>
-              <option value="waiting customer">Status: Waiting Customer</option>
+              <option value="in_progress">Status: In Progress</option>
+              <option value="waiting_on_customer">Status: Waiting Customer</option>
               <option value="resolved">Status: Resolved</option>
             </select>
 
@@ -155,7 +168,7 @@ export default function TicketListPage() {
 
         {/* Table */}
         <div className="flex-1 overflow-auto">
-          {isLoading ? (
+          {isLoading && tickets.length === 0 ? (
             <div className="flex items-center justify-center p-12">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
@@ -244,10 +257,10 @@ export default function TicketListPage() {
                           <DropdownMenuItem onClick={() => navigate(`/tickets/${ticket.id}`)} className="cursor-pointer gap-2 text-xs">
                             <Eye className="w-3.5 h-3.5 text-primary" /> View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleQuickStatusChange(ticket.id, 'In Progress')} className="cursor-pointer gap-2 text-xs">
+                          <DropdownMenuItem onClick={() => handleQuickStatusChange(ticket.id, 'in_progress')} className="cursor-pointer gap-2 text-xs">
                             <UserCheck className="w-3.5 h-3.5 text-amber-400" /> Start Progress
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleQuickStatusChange(ticket.id, 'Resolved')} className="cursor-pointer gap-2 text-xs">
+                          <DropdownMenuItem onClick={() => handleQuickStatusChange(ticket.id, 'resolved')} className="cursor-pointer gap-2 text-xs">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Mark Resolved
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -265,8 +278,8 @@ export default function TicketListPage() {
         <div className="p-4 border-t border-border flex items-center justify-between text-xs text-muted-foreground bg-secondary/10">
           <span>Showing {filteredTickets.length} tickets</span>
           <div className="flex items-center gap-2">
-            <button className="px-2.5 py-1 rounded border border-border bg-background hover:bg-secondary disabled:opacity-50" disabled>Previous</button>
-            <button className="px-2.5 py-1 rounded border border-border bg-background hover:bg-secondary disabled:opacity-50" disabled>Next</button>
+            <button className="px-2.5 py-1 rounded border border-border bg-background hover:bg-secondary disabled:opacity-50 text-foreground" disabled>Previous</button>
+            <button className="px-2.5 py-1 rounded border border-border bg-background hover:bg-secondary disabled:opacity-50 text-foreground" disabled>Next</button>
           </div>
         </div>
 
