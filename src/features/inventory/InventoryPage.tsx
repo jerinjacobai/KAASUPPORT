@@ -228,9 +228,8 @@ export default function InventoryPage() {
             </div>
 
             <div className="p-3 bg-secondary/50 rounded-lg border border-border text-xs space-y-1">
-              <p className="font-semibold text-foreground">Auto-detected Restock Items:</p>
-              <p className="text-rose-400 flex items-center gap-1">• Siemens S7 PLC Module (SKU: PRT-1001) - 10 units</p>
-              <p className="text-rose-400 flex items-center gap-1">• Industrial Cat6 Patch Cable (SKU: PRT-1004) - 50 units</p>
+              <p className="font-semibold text-foreground">Restock Items:</p>
+              <p className="text-muted-foreground">No low-stock items detected. Add spare parts to the inventory catalog first, then restock alerts will appear here automatically.</p>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">

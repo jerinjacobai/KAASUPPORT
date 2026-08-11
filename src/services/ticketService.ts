@@ -16,7 +16,7 @@ export async function fetchTickets(isKaaInternal: boolean, userCompany: string |
         priority: t.priority || 'medium',
         status: t.status || 'open',
         category: t.category || 'General',
-        assignee: { name: 'Alex Johnson', avatar: 'https://i.pravatar.cc/150?u=1' },
+        assignee: { name: 'Support Staff', avatar: '' },
         createdAt: t.created_at || new Date().toISOString()
       }))
 

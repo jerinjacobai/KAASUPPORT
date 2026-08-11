@@ -77,6 +77,8 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+import { useMasterStore } from '@/stores/master-store';
+
 export function App() {
   const { checkSession } = useAuthStore();
 
@@ -85,9 +87,7 @@ export function App() {
 
   useEffect(() => {
     checkSession();
-    import('@/stores/master-store').then(({ useMasterStore }) => {
-      useMasterStore.getState().purgeMockData();
-    });
+    useMasterStore.getState().purgeMockData();
   }, [checkSession]);
 
   return (

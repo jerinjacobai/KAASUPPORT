@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { mockTickets, mockAssets, mockEngineers } from '@/lib/mock-data';
+import { useMasterStore } from '@/stores/master-store';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
 
@@ -72,9 +72,10 @@ export function Header() {
 
   // Live filter data
   const query = searchQuery.trim().toLowerCase();
+  const { tickets: storeTickets, assets: storeAssets, users: storeUsers } = useMasterStore();
 
   const matchingTickets = query 
-    ? mockTickets.filter(t => 
+    ? storeTickets.filter(t => 
         t.id.toLowerCase().includes(query) || 
         t.title.toLowerCase().includes(query) || 
         t.company.toLowerCase().includes(query)
@@ -82,7 +83,7 @@ export function Header() {
     : [];
 
   const matchingAssets = query
-    ? mockAssets.filter(a => 
+    ? storeAssets.filter(a => 
         a.tag.toLowerCase().includes(query) || 
         a.name.toLowerCase().includes(query) || 
         a.company.toLowerCase().includes(query) ||
@@ -91,10 +92,11 @@ export function Header() {
     : [];
 
   const matchingEngineers = query
-    ? mockEngineers.filter(e =>
-        e.name.toLowerCase().includes(query) ||
-        e.role.toLowerCase().includes(query) ||
-        e.skills.some((s: string) => s.toLowerCase().includes(query))
+    ? storeUsers.filter(u =>
+        u.roleType === 'KAA Internal Staff' && (
+        u.name.toLowerCase().includes(query) ||
+        u.roleName.toLowerCase().includes(query) ||
+        u.email.toLowerCase().includes(query))
       ).slice(0, 3)
     : [];
 
@@ -299,10 +301,10 @@ export function Header() {
                     className="flex items-center justify-between p-2.5 rounded-xl hover:bg-secondary/60 transition-all cursor-pointer border border-transparent hover:border-amber-500/20 group"
                   >
                     <div className="flex items-center gap-2.5">
-                      <img src={e.avatar} alt="" className="w-6 h-6 rounded-full border border-border" />
+                      <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px] font-bold border border-border">{e.name.charAt(0)}</div>
                       <div>
                         <div className="text-xs font-semibold text-foreground">{e.name}</div>
-                        <div className="text-[10px] text-muted-foreground">{e.role} • {e.location}</div>
+                        <div className="text-[10px] text-muted-foreground">{e.roleName} • {e.email}</div>
                       </div>
                     </div>
                     <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400">

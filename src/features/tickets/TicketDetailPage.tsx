@@ -33,7 +33,7 @@ export default function TicketDetailPage() {
     priority: foundTicket.priority || 'medium',
     company: foundTicket.company,
     category: foundTicket.category || 'Hardware',
-    assignee: foundTicket.assignee || { name: 'Alex Johnson', avatar: 'https://i.pravatar.cc/150?u=1' },
+    assignee: foundTicket.assignee || { name: 'Support Staff', avatar: '' },
     reporter: { name: 'Field Dispatcher', avatar: 'https://i.pravatar.cc/150?u=5', email: `dispatch@${foundTicket.company.toLowerCase().replace(/[^a-z0-9]/g, '')}.com` },
     created: foundTicket.createdAt || '2026-08-11T10:00:00Z',
   };

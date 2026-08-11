@@ -238,7 +238,7 @@ export default function TicketListPage() {
                     <td className="p-4">
                       <div className="flex items-center gap-2">
                         <img src={ticket.assignee?.avatar || 'https://i.pravatar.cc/150?u=1'} alt="" className="w-6 h-6 rounded-full border border-border" />
-                        <span className="text-xs text-foreground font-medium">{ticket.assignee?.name || 'Alex Johnson'}</span>
+                        <span className="text-xs text-foreground font-medium">{ticket.assignee?.name || 'Unassigned'}</span>
                       </div>
                     </td>
                     <td className="p-4 text-xs text-muted-foreground whitespace-nowrap">

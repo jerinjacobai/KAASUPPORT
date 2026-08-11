@@ -158,7 +158,7 @@ export default function KanbanPage() {
                     <div className="pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground">
                       <div className="flex items-center gap-1.5">
                         <img src={ticket.assignee?.avatar || 'https://i.pravatar.cc/150?u=1'} alt="" className="w-5 h-5 rounded-full border border-border" />
-                        <span className="truncate max-w-[90px] text-foreground font-medium">{ticket.assignee?.name || 'Alex Johnson'}</span>
+                        <span className="truncate max-w-[90px] text-foreground font-medium">{ticket.assignee?.name || 'Unassigned'}</span>
                       </div>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" /> {formatDistanceToNow(new Date(ticket.createdAt || Date.now()), { addSuffix: true })}
