@@ -137,7 +137,7 @@ export function App() {
           </Suspense>
         </BrowserRouter>
         <Toaster position="top-right" theme="system" richColors />
-        <Analytics />
+        {import.meta.env.PROD && <Analytics mode="production" />}
       </ThemeProvider>
     </QueryClientProvider>
   );
