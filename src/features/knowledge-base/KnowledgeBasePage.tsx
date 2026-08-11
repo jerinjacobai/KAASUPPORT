@@ -16,7 +16,7 @@ export default function KnowledgeBasePage() {
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState('Hardware');
 
-  const filteredArticles = mockKBArticles.filter(art =>
+  const filteredArticles = mockKBArticles.filter((art: any) =>
     art.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     art.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -76,7 +76,7 @@ export default function KnowledgeBasePage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {filteredArticles.map((article) => (
+        {filteredArticles.map((article: any) => (
           <div 
             key={article.id} 
             onClick={() => handleOpenArticle(article)}

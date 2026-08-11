@@ -8,19 +8,9 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { mockAssets } from '@/lib/mock-data';
 
-// Mock Master Datasets
-const initialCompanies = [
-  { id: 'COMP-1', name: 'Acme Corp', code: 'ACME', industry: 'Manufacturing & Heavy Machinery', email: 'support@acmecorp.com', phone: '+91 98765 43210', assetsCount: 5, usersCount: 12, is_active: true },
-  { id: 'COMP-2', name: 'Globex Ltd', code: 'GLBX', industry: 'Electronics & Automation', email: 'admin@globex.com', phone: '+91 98765 11223', assetsCount: 3, usersCount: 8, is_active: true },
-  { id: 'COMP-3', name: 'Initech Inc', code: 'INTC', industry: 'Software & Cloud Infrastructure', email: 'it@initech.com', phone: '+91 98765 99887', assetsCount: 2, usersCount: 5, is_active: true },
-];
-
-const initialUsers = [
-  { id: 'USR-1', name: 'Alex Johnson', email: 'alex.j@kaa.com', roleType: 'KAA Internal Staff', roleName: 'Senior Field Engineer', mappedCompany: 'Global (All Companies)', status: 'Active' },
-  { id: 'USR-2', name: 'John Doe', email: 'john@acmecorp.com', roleType: 'Client User', roleName: 'Client Admin', mappedCompany: 'Acme Corp', status: 'Active' },
-  { id: 'USR-3', name: 'Sarah Connor', email: 'sarah@globex.com', roleType: 'Client User', roleName: 'Department Manager', mappedCompany: 'Globex Ltd', status: 'Active' },
-  { id: 'USR-4', name: 'Priya Sharma', email: 'priya.s@kaa.com', roleType: 'KAA Internal Staff', roleName: 'Service Coordinator', mappedCompany: 'Global (All Companies)', status: 'Active' },
-];
+// Live Master Datasets
+const initialCompanies: any[] = [];
+const initialUsers: any[] = [];
 
 export default function MastersPage() {
   const [activeTab, setActiveTab] = useState('companies');
@@ -182,51 +172,62 @@ export default function MastersPage() {
 
         {/* Tab 1: Companies Master */}
         <TabsContent value="companies" className="mt-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {companiesList
-              .filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.code.toLowerCase().includes(searchTerm.toLowerCase()))
-              .map((comp) => (
-                <div key={comp.id} className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all flex flex-col justify-between space-y-4 shadow-lg">
-                  <div>
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
-                        <Building2 className="w-6 h-6" />
+          {companiesList.length === 0 ? (
+            <div className="glass rounded-xl p-12 text-center border border-border flex flex-col items-center justify-center">
+              <Building2 className="w-12 h-12 text-muted-foreground/40 mb-3" />
+              <h3 className="text-base font-bold text-foreground">No Companies Registered Yet</h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">Click "Add Company Master" above to onboard your first client tenant company into the portal.</p>
+              <Button onClick={() => setCompanyModalOpen(true)} size="sm" className="mt-4 gap-2 text-xs">
+                <Building2 className="w-4 h-4" /> Add Company Master
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {companiesList
+                .filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.code.toLowerCase().includes(searchTerm.toLowerCase()))
+                .map((comp) => (
+                  <div key={comp.id} className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all flex flex-col justify-between space-y-4 shadow-lg">
+                    <div>
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                          <Building2 className="w-6 h-6" />
+                        </div>
+                        <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-400 font-semibold">
+                          {comp.code}
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-400 font-semibold">
-                        {comp.code}
-                      </Badge>
+
+                      <h3 className="font-bold text-lg text-foreground">{comp.name}</h3>
+                      <p className="text-xs text-muted-foreground mb-3">{comp.industry}</p>
+
+                      <div className="space-y-2 text-xs text-muted-foreground bg-secondary/30 p-3 rounded-lg border border-border/50">
+                        <div className="flex justify-between">
+                          <span>Contact Email:</span>
+                          <span className="font-mono text-foreground">{comp.email}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Mapped Users:</span>
+                          <span className="font-bold text-amber-400">{comp.usersCount} users</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Mapped Assets:</span>
+                          <span className="font-bold text-emerald-400">{comp.assetsCount} assets</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <h3 className="font-bold text-lg text-foreground">{comp.name}</h3>
-                    <p className="text-xs text-muted-foreground mb-3">{comp.industry}</p>
-
-                    <div className="space-y-2 text-xs text-muted-foreground bg-secondary/30 p-3 rounded-lg border border-border/50">
-                      <div className="flex justify-between">
-                        <span>Contact Email:</span>
-                        <span className="font-mono text-foreground">{comp.email}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Mapped Users:</span>
-                        <span className="font-bold text-amber-400">{comp.usersCount} users</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Mapped Assets:</span>
-                        <span className="font-bold text-emerald-400">{comp.assetsCount} assets</span>
-                      </div>
+                    <div className="pt-3 border-t border-border/50 flex items-center justify-between">
+                      <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Tenant Isolated
+                      </span>
+                      <Button variant="ghost" size="sm" onClick={() => toast.info(`Editing ${comp.name} Master`)} className="text-xs gap-1">
+                        <Edit3 className="w-3.5 h-3.5" /> Edit Master
+                      </Button>
                     </div>
                   </div>
-
-                  <div className="pt-3 border-t border-border/50 flex items-center justify-between">
-                    <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Tenant Isolated
-                    </span>
-                    <Button variant="ghost" size="sm" onClick={() => toast.info(`Editing ${comp.name} Master`)} className="text-xs gap-1">
-                      <Edit3 className="w-3.5 h-3.5" /> Edit Master
-                    </Button>
-                  </div>
-                </div>
-              ))}
-          </div>
+                ))}
+            </div>
+          )}
         </TabsContent>
 
         {/* Tab 2: User & Role Mapping Master */}

@@ -26,9 +26,7 @@ interface AuthState {
   hasPermission: (permission: string) => boolean
   hasRole: (role: string) => boolean
   checkSession: () => Promise<void>
-  signIn: (email: string, password: string, isClientLogin?: boolean, companyName?: string) => Promise<{ error: Error | null }>
-  loginAsAdmin: () => void
-  loginAsClient: (companyName?: string) => void
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   reset: () => void
 }
@@ -43,7 +41,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   userCompany: null,
   activeCompanyId: null,
   isLoading: false,
-  isKaaInternal: false,
+  isKaaInternal: true, // Default KAA staff perspective
 
   setUser: (user) => set({ user }),
   setSession: (session) => set({ session }),
@@ -73,7 +71,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
         })
       } else {
-        // User must log in first via Login Page
         set({ user: null, session: null, isLoading: false })
       }
     } catch {
@@ -81,65 +78,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  signIn: async (email, password, isClientLogin = false, companyName = 'Acme Corp') => {
+  signIn: async (email, password) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        if (isClientLogin) {
-          get().loginAsClient(companyName)
-        } else {
-          get().loginAsAdmin()
-        }
-        return { error: null }
+        return { error }
       }
-      set({ user: data.user, session: data.session })
+      
+      const isInternal = email.endsWith('@kaasupport.com') || email.endsWith('@kaa-erp.com') || data.user?.user_metadata?.is_kaa_internal;
+      
+      set({ 
+        user: data.user, 
+        session: data.session,
+        isKaaInternal: !!isInternal,
+        roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
+        permissions: ['*'],
+        userCompany: data.user?.user_metadata?.company || null
+      })
+      
       return { error: null }
-    } catch {
-      if (isClientLogin) {
-        get().loginAsClient(companyName)
-      } else {
-        get().loginAsAdmin()
-      }
-      return { error: null }
+    } catch (err: any) {
+      return { error: err }
     }
-  },
-
-  loginAsAdmin: () => {
-    const mockAdmin: User = {
-      id: 'kaa-admin-id',
-      app_metadata: {},
-      user_metadata: { full_name: 'KAA Super Admin' },
-      aud: 'authenticated',
-      created_at: new Date().toISOString(),
-      email: 'admin@kaa-erp.com',
-    }
-    set({
-      user: mockAdmin,
-      roles: ['super_admin', 'internal'],
-      permissions: ['*'],
-      isKaaInternal: true,
-      userCompany: null, // Sees all companies
-      isLoading: false,
-    })
-  },
-
-  loginAsClient: (companyName = 'Acme Corp') => {
-    const mockClientUser: User = {
-      id: 'client-user-id',
-      app_metadata: {},
-      user_metadata: { full_name: 'John Doe (Client Admin)', company: companyName },
-      aud: 'authenticated',
-      created_at: new Date().toISOString(),
-      email: `support@${companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-    }
-    set({
-      user: mockClientUser,
-      roles: ['client_admin', 'client'],
-      permissions: ['client.tickets.read', 'client.tickets.create', 'client.assets.read'],
-      isKaaInternal: false,
-      userCompany: companyName, // Locked to mapped company!
-      isLoading: false,
-    })
   },
 
   signOut: async () => {
@@ -161,6 +121,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     userCompany: null,
     activeCompanyId: null,
     isLoading: false,
-    isKaaInternal: false,
+    isKaaInternal: true,
   }),
 }))

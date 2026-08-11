@@ -15,10 +15,10 @@ export default function EngineersPage() {
   const [newEngineerName, setNewEngineerName] = useState('');
   const [newEngineerRole, setNewEngineerRole] = useState('Senior PLC Engineer');
 
-  const filteredEngineers = mockEngineers.filter(eng =>
+  const filteredEngineers = mockEngineers.filter((eng: any) =>
     eng.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     eng.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    eng.skills.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
+    eng.skills.some((s: string) => s.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleOpenAssignModal = (engineer: any) => {
@@ -112,7 +112,7 @@ export default function EngineersPage() {
               <div className="space-y-1.5 mb-4">
                 <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Skills</span>
                 <div className="flex flex-wrap gap-1">
-                  {engineer.skills.map((skill, idx) => (
+                  {engineer.skills.map((skill: string, idx: number) => (
                     <span key={idx} className="text-[11px] px-2 py-0.5 rounded-md bg-secondary border border-border text-foreground">
                       {skill}
                     </span>

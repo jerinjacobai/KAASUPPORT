@@ -94,7 +94,7 @@ export function Header() {
     ? mockEngineers.filter(e =>
         e.name.toLowerCase().includes(query) ||
         e.role.toLowerCase().includes(query) ||
-        e.skills.some(s => s.toLowerCase().includes(query))
+        e.skills.some((s: string) => s.toLowerCase().includes(query))
       ).slice(0, 3)
     : [];
 

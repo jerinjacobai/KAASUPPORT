@@ -16,7 +16,7 @@ export default function InventoryPage() {
   const [partSku, setPartSku] = useState('');
   const [partPrice, setPartPrice] = useState('₹12,500');
 
-  const filteredParts = mockInventoryParts.filter(part =>
+  const filteredParts = mockInventoryParts.filter((part: any) =>
     part.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     part.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
     part.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -85,7 +85,7 @@ export default function InventoryPage() {
         </div>
 
         <div className="divide-y divide-border">
-          {filteredParts.map((part) => (
+          {filteredParts.map((part: any) => (
             <div key={part.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-secondary/30 transition-colors">
               <div className="flex items-start gap-3">
                 <div className="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
