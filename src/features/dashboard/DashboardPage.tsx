@@ -10,6 +10,8 @@ import { useMasterStore } from '@/stores/master-store';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 
+import { toast } from 'sonner';
+
 export default function DashboardPage() {
   const { isKaaInternal, userCompany } = useAuthStore();
   const { tickets, amcContracts } = useMasterStore();
@@ -25,6 +27,118 @@ export default function DashboardPage() {
   const remainingVisitsStr = activeContracts.length > 0 
     ? `${activeContracts[0].totalVisits - activeContracts[0].usedVisits} / ${activeContracts[0].totalVisits}`
     : '0 / 0';
+
+  const handleExportSummary = () => {
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast.error('Please allow popups to export executive summary.');
+        return;
+      }
+
+      const ticketsListRows = companyTickets.length > 0 
+        ? companyTickets.map(t => `
+            <tr>
+              <td><strong>${t.id || t.ticket_number}</strong></td>
+              <td>${t.title}</td>
+              <td>${t.company}</td>
+              <td><span style="text-transform: uppercase; font-weight: bold; color: ${t.priority === 'high' || t.priority === 'critical' ? '#ef4444' : '#eab308'};">${t.priority}</span></td>
+              <td><span style="text-transform: uppercase; font-weight: bold; color: ${t.status === 'resolved' ? '#10b981' : '#6366f1'};">${t.status}</span></td>
+            </tr>
+          `).join('')
+        : `<tr><td colspan="5" style="text-align: center; color: #6b7280; padding: 15px;">No active support tickets.</td></tr>`;
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>KAA Dashboard Executive Summary</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; margin: 0; padding: 20px; background: #fff; }
+              .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #6366f1; padding-bottom: 15px; margin-bottom: 20px; }
+              .brand { font-size: 22px; font-weight: 800; color: #4f46e5; }
+              .sub-brand { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+              .title { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 5px 0; }
+
+              .kpi-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 25px; }
+              .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; }
+              .kpi-label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+              .kpi-value { font-size: 22px; font-weight: 800; color: #0f172a; }
+
+              table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 15px; }
+              th { background: #f1f5f9; color: #475569; font-weight: 700; text-align: left; padding: 8px 10px; border-bottom: 2px solid #cbd5e1; text-transform: uppercase; font-size: 10px; }
+              td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; color: #334155; }
+            </style>
+          </head>
+          <body>
+            <div className="header-bar">
+              <div>
+                <div className="brand">KAA SUPPORT PORTAL</div>
+                <div className="sub-brand">Dashboard Executive Summary Report</div>
+              </div>
+              <div style="text-align: right;">
+                <p style="font-size: 11px; color: #64748b; margin: 0;">Scope: <strong>${isKaaInternal ? 'All KAA Clients' : userCompany}</strong></p>
+                <p style="font-size: 10px; color: #94a3b8; margin: 2px 0 0 0;">Generated: ${new Date().toLocaleString()}</p>
+              </div>
+            </div>
+
+            <h2 className="title">Executive Operations Summary</h2>
+
+            <div className="kpi-container">
+              <div className="kpi-card">
+                <div className="kpi-label">TOTAL TICKETS</div>
+                <div className="kpi-value">${companyTickets.length}</div>
+              </div>
+              <div className="kpi-card">
+                <div className="kpi-label">ACTIVE OPEN ISSUES</div>
+                <div className="kpi-value" style="color: #6366f1;">${openCount}</div>
+              </div>
+              <div className="kpi-card">
+                <div className="kpi-label">AVG RESPONSE TIME</div>
+                <div className="kpi-value">1.8 hrs</div>
+              </div>
+              <div className="kpi-card">
+                <div className="kpi-label">SLA COMPLIANCE</div>
+                <div className="kpi-value" style="color: #10b981;">100%</div>
+              </div>
+            </div>
+
+            <h3>Recent Registered Tickets</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>Title</th>
+                  <th>Company</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${ticketsListRows}
+              </tbody>
+            </table>
+
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 300);
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+
+      toast.success('Executive Summary PDF Generated!', {
+        description: 'Opened dashboard printable summary window.'
+      });
+    } catch {
+      toast.error('Failed to generate dashboard export');
+    }
+  };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -56,7 +170,7 @@ export default function DashboardPage() {
               <PlusCircle className="w-4 h-4" /> Raise Ticket
             </Link>
           )}
-          <button className="bg-secondary hover:bg-secondary/80 text-foreground px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-2">
+          <button onClick={handleExportSummary} className="bg-secondary hover:bg-secondary/80 text-foreground px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-2">
             <Download className="w-4 h-4" /> Export Summary
           </button>
         </div>

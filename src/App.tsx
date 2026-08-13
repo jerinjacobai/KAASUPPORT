@@ -77,6 +77,7 @@ const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { useMasterStore } from '@/stores/master-store';
 
 export function App() {
@@ -93,8 +94,9 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <BrowserRouter>
-          <Suspense fallback={
+        <ErrorBoundary>
+          <BrowserRouter>
+            <Suspense fallback={
             <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
             </div>
@@ -136,8 +138,9 @@ export function App() {
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Routes>
-          </Suspense>
-        </BrowserRouter>
+            </Suspense>
+          </BrowserRouter>
+        </ErrorBoundary>
         <Toaster position="top-right" theme="system" richColors />
       </ThemeProvider>
     </QueryClientProvider>
