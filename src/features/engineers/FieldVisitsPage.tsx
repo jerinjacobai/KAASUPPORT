@@ -43,7 +43,7 @@ export default function FieldVisitsPage() {
       id: `VISIT-${visitsList.length + 1}`,
       ticketId: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
       engineerName: visitEngineer,
-      engineerAvatar: 'https://i.pravatar.cc/150?u=1',
+      engineerAvatar: '',
       companyName: 'Client Site',
       location: visitLocation,
       scheduledStart: 'Today, 02:00 PM',
@@ -93,7 +93,9 @@ export default function FieldVisitsPage() {
                 <div key={visit.id} className="glass rounded-xl p-5 border border-border hover:border-primary/40 transition-all space-y-4 shadow-lg">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border/50">
                     <div className="flex items-center gap-3">
-                      <img src={visit.engineerAvatar} alt={visit.engineerName} className="w-10 h-10 rounded-full border border-primary/30 object-cover" />
+                      <div className="w-10 h-10 rounded-full bg-primary/20 text-primary border border-primary/30 font-bold text-sm flex items-center justify-center shrink-0">
+                        {visit.engineerName.charAt(0)}
+                      </div>
                       <div>
                         <h4 className="font-semibold text-sm text-foreground">{visit.engineerName}</h4>
                         <p className="text-xs text-muted-foreground">Ticket: <span className="font-medium text-primary">{visit.ticketId}</span> ({visit.companyName})</p>

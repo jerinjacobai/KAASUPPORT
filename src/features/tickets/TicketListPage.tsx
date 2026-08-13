@@ -236,10 +236,18 @@ export default function TicketListPage() {
                       <StatusBadge status={ticket.status || 'open'} />
                     </td>
                     <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <img src={ticket.assignee?.avatar || 'https://i.pravatar.cc/150?u=1'} alt="" className="w-6 h-6 rounded-full border border-border" />
-                        <span className="text-xs text-foreground font-medium">{ticket.assignee?.name || 'Unassigned'}</span>
-                      </div>
+                      {(!ticket.assignee?.name || ticket.assignee.name === 'Unassigned' || ticket.assignee.name === 'Support Staff') ? (
+                        <Badge variant="outline" className="text-[11px] font-normal text-muted-foreground border-border/60">
+                          Unassigned
+                        </Badge>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 text-primary border border-primary/30 font-bold flex items-center justify-center text-[10px]">
+                            {ticket.assignee.name.charAt(0)}
+                          </div>
+                          <span className="text-xs text-foreground font-medium">{ticket.assignee.name}</span>
+                        </div>
+                      )}
                     </td>
                     <td className="p-4 text-xs text-muted-foreground whitespace-nowrap">
                       {formatDistanceToNow(new Date(ticket.createdAt || ticket.created_at || Date.now()), { addSuffix: true })}

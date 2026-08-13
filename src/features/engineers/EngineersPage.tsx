@@ -120,7 +120,9 @@ export default function EngineersPage() {
               <div>
                 <div className="flex items-start justify-between mb-4">
                   <div className="relative">
-                    <img src="https://i.pravatar.cc/150?u=1" alt={engineer.name} className="w-14 h-14 rounded-full border-2 border-primary/20 object-cover" />
+                    <div className="w-14 h-14 rounded-full border-2 border-primary/20 bg-primary/10 text-primary font-bold text-xl flex items-center justify-center">
+                      {engineer.name.charAt(0)}
+                    </div>
                     <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-background bg-emerald-500" />
                   </div>
                   <Badge variant="success">

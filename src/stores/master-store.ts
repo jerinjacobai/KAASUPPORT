@@ -133,7 +133,12 @@ export const useMasterStore = create<MasterState>()(
           users: cleanMockFilter(state.users),
           assets: cleanMockFilter(state.assets),
           amcContracts: cleanMockFilter(state.amcContracts),
-          tickets: cleanMockFilter(state.tickets)
+          tickets: cleanMockFilter(state.tickets).map(t => {
+            if (!t.assignee || t.assignee.name === 'Support Staff' || t.assignee.avatar?.includes('pravatar')) {
+              return { ...t, assignee: { name: 'Unassigned', avatar: '' } }
+            }
+            return t
+          })
         }))
       },
 
@@ -339,7 +344,7 @@ export const useMasterStore = create<MasterState>()(
           priority: ticketData.priority || 'medium',
           status: ticketData.status || 'open',
           category: ticketData.category || 'Hardware',
-          assignee: ticketData.assignee || { name: 'Support Staff', avatar: 'https://i.pravatar.cc/150?u=1' },
+          assignee: ticketData.assignee || { name: 'Unassigned', avatar: '' },
           createdAt: new Date().toISOString(),
           slaBreached: false
         }
@@ -383,7 +388,7 @@ export const useMasterStore = create<MasterState>()(
               priority: t.priority || 'medium',
               status: t.status || 'open',
               category: t.category || 'General',
-              assignee: { name: 'Support Staff', avatar: 'https://i.pravatar.cc/150?u=1' },
+              assignee: { name: 'Unassigned', avatar: '' },
               createdAt: t.created_at || new Date().toISOString()
             }))
             const existingIds = new Set(get().tickets.map(t => t.id))

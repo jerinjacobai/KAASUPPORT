@@ -223,10 +223,16 @@ export default function DashboardPage() {
                     <td className="p-3"><PriorityBadge priority={ticket.priority || 'medium'} /></td>
                     <td className="p-3"><StatusBadge status={ticket.status || 'open'} /></td>
                     <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <img src={ticket.assignee?.avatar || 'https://i.pravatar.cc/150?u=1'} alt="" className="w-5 h-5 rounded-full" />
-                        <span className="text-xs text-foreground font-medium">{ticket.assignee?.name || 'Support Staff'}</span>
-                      </div>
+                      {(!ticket.assignee?.name || ticket.assignee.name === 'Unassigned' || ticket.assignee.name === 'Support Staff') ? (
+                        <span className="text-xs text-muted-foreground italic">Unassigned</span>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-primary/20 text-primary border border-primary/30 font-bold flex items-center justify-center text-[10px]">
+                            {ticket.assignee.name.charAt(0)}
+                          </div>
+                          <span className="text-xs text-foreground font-medium">{ticket.assignee.name}</span>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))

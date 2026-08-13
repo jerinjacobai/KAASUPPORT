@@ -61,7 +61,7 @@ export default function CreateTicketPage() {
         priority: priority,
         category: category,
         status: 'open',
-        assignee: { name: 'Support Staff', avatar: 'https://i.pravatar.cc/150?u=1' }
+        assignee: { name: 'Unassigned', avatar: '' }
       });
 
       // Background sync with Supabase table

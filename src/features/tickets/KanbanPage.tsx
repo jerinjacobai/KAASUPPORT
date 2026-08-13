@@ -157,8 +157,16 @@ export default function KanbanPage() {
 
                     <div className="pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground">
                       <div className="flex items-center gap-1.5">
-                        <img src={ticket.assignee?.avatar || 'https://i.pravatar.cc/150?u=1'} alt="" className="w-5 h-5 rounded-full border border-border" />
-                        <span className="truncate max-w-[90px] text-foreground font-medium">{ticket.assignee?.name || 'Unassigned'}</span>
+                        {(!ticket.assignee?.name || ticket.assignee.name === 'Unassigned' || ticket.assignee.name === 'Support Staff') ? (
+                          <span className="text-[11px] text-muted-foreground italic">Unassigned</span>
+                        ) : (
+                          <>
+                            <div className="w-5 h-5 rounded-full bg-primary/20 text-primary border border-primary/30 font-bold flex items-center justify-center text-[9px]">
+                              {ticket.assignee.name.charAt(0)}
+                            </div>
+                            <span className="truncate max-w-[90px] text-foreground font-medium">{ticket.assignee.name}</span>
+                          </>
+                        )}
                       </div>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" /> {formatDistanceToNow(new Date(ticket.createdAt || Date.now()), { addSuffix: true })}
