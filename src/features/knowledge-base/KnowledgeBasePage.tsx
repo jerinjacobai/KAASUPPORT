@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { mockKBArticles } from '@/lib/mock-data';
 import { Search, ThumbsUp, ThumbsDown, Eye, Plus, Sparkles, BookOpen, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useMasterStore } from '@/stores/master-store';
 
 export default function KnowledgeBasePage() {
+  const { kbArticles, addKBArticle } = useMasterStore();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
@@ -15,8 +17,9 @@ export default function KnowledgeBasePage() {
 
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState('Hardware');
+  const [newContent, setNewContent] = useState('');
 
-  const filteredArticles = mockKBArticles.filter((art: any) =>
+  const filteredArticles = (kbArticles || []).filter((art: any) =>
     art.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     art.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -38,11 +41,20 @@ export default function KnowledgeBasePage() {
       toast.error('Please enter article title');
       return;
     }
-    toast.success(`KB Article Published!`, {
-      description: `"${newTitle}" published under ${newCategory}.`
+
+    const created = addKBArticle({
+      title: newTitle.trim(),
+      category: newCategory,
+      content: newContent.trim() || 'Troubleshooting and step-by-step resolution procedure for this component.'
     });
+
+    toast.success(`KB Article Published!`, {
+      description: `"${created.title}" published under ${created.category}.`
+    });
+
     setCreateModalOpen(false);
     setNewTitle('');
+    setNewContent('');
   };
 
   return (
@@ -51,7 +63,7 @@ export default function KnowledgeBasePage() {
         title="Knowledge Base & AI Self-Service"
         description="FAQs, technical guides, troubleshooting documentation, and AI-driven resolution suggestions"
       >
-        <Button variant="default" onClick={() => setCreateModalOpen(true)} className="gap-2">
+        <Button variant="default" onClick={() => setCreateModalOpen(true)} className="gap-2 text-xs">
           <Plus className="w-4 h-4" /> Create Article
         </Button>
       </PageHeader>
@@ -67,43 +79,56 @@ export default function KnowledgeBasePage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Type error code, machine model, or question (e.g. Siemens PLC connection timeout)..."
+            placeholder="Type error code, machine model, or question..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-background/80 backdrop-blur border border-border rounded-xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:border-primary shadow-lg"
+            className="w-full bg-background/80 backdrop-blur border border-border rounded-xl pl-12 pr-4 py-3 text-sm focus:outline-none focus:border-primary shadow-lg text-foreground"
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {filteredArticles.map((article: any) => (
-          <div 
-            key={article.id} 
-            onClick={() => handleOpenArticle(article)}
-            className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all flex flex-col justify-between space-y-4 shadow-lg cursor-pointer group"
-          >
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <Badge variant="outline" className="text-xs border-primary/30 text-primary">{article.category}</Badge>
-                <span className="text-[11px] text-muted-foreground">Updated {article.lastUpdated}</span>
+      {filteredArticles.length === 0 ? (
+        <div className="glass rounded-xl p-12 text-center border border-border flex flex-col items-center justify-center">
+          <BookOpen className="w-12 h-12 text-muted-foreground/40 mb-3" />
+          <h3 className="text-base font-bold text-foreground">No Knowledge Base Articles Published</h3>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+            Click "Create Article" above to publish technical guides, FAQs, and AI troubleshooting documentation.
+          </p>
+          <Button onClick={() => setCreateModalOpen(true)} size="sm" className="mt-4 gap-2 text-xs">
+            <Plus className="w-4 h-4" /> Create Article
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {filteredArticles.map((article: any) => (
+            <div 
+              key={article.id} 
+              onClick={() => handleOpenArticle(article)}
+              className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all flex flex-col justify-between space-y-4 shadow-lg cursor-pointer group"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <Badge variant="outline" className="text-xs border-primary/30 text-primary">{article.category}</Badge>
+                  <span className="text-[11px] text-muted-foreground">Updated {article.lastUpdated}</span>
+                </div>
+
+                <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                  {article.title}
+                </h3>
               </div>
 
-              <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                {article.title}
-              </h3>
+              <div className="pt-3 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Eye className="w-3.5 h-3.5 text-primary" /> {article.views} views
+                </span>
+                <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                  <ThumbsUp className="w-3.5 h-3.5" /> {article.helpful}% helpful
+                </span>
+              </div>
             </div>
-
-            <div className="pt-3 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Eye className="w-3.5 h-3.5 text-primary" /> {article.views} views
-              </span>
-              <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-                <ThumbsUp className="w-3.5 h-3.5" /> {article.helpful}% helpful
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Article Reader Modal */}
       <Dialog open={readModalOpen} onOpenChange={setReadModalOpen}>
@@ -120,9 +145,7 @@ export default function KnowledgeBasePage() {
             <h4 className="font-semibold text-foreground flex items-center gap-1.5">
               <BookOpen className="w-4 h-4 text-primary" /> Troubleshooting Procedure
             </h4>
-            <p>1. Verify 24V DC power input to the main CPU rack LED indicator panel.</p>
-            <p>2. Check profinet communication cable integrity between station 1 and master gateway.</p>
-            <p>3. If red fault LED flashes 3 times, reset buffer memory via KAA Diagnostics Utility v4.2.</p>
+            <p className="whitespace-pre-line leading-relaxed">{selectedArticle?.content}</p>
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-border text-xs">
@@ -151,13 +174,13 @@ export default function KnowledgeBasePage() {
 
           <form onSubmit={handleCreateArticleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Article Title</label>
+              <label className="text-xs font-medium text-foreground">Article Title *</label>
               <input 
                 type="text" 
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="E.g., How to resolve Siemens PLC PROFIBUS communication fault"
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
               />
             </div>
 
@@ -166,13 +189,24 @@ export default function KnowledgeBasePage() {
               <select 
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
               >
                 <option value="Hardware">Hardware / Machinery</option>
                 <option value="Electrical">Electrical / PLC</option>
                 <option value="Network">Network / Connectivity</option>
                 <option value="Software">Software & Licensing</option>
               </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Troubleshooting Steps / Content</label>
+              <textarea 
+                rows={4}
+                value={newContent}
+                onChange={(e) => setNewContent(e.target.value)}
+                placeholder="Enter step-by-step diagnostic and resolution instructions..."
+                className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+              />
             </div>
 
             <div className="flex justify-end gap-2 pt-2">

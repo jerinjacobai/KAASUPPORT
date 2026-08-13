@@ -75,12 +75,37 @@ export interface TicketMaster {
   slaBreached?: boolean
 }
 
+export interface InventoryPartMaster {
+  id: string
+  sku: string
+  name: string
+  category: string
+  location: string
+  unitPrice: string
+  stock: number
+  minStock: number
+  created_at?: string
+}
+
+export interface KBArticleMaster {
+  id: string
+  title: string
+  category: string
+  content?: string
+  views: number
+  helpful: number
+  lastUpdated: string
+  created_at?: string
+}
+
 interface MasterState {
   companies: CompanyMaster[]
   users: UserMaster[]
   assets: AssetMaster[]
   amcContracts: AMCContractMaster[]
   tickets: TicketMaster[]
+  inventoryParts: InventoryPartMaster[]
+  kbArticles: KBArticleMaster[]
 
   // Actions
   addCompany: (company: Omit<CompanyMaster, 'id' | 'assetsCount' | 'usersCount'> & { id?: string }) => CompanyMaster
@@ -103,13 +128,20 @@ interface MasterState {
   updateTicket: (id: string, updates: Partial<TicketMaster>) => void
   setTickets: (tickets: TicketMaster[]) => void
 
+  addInventoryPart: (part: Omit<InventoryPartMaster, 'id'> & { id?: string }) => InventoryPartMaster
+  updateInventoryPart: (id: string, updates: Partial<InventoryPartMaster>) => void
+  reserveInventoryStock: (id: string, quantity?: number) => void
+  deleteInventoryPart: (id: string) => void
+
+  addKBArticle: (article: Omit<KBArticleMaster, 'id' | 'views' | 'helpful' | 'lastUpdated'> & { id?: string }) => KBArticleMaster
+
   purgeMockData: () => void
   syncFromSupabase: () => Promise<void>
 }
 
 // Clear any stale mock data if present
 const cleanMockFilter = <T extends { company?: string; mappedCompany?: string; title?: string; name?: string }>(items: T[]) => {
-  return items.filter(item => {
+  return (items || []).filter(item => {
     const comp = item.company || item.mappedCompany || ''
     const name = item.name || item.title || ''
     const isMockComp = ['Acme Corp', 'Globex Ltd', 'Initech Inc'].includes(comp)
@@ -126,6 +158,8 @@ export const useMasterStore = create<MasterState>()(
       assets: [],
       amcContracts: [],
       tickets: [],
+      inventoryParts: [],
+      kbArticles: [],
 
       purgeMockData: () => {
         set(state => ({
@@ -133,6 +167,8 @@ export const useMasterStore = create<MasterState>()(
           users: cleanMockFilter(state.users),
           assets: cleanMockFilter(state.assets),
           amcContracts: cleanMockFilter(state.amcContracts),
+          inventoryParts: cleanMockFilter(state.inventoryParts || []),
+          kbArticles: cleanMockFilter(state.kbArticles || []),
           tickets: cleanMockFilter(state.tickets).map(t => {
             if (!t.assignee || t.assignee.name === 'Support Staff' || t.assignee.avatar?.includes('pravatar')) {
               return { ...t, assignee: { name: 'Unassigned', avatar: '' } }
@@ -374,6 +410,68 @@ export const useMasterStore = create<MasterState>()(
       },
 
       setTickets: (tickets) => set({ tickets }),
+
+      addInventoryPart: (partData) => {
+        const nextId = (get().inventoryParts || []).length + 1
+        const newPart: InventoryPartMaster = {
+          id: partData.id || `PRT-${nextId}`,
+          sku: partData.sku || `PRT-${Math.floor(1000 + Math.random() * 9000)}`,
+          name: partData.name,
+          category: partData.category || 'Hardware',
+          location: partData.location || 'Central Warehouse, Zone A',
+          unitPrice: partData.unitPrice || '₹12,500',
+          stock: Number(partData.stock) || 10,
+          minStock: Number(partData.minStock) || 2,
+          created_at: new Date().toISOString()
+        }
+
+        set((state) => ({
+          inventoryParts: [newPart, ...(state.inventoryParts || [])]
+        }))
+
+        return newPart
+      },
+
+      updateInventoryPart: (id, updates) => {
+        set((state) => ({
+          inventoryParts: (state.inventoryParts || []).map(p => p.id === id ? { ...p, ...updates } : p)
+        }))
+      },
+
+      reserveInventoryStock: (id, quantity = 1) => {
+        set((state) => ({
+          inventoryParts: (state.inventoryParts || []).map(p => p.id === id ? { 
+            ...p, 
+            stock: Math.max(0, p.stock - quantity) 
+          } : p)
+        }))
+      },
+
+      deleteInventoryPart: (id) => {
+        set((state) => ({
+          inventoryParts: (state.inventoryParts || []).filter(p => p.id !== id)
+        }))
+      },
+
+      addKBArticle: (articleData) => {
+        const nextId = (get().kbArticles || []).length + 1
+        const newArticle: KBArticleMaster = {
+          id: articleData.id || `${nextId}`,
+          title: articleData.title,
+          category: articleData.category || 'Hardware',
+          content: articleData.content || 'Troubleshooting and step-by-step resolution procedure for this component.',
+          views: 1,
+          helpful: 100,
+          lastUpdated: 'Just now',
+          created_at: new Date().toISOString()
+        }
+
+        set((state) => ({
+          kbArticles: [newArticle, ...(state.kbArticles || [])]
+        }))
+
+        return newArticle
+      },
 
       syncFromSupabase: async () => {
         try {
