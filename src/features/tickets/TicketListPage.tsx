@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
-import { Plus, Search, Download, MoreHorizontal, Lock, Building2, RefreshCw, Eye, CheckCircle2, UserCheck, FileText } from 'lucide-react';
+import { Plus, Search, Download, Lock, Building2, RefreshCw, Eye, CheckCircle2, UserCheck, FileText, ChevronDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '@/stores/auth-store';
 import { useMasterStore } from '@/stores/master-store';
@@ -245,26 +245,35 @@ export default function TicketListPage() {
                       {formatDistanceToNow(new Date(ticket.createdAt || ticket.created_at || Date.now()), { addSuffix: true })}
                     </td>
                     <td className="p-4 text-right">
-                      {/* Working Actions Menu */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground transition-colors">
-                            <MoreHorizontal className="w-4 h-4" />
+                      <div className="flex items-center justify-end gap-2">
+                        <Link to={`/tickets/${ticket.id}`}>
+                          <button className="px-2.5 py-1 text-xs font-semibold rounded-md bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground transition-all flex items-center gap-1">
+                            <Eye className="w-3.5 h-3.5" /> View
                           </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44 bg-card border-border text-foreground">
-                          <DropdownMenuLabel className="text-xs text-muted-foreground">Quick Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => navigate(`/tickets/${ticket.id}`)} className="cursor-pointer gap-2 text-xs">
-                            <Eye className="w-3.5 h-3.5 text-primary" /> View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleQuickStatusChange(ticket.id, 'in_progress')} className="cursor-pointer gap-2 text-xs">
-                            <UserCheck className="w-3.5 h-3.5 text-amber-400" /> Start Progress
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleQuickStatusChange(ticket.id, 'resolved')} className="cursor-pointer gap-2 text-xs">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Mark Resolved
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        </Link>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="px-2.5 py-1 text-xs font-semibold rounded-md bg-secondary border border-border text-foreground hover:bg-secondary/80 transition-all flex items-center gap-1">
+                              Actions <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 bg-card border-border text-foreground shadow-xl">
+                            <DropdownMenuLabel className="text-xs text-muted-foreground">Manage Ticket</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => navigate(`/tickets/${ticket.id}`)} className="cursor-pointer gap-2 text-xs">
+                              <Eye className="w-3.5 h-3.5 text-primary" /> View Ticket Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleQuickStatusChange(ticket.id, 'in_progress')} className="cursor-pointer gap-2 text-xs">
+                              <UserCheck className="w-3.5 h-3.5 text-amber-400" /> Mark In Progress
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleQuickStatusChange(ticket.id, 'resolved')} className="cursor-pointer gap-2 text-xs">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Mark Resolved
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleQuickStatusChange(ticket.id, 'open')} className="cursor-pointer gap-2 text-xs">
+                              <RefreshCw className="w-3.5 h-3.5 text-blue-400" /> Re-open Ticket
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </td>
                   </tr>
                 ))
