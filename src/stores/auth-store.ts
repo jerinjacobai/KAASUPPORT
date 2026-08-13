@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import type { User, Session } from '@supabase/supabase-js'
 import type { Profile } from '@/types/database'
 import { supabase } from '@/lib/supabase'
+import { useMasterStore } from '@/stores/master-store'
 
 interface AuthState {
   user: User | null
@@ -87,26 +88,60 @@ export const useAuthStore = create<AuthState>()(
 
       signIn: async (email, password) => {
         try {
+          // 1. Try Supabase Auth
           const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-          if (error) {
-            return { error }
+          if (!error && data?.user) {
+            const isInternal = email.endsWith('@kaasupport.com') || email.endsWith('@kaa-erp.com') || data.user?.user_metadata?.is_kaa_internal;
+            
+            set({ 
+              user: data.user, 
+              session: data.session,
+              isKaaInternal: !!isInternal,
+              roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
+              permissions: ['*'],
+              userCompany: data.user?.user_metadata?.company || null,
+              isLoading: false
+            })
+            
+            return { error: null }
           }
-          
-          const isInternal = email.endsWith('@kaasupport.com') || email.endsWith('@kaa-erp.com') || data.user?.user_metadata?.is_kaa_internal;
-          
-          set({ 
-            user: data.user, 
-            session: data.session,
-            isKaaInternal: !!isInternal,
-            roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
-            permissions: ['*'],
-            userCompany: data.user?.user_metadata?.company || null,
-            isLoading: false
-          })
-          
-          return { error: null }
+
+          // 2. Fallback to Master Store created users
+          const masterUsers = useMasterStore.getState().users;
+          const foundMasterUser = masterUsers.find(u => 
+            u.email.toLowerCase() === email.toLowerCase() && 
+            (u.password === password || u.defaultPassword === password) &&
+            u.status === 'Active'
+          );
+
+          if (foundMasterUser) {
+            const isInternal = foundMasterUser.roleType === 'KAA Internal Staff';
+            const userObj: any = {
+              id: foundMasterUser.id,
+              email: foundMasterUser.email,
+              user_metadata: {
+                full_name: foundMasterUser.name,
+                company: foundMasterUser.mappedCompany,
+                is_kaa_internal: isInternal
+              }
+            };
+
+            set({
+              user: userObj,
+              session: { user: userObj } as any,
+              isKaaInternal: isInternal,
+              roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
+              permissions: ['*'],
+              userCompany: isInternal ? null : foundMasterUser.mappedCompany,
+              isLoading: false
+            });
+
+            return { error: null };
+          }
+
+          return { error: error || new Error('Invalid email or password.') };
         } catch (err: any) {
-          return { error: err }
+          return { error: err };
         }
       },
 
