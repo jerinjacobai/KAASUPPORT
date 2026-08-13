@@ -31,16 +31,213 @@ export default function ReportsPage() {
 
   const currentMonthMetrics = monthlyReportData.find(m => m.month === selectedMonth) || monthlyReportData[0];
 
+  // REAL CSV EXPORT FUNCTION
   const handleExportExcel = () => {
-    toast.success(`Monthly Report (${selectedMonth}) Exported to Excel`, {
-      description: `Downloaded KAA_Monthly_Report_${selectedMonth.replace(' ', '_')}.xlsx`
-    });
+    try {
+      const headers = ['Month', 'Total Tickets', 'Resolved Tickets', 'SLA Compliance %', 'AMC Visits Used', 'Avg Resolution Time'];
+      const csvRows = [
+        headers.join(','),
+        ...monthlyReportData.map(row => 
+          `"${row.month}","${row.totalTickets}","${row.resolved}","${row.slaPct}%","${row.amcVisits}","${row.avgHours}"`
+        )
+      ];
+
+      const csvContent = csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `KAA_Monthly_Report_${selectedMonth.replace(' ', '_')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success(`Monthly Report CSV Downloaded!`, {
+        description: `Exported ${selectedMonth} executive metrics to CSV file.`
+      });
+    } catch {
+      toast.error('Failed to generate CSV download');
+    }
   };
 
-  const handleExportPDF = () => {
-    toast.success(`Executive Monthly PDF Report Generated (${selectedMonth})`, {
-      description: `Downloaded KAA_Executive_Service_Report_${selectedMonth.replace(' ', '_')}.pdf`
-    });
+  // REAL PDF EXPORT FUNCTION (Window Print & Downloadable PDF Document)
+  const handleExportPDF = (targetMonth = selectedMonth) => {
+    try {
+      const targetMetrics = monthlyReportData.find(m => m.month === targetMonth) || currentMonthMetrics;
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast.error('Please allow popups to generate PDF report.');
+        return;
+      }
+
+      const ticketsListRows = tickets.length > 0 
+        ? tickets.map(t => `
+            <tr>
+              <td><strong>${t.id || t.ticket_number}</strong></td>
+              <td>${t.title}</td>
+              <td>${t.company}</td>
+              <td><span style="text-transform: uppercase; font-weight: bold; color: ${t.priority === 'high' || t.priority === 'critical' ? '#ef4444' : '#eab308'};">${t.priority}</span></td>
+              <td><span style="text-transform: uppercase; font-weight: bold; color: ${t.status === 'resolved' ? '#10b981' : '#6366f1'};">${t.status}</span></td>
+              <td>${t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'Today'}</td>
+            </tr>
+          `).join('')
+        : `<tr><td colspan="6" style="text-align: center; color: #6b7280; padding: 15px;">No active support tickets logged for this period.</td></tr>`;
+
+      const monthlyTableRows = monthlyReportData.map(m => `
+        <tr style="${m.month === targetMonth ? 'background-color: #e0e7ff; font-weight: bold;' : ''}">
+          <td>${m.month}</td>
+          <td>${m.totalTickets}</td>
+          <td>${m.resolved}</td>
+          <td>${m.slaPct}%</td>
+          <td>${m.amcVisits} visits</td>
+          <td>${m.avgHours}</td>
+        </tr>
+      `).join('');
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>KAA Executive Report - ${targetMonth}</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; margin: 0; padding: 20px; background: #fff; }
+              .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #4f46e5; padding-bottom: 15px; margin-bottom: 20px; }
+              .brand { font-size: 22px; font-weight: 800; color: #4f46e5; tracking-tight; }
+              .sub-brand { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+              .report-title { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 5px 0; }
+              .meta-pill { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; display: inline-block; }
+              
+              .kpi-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 25px; }
+              .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; }
+              .kpi-label { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+              .kpi-value { font-size: 22px; font-weight: 800; color: #0f172a; }
+              .kpi-sub { font-size: 10px; color: #10b981; font-weight: 600; margin-top: 4px; }
+
+              section { margin-bottom: 25px; }
+              h3 { font-size: 14px; font-weight: 700; color: #0f172a; border-left: 4px solid #4f46e5; padding-left: 8px; margin-bottom: 10px; }
+              
+              table { width: 100%; border-collapse: collapse; font-size: 11px; }
+              th { background: #f1f5f9; color: #475569; font-weight: 700; text-align: left; padding: 8px 10px; border-bottom: 2px solid #cbd5e1; text-transform: uppercase; font-size: 10px; }
+              td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; color: #334155; }
+
+              .footer { border-top: 2px solid #e2e8f0; pt: 15px; margin-top: 30px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #94a3b8; }
+              .signature-box { border: 1px dashed #cbd5e1; padding: 10px; border-radius: 6px; width: 180px; text-align: center; }
+
+              @media print {
+                body { padding: 0; }
+                .no-print { display: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <div className="header-bar">
+              <div>
+                <div className="brand">KAA SUPPORT PORTAL</div>
+                <div className="sub-brand">Enterprise Operations & Service Audit</div>
+              </div>
+              <div style="text-align: right;">
+                <span className="meta-pill">✓ OFFICIAL EXECUTIVE AUDIT REPORT</span>
+                <p style="font-size: 11px; color: #64748b; margin: 5px 0 0 0;">Report Period: <strong>${targetMonth}</strong></p>
+              </div>
+            </div>
+
+            <section>
+              <h2 className="report-title">Monthly Executive SLA & Support Performance</h2>
+              <p style="font-size: 11px; color: #64748b; margin: 0;">Comprehensive service desk audit for regional operations and client AMC contracts.</p>
+            </section>
+
+            <div className="kpi-container">
+              <div className="kpi-card">
+                <div className="kpi-label">TOTAL TICKETS (${targetMonth})</div>
+                <div className="kpi-value">${targetMetrics.totalTickets}</div>
+                <div className="kpi-sub">${targetMetrics.resolved} Resolved</div>
+              </div>
+              <div className="kpi-card">
+                <div className="kpi-label">SLA COMPLIANCE RATE</div>
+                <div className="kpi-value" style="color: #10b981;">${targetMetrics.slaPct}%</div>
+                <div className="kpi-sub">Target &ge; 90%</div>
+              </div>
+              <div className="kpi-card">
+                <div className="kpi-label">AVG RESOLUTION TIME</div>
+                <div className="kpi-value">${targetMetrics.avgHours}</div>
+                <div className="kpi-sub">Turnaround Time</div>
+              </div>
+              <div className="kpi-card">
+                <div className="kpi-label">AMC VISITS USED</div>
+                <div className="kpi-value" style="color: #d97706;">${targetMetrics.amcVisits}</div>
+                <div className="kpi-sub">Quota Consumed</div>
+              </div>
+            </div>
+
+            <section>
+              <h3>Month-by-Month Performance History</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Total Tickets</th>
+                    <th>Resolved</th>
+                    <th>SLA Compliance</th>
+                    <th>AMC Visits Used</th>
+                    <th>Avg Resolution Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${monthlyTableRows}
+                </tbody>
+              </table>
+            </section>
+
+            <section>
+              <h3>Registered Support Tickets Detail</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ticket ID</th>
+                    <th>Subject / Title</th>
+                    <th>Client Company</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Logged Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${ticketsListRows}
+                </tbody>
+              </table>
+            </section>
+
+            <div className="footer">
+              <div>
+                <p>Generated on: <strong>${new Date().toLocaleString()}</strong></p>
+                <p>KAA Support Portal | Enterprise ERP Operations</p>
+              </div>
+              <div className="signature-box">
+                <p style="margin: 0 0 15px 0; color: #94a3b8; font-size: 9px;">AUTHORIZED AUDITOR SIGNATURE</p>
+                <p style="margin: 0; font-weight: bold; color: #475569;">KAA Operations Admin</p>
+              </div>
+            </div>
+
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 300);
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+
+      toast.success(`Executive PDF Report Generated for ${targetMonth}`, {
+        description: 'Opened print & PDF export window.'
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to generate PDF report window');
+    }
   };
 
   return (
@@ -53,7 +250,7 @@ export default function ReportsPage() {
           <Button variant="outline" onClick={handleExportExcel} className="gap-2 text-xs">
             <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> Export Monthly Excel
           </Button>
-          <Button variant="default" onClick={handleExportPDF} className="gap-2 text-xs">
+          <Button variant="default" onClick={() => handleExportPDF(selectedMonth)} className="gap-2 text-xs">
             <FileText className="w-4 h-4" /> Export Executive PDF
           </Button>
         </div>
@@ -96,7 +293,7 @@ export default function ReportsPage() {
               <Badge variant="outline" className="text-xs border-emerald-500/30 text-emerald-400 font-semibold gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> SLA Audited
               </Badge>
-              <Button size="sm" variant="outline" onClick={handleExportPDF} className="text-xs gap-1">
+              <Button size="sm" variant="outline" onClick={() => handleExportPDF(selectedMonth)} className="text-xs gap-1">
                 <Download className="w-3.5 h-3.5" /> Download Report PDF
               </Button>
             </div>
@@ -174,7 +371,7 @@ export default function ReportsPage() {
                       <td className="p-3 font-semibold text-amber-400">{m.amcVisits} visits</td>
                       <td className="p-3 font-mono text-muted-foreground">{m.avgHours}</td>
                       <td className="p-3 text-right">
-                        <Button variant="ghost" size="sm" onClick={handleExportPDF} className="text-[11px] gap-1 py-1 h-7">
+                        <Button variant="ghost" size="sm" onClick={() => handleExportPDF(m.month)} className="text-[11px] gap-1 py-1 h-7">
                           <FileText className="w-3 h-3 text-primary" /> PDF
                         </Button>
                       </td>

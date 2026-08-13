@@ -27,6 +27,117 @@ export default function AMCContractsPage() {
     setModalOpen(true);
   };
 
+  const handleDownloadAMC_PDF = (contract: any) => {
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast.error('Please allow popups to generate AMC PDF agreement.');
+        return;
+      }
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>AMC Agreement - ${contract.contractNumber}</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; margin: 0; padding: 20px; background: #fff; }
+              .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #10b981; padding-bottom: 15px; margin-bottom: 20px; }
+              .brand { font-size: 22px; font-weight: 800; color: #059669; }
+              .sub-brand { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+              .contract-title { font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 5px 0; }
+              .badge { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; display: inline-block; }
+
+              .grid-box { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+              .label { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; }
+              .val { font-size: 14px; font-weight: 700; color: #0f172a; margin-top: 2px; }
+
+              .terms { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; font-size: 11px; color: #334155; line-height: 1.6; }
+              .footer { border-top: 2px solid #e2e8f0; padding-top: 15px; margin-top: 30px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #94a3b8; }
+              .sig { border: 1px dashed #cbd5e1; padding: 10px; border-radius: 6px; width: 160px; text-align: center; }
+            </style>
+          </head>
+          <body>
+            <div className="header-bar">
+              <div>
+                <div className="brand">KAA SUPPORT PORTAL</div>
+                <div className="sub-brand">Annual Maintenance Contract (AMC) Agreement</div>
+              </div>
+              <div style="text-align: right;">
+                <span className="badge">✓ ACTIVE SLA CONTRACT</span>
+                <p style="font-size: 11px; color: #64748b; margin: 5px 0 0 0;">Ref: <strong>${contract.contractNumber}</strong></p>
+              </div>
+            </div>
+
+            <h2 className="contract-title">${contract.name}</h2>
+            <p style="font-size: 11px; color: #64748b; margin-top: 0;">Official SLA maintenance service agreement between KAA ERP Support & Client.</p>
+
+            <div className="grid-box">
+              <div>
+                <div className="label">CLIENT COMPANY</div>
+                <div className="val">${contract.company}</div>
+              </div>
+              <div>
+                <div className="label">CONTRACT NUMBER</div>
+                <div className="val" style="color: #059669;">${contract.contractNumber}</div>
+              </div>
+              <div>
+                <div className="label">ANNUAL VISIT QUOTA</div>
+                <div className="val">${contract.usedVisits} Used / ${contract.totalVisits} Total</div>
+              </div>
+              <div>
+                <div className="label">CONTRACT PERIOD</div>
+                <div className="val">${contract.startDate} to ${contract.endDate}</div>
+              </div>
+              <div>
+                <div className="label">LABOR INCLUSION</div>
+                <div className="val" style="color: #10b981;">${contract.includedLabor ? 'Full Onsite Labor Covered' : 'Parts Only'}</div>
+              </div>
+              <div>
+                <div className="label">SLA RESPONSE GUARANTEE</div>
+                <div className="val">2-Hour Emergency Dispatch</div>
+              </div>
+            </div>
+
+            <div className="terms">
+              <strong style="color: #0f172a; display: block; margin-bottom: 5px;">AGREEMENT TERMS & CONDITIONS:</strong>
+              1. Preventative maintenance visits include routine inspection of PLC racks, VFD drives, and field sensors.<br/>
+              2. Emergency tickets raised under this AMC contract take SLA priority with zero labor surcharge.<br/>
+              3. Unused visit quotas automatically roll over to the next contract quarter upon renewal.
+            </div>
+
+            <div className="footer">
+              <div>
+                <p>Agreement Generated: <strong>${new Date().toLocaleDateString()}</strong></p>
+                <p>KAA Enterprise Asset & AMC Division</p>
+              </div>
+              <div className="sig">
+                <p style="margin: 0 0 15px 0; color: #94a3b8; font-size: 8px;">AUTHORIZED SIGNATURE & STAMP</p>
+                <p style="margin: 0; font-weight: bold; color: #475569;">KAA Service Lead</p>
+              </div>
+            </div>
+
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 300);
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+
+      toast.success(`AMC Agreement PDF Generated (${contract.contractNumber})`, {
+        description: 'Opened printable AMC PDF window.'
+      });
+    } catch {
+      toast.error('Failed to generate AMC PDF agreement.');
+    }
+  };
+
   const handleCreateContract = (e: React.FormEvent) => {
     e.preventDefault();
     if (!contractName.trim()) {
@@ -141,8 +252,8 @@ export default function AMCContractsPage() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => toast.success(`Downloading Agreement PDF for ${contract.contractNumber}`)} 
-                    className="text-xs gap-1"
+                    onClick={() => handleDownloadAMC_PDF(contract)} 
+                    className="text-xs gap-1 hover:text-emerald-400"
                   >
                     <Download className="w-3.5 h-3.5" /> PDF Agreement
                   </Button>
