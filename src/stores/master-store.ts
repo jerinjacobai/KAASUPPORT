@@ -23,6 +23,7 @@ export interface UserMaster {
   roleName: string
   mappedCompany: string
   status: 'Active' | 'Inactive'
+  passwordHash?: string
   password?: string
   defaultPassword?: string
   isPasswordResetRequired?: boolean

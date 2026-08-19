@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useMasterStore, type UserMaster } from '@/stores/master-store';
+import { hashPassword } from '@/lib/crypto';
 
 export default function MastersPage() {
   const [activeTab, setActiveTab] = useState('companies');
@@ -61,65 +62,84 @@ export default function MastersPage() {
   const [assetCategory] = useState('Machinery');
   const [assetMappedCompany, setAssetMappedCompany] = useState('');
 
+  const [isSubmittingUser, setIsSubmittingUser] = useState(false);
+  const [isSubmittingComp, setIsSubmittingComp] = useState(false);
+
   // Handlers
   const handleCreateCompany = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingComp) return;
     if (!compName.trim()) {
       toast.error('Please enter company name');
       return;
     }
-    const createdComp = addCompany({
-      name: compName,
-      code: compCode || compName.slice(0, 4).toUpperCase(),
-      industry: compIndustry,
-      email: compEmail || `admin@${compName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
-      phone: compPhone || '+91 98000 11111',
-      is_active: true
-    });
+    setIsSubmittingComp(true);
+    try {
+      const createdComp = addCompany({
+        name: compName.trim(),
+        code: compCode.trim() || compName.trim().slice(0, 4).toUpperCase(),
+        industry: compIndustry,
+        email: compEmail.trim() || `admin@${compName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+        phone: compPhone.trim() || '+91 98000 11111',
+        is_active: true
+      });
 
-    toast.success(`Company ${createdComp.name} Master Created!`, {
-      description: `Tenant short code ${createdComp.code} initialized with RLS isolation policies.`
-    });
-    setCompanyModalOpen(false);
-    setCompName('');
-    setCompCode('');
-    setCompEmail('');
-    setCompPhone('');
+      toast.success(`Company ${createdComp.name} Master Created!`, {
+        description: `Tenant short code ${createdComp.code} initialized with RLS isolation policies.`
+      });
+      setCompanyModalOpen(false);
+      setCompName('');
+      setCompCode('');
+      setCompEmail('');
+      setCompPhone('');
+    } finally {
+      setIsSubmittingComp(false);
+    }
   };
 
-  const handleCreateUser = (e: React.FormEvent) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingUser) return;
     if (!userName.trim() || !userEmail.trim()) {
       toast.error('Please enter user name and email address');
       return;
     }
 
-    const selectedCompany = userRoleType === 'KAA Internal Staff' 
-      ? 'Global (All Companies)' 
-      : (userMappedCompany || (companiesList[0]?.name || ''));
+    setIsSubmittingUser(true);
+    try {
+      const rawPassword = userPassword.trim() || 'KaaPass2026!#';
+      const computedHash = await hashPassword(rawPassword);
 
-    const createdUser = addUser({
-      name: userName,
-      email: userEmail,
-      roleType: userRoleType,
-      roleName: userRoleName,
-      mappedCompany: selectedCompany,
-      status: 'Active',
-      password: userPassword || 'KaaPass2026!#',
-      defaultPassword: userPassword || 'KaaPass2026!#',
-      isPasswordResetRequired: true
-    });
+      const selectedCompany = userRoleType === 'KAA Internal Staff' 
+        ? 'Global (All Companies)' 
+        : (userMappedCompany || (companiesList[0]?.name || ''));
 
-    toast.success(`User ${createdUser.name} Onboarded & Role Mapped!`, {
-      description: userRoleType === 'Client User' 
-        ? `Mapped strictly to tenant ${selectedCompany} with default password.` 
-        : 'Granted global KAA internal staff access.'
-    });
+      const createdUser = addUser({
+        name: userName.trim(),
+        email: userEmail.trim(),
+        roleType: userRoleType,
+        roleName: userRoleName,
+        mappedCompany: selectedCompany,
+        status: 'Active',
+        passwordHash: computedHash,
+        isPasswordResetRequired: true
+      });
 
-    setUserModalOpen(false);
-    setUserName('');
-    setUserEmail('');
-    setUserPassword('KaaPass2026!#');
+      toast.success(`User ${createdUser.name} Onboarded & Role Mapped!`, {
+        description: userRoleType === 'Client User' 
+          ? `Mapped strictly to tenant ${selectedCompany} with encrypted credentials.` 
+          : 'Granted global KAA internal staff access.'
+      });
+
+      setUserModalOpen(false);
+      setUserName('');
+      setUserEmail('');
+      setUserPassword('KaaPass2026!#');
+    } catch {
+      toast.error('Failed to create user. Please try again.');
+    } finally {
+      setIsSubmittingUser(false);
+    }
   };
 
   const handleOpenPasswordReset = (usr: UserMaster) => {
@@ -128,7 +148,7 @@ export default function MastersPage() {
     setPasswordModalOpen(true);
   };
 
-  const handleSavePasswordReset = (e: React.FormEvent) => {
+  const handleSavePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUserForPassword) return;
     if (!resetNewPassword.trim()) {
@@ -136,10 +156,18 @@ export default function MastersPage() {
       return;
     }
 
-    const updatedPass = resetUserPassword(selectedUserForPassword.id, resetNewPassword);
+    const rawPassword = resetNewPassword.trim();
+    const computedHash = await hashPassword(rawPassword);
+
+    resetUserPassword(selectedUserForPassword.id, rawPassword);
+    useMasterStore.getState().updateUser(selectedUserForPassword.id, {
+      passwordHash: computedHash,
+      password: '',
+      defaultPassword: ''
+    });
 
     toast.success(`Password Reset for ${selectedUserForPassword.name}!`, {
-      description: `New password updated: ${updatedPass}`
+      description: `New password updated: ${rawPassword}`
     });
 
     setPasswordModalOpen(false);

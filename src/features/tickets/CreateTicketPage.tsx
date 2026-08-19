@@ -23,6 +23,7 @@ export default function CreateTicketPage() {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('medium');
   const [category, setCategory] = useState('Hardware');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize company state once companies are loaded
   useEffect(() => {
@@ -41,6 +42,8 @@ export default function CreateTicketPage() {
   );
 
   const handleNext = async () => {
+    if (isSubmitting) return;
+
     if (currentStep === 0 && !company) {
       toast.error('Please select a client company. Onboard a company in Admin Masters first if none exist.');
       return;
@@ -52,37 +55,44 @@ export default function CreateTicketPage() {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(s => s + 1);
     } else {
-      // Submit Ticket to master store & Supabase
-      const newTicket = addTicket({
-        title: title.trim(),
-        description: description.trim() || 'No additional details provided.',
-        company: company,
-        assetId: assetId,
-        priority: priority,
-        category: category,
-        status: 'open',
-        assignee: { name: 'Unassigned', avatar: '' }
-      });
-
-      // Background sync with Supabase table
+      setIsSubmitting(true);
       try {
-        await createTicket({
+        // Submit Ticket to master store & Supabase
+        const newTicket = addTicket({
           title: title.trim(),
-          description: description.trim(),
+          description: description.trim() || 'No additional details provided.',
+          company: company,
+          assetId: assetId,
           priority: priority,
           category: category,
-          company: company,
-          assetId: assetId
+          status: 'open',
+          assignee: { name: 'Unassigned', avatar: '' }
         });
+
+        // Background sync with Supabase table
+        try {
+          await createTicket({
+            title: title.trim(),
+            description: description.trim(),
+            priority: priority,
+            category: category,
+            company: company,
+            assetId: assetId
+          });
+        } catch (err) {
+          console.warn('Supabase sync note:', err);
+        }
+
+        toast.success('Ticket created successfully', {
+          description: `${newTicket.id} has been generated and logged under ${company}.`
+        });
+
+        navigate(`/tickets/${newTicket.id}`);
       } catch (err) {
-        console.warn('Supabase sync note:', err);
+        toast.error('Failed to create ticket. Please try again.');
+      } finally {
+        setIsSubmitting(false);
       }
-
-      toast.success('Ticket created successfully', {
-        description: `${newTicket.id} has been generated and logged under ${company}.`
-      });
-
-      navigate(`/tickets/${newTicket.id}`);
     }
   };
 
@@ -339,10 +349,17 @@ export default function CreateTicketPage() {
 
             <button
               onClick={handleNext}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-lg shadow-primary/20"
+              disabled={isSubmitting}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50"
             >
-              {currentStep === STEPS.length - 1 ? 'Submit Ticket' : 'Next Step'}
-              <ChevronRight className="w-4 h-4" />
+              {isSubmitting ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  {currentStep === STEPS.length - 1 ? 'Submit Ticket' : 'Next Step'}
+                  <ChevronRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
         </>

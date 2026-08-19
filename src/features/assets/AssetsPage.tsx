@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useMasterStore } from '@/stores/master-store';
+import { useAuthStore } from '@/stores/auth-store';
 import { Link } from 'react-router-dom';
 
 export default function AssetsPage() {
+  const { isKaaInternal, userCompany } = useAuthStore();
   const { assets: assetsList, companies: companiesList, addAsset } = useMasterStore();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,7 +34,11 @@ export default function AssetsPage() {
     setRegisterModalOpen(true);
   };
 
-  const filteredAssets = assetsList.filter(asset =>
+  const tenantAssets = assetsList.filter(asset =>
+    isKaaInternal ? true : (asset.company === userCompany)
+  );
+
+  const filteredAssets = tenantAssets.filter(asset =>
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     asset.tag.toLowerCase().includes(searchTerm.toLowerCase()) ||
     asset.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -95,9 +101,11 @@ export default function AssetsPage() {
           <Button variant="outline" onClick={() => setQrModalOpen(true)} className="gap-2 text-xs">
             <QrCode className="w-4 h-4 text-primary" /> Scan / Print QR
           </Button>
-          <Button variant="default" onClick={handleOpenRegister} className="gap-2 text-xs">
-            <Plus className="w-4 h-4" /> Register Asset
-          </Button>
+          {isKaaInternal && (
+            <Button variant="default" onClick={handleOpenRegister} className="gap-2 text-xs">
+              <Plus className="w-4 h-4" /> Register Asset
+            </Button>
+          )}
         </div>
       </PageHeader>
 

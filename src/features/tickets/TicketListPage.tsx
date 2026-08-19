@@ -56,7 +56,7 @@ export default function TicketListPage() {
 
   // Multi-tenant Row-Level Security Filtering + Status & Priority Filters
   const filteredTickets = tickets.filter((ticket: any) => {
-    const matchesTenant = isKaaInternal ? true : (ticket.company === userCompany || !ticket.company);
+    const matchesTenant = isKaaInternal ? true : (ticket.company === userCompany);
     
     const matchesStatus = statusFilter === 'all' ? true : 
       (ticket.status || '').toLowerCase() === statusFilter.toLowerCase();

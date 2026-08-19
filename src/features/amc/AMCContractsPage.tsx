@@ -7,12 +7,16 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useMasterStore } from '@/stores/master-store';
+import { useAuthStore } from '@/stores/auth-store';
 import { Link } from 'react-router-dom';
 
 export default function AMCContractsPage() {
-  const { amcContracts: contracts, companies, addAMCContract } = useMasterStore();
+  const { isKaaInternal, userCompany } = useAuthStore();
+  const { amcContracts: allContracts, companies, addAMCContract } = useMasterStore();
   const [modalOpen, setModalOpen] = useState(false);
   
+  const contracts = allContracts.filter(c => isKaaInternal ? true : (c.company === userCompany));
+
   const [contractName, setContractName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [totalVisits, setTotalVisits] = useState('12');
@@ -175,9 +179,11 @@ export default function AMCContractsPage() {
         title="AMC Maintenance Contracts"
         description="Manage Annual Maintenance Contracts, preventative visit quotas, SLA agreements, and renewals"
       >
-        <Button variant="default" onClick={handleOpenModal} className="gap-2 text-xs">
-          <Plus className="w-4 h-4" /> New AMC Contract
-        </Button>
+        {isKaaInternal && (
+          <Button variant="default" onClick={handleOpenModal} className="gap-2 text-xs">
+            <Plus className="w-4 h-4" /> New AMC Contract
+          </Button>
+        )}
       </PageHeader>
 
       {contracts.length === 0 ? (

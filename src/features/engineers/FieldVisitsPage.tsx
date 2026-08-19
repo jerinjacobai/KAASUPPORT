@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { mockFieldVisits } from '@/lib/mock-data';
 import { MapPin, Navigation, Calendar, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,7 @@ export default function FieldVisitsPage() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const [visitsList, setVisitsList] = useState<any[]>(mockFieldVisits);
+  const [visitsList, setVisitsList] = useState<any[]>([]);
 
   const [visitEngineer, setVisitEngineer] = useState(engineersList[0]?.name || '');
   const [visitLocation, setVisitLocation] = useState('');

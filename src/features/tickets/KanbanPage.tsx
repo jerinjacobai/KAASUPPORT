@@ -32,11 +32,13 @@ export default function KanbanPage() {
   });
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
+    if (!isKaaInternal) return;
     setDraggedTicket(id);
     e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleDragOver = (e: React.DragEvent, colId: string) => {
+    if (!isKaaInternal) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     if (dragOverCol !== colId) {
@@ -51,7 +53,7 @@ export default function KanbanPage() {
   const handleDrop = (e: React.DragEvent, statusId: string) => {
     e.preventDefault();
     setDragOverCol(null);
-    if (!draggedTicket) return;
+    if (!draggedTicket || !isKaaInternal) return;
     
     updateTicket(draggedTicket, { status: statusId });
     setDraggedTicket(null);
@@ -132,9 +134,9 @@ export default function KanbanPage() {
                 {colTickets.map((ticket) => (
                   <div 
                     key={ticket.id} 
-                    draggable
+                    draggable={isKaaInternal}
                     onDragStart={(e) => handleDragStart(e, ticket.id)}
-                    className={`glass rounded-lg p-4 border border-border hover:border-primary/50 transition-all shadow-md group cursor-grab active:cursor-grabbing space-y-3 ${
+                    className={`glass rounded-lg p-4 border border-border hover:border-primary/50 transition-all shadow-md group ${isKaaInternal ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'} space-y-3 ${
                       draggedTicket === ticket.id ? 'opacity-50 border-primary' : ''
                     }`}
                   >

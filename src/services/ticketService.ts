@@ -16,7 +16,7 @@ export async function fetchTickets(isKaaInternal: boolean, userCompany: string |
         priority: t.priority || 'medium',
         status: t.status || 'open',
         category: t.category || 'General',
-        assignee: { name: 'Support Staff', avatar: '' },
+        assignee: { name: 'Unassigned', avatar: '' },
         createdAt: t.created_at || new Date().toISOString()
       }))
 

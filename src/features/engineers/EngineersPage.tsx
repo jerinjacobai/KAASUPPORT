@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useMasterStore } from '@/stores/master-store';
+import { hashPassword } from '@/lib/crypto';
 import { Link } from 'react-router-dom';
 
 export default function EngineersPage() {
@@ -44,31 +45,43 @@ export default function EngineersPage() {
     });
   };
 
-  const handleAddEngineerSubmit = (e: React.FormEvent) => {
+  const [isSubmittingEng, setIsSubmittingEng] = useState(false);
+
+  const handleAddEngineerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingEng) return;
     if (!newEngineerName.trim() || !newEngineerEmail.trim()) {
       toast.error('Please enter engineer name and email');
       return;
     }
 
-    const created = addUser({
-      name: newEngineerName.trim(),
-      email: newEngineerEmail.trim(),
-      roleType: 'KAA Internal Staff',
-      roleName: newEngineerRole,
-      mappedCompany: 'Global (All Companies)',
-      status: 'Active',
-      password: 'KaaPass2026!#',
-      defaultPassword: 'KaaPass2026!#',
-      isPasswordResetRequired: true
-    });
+    setIsSubmittingEng(true);
+    try {
+      const defaultPass = 'KaaPass2026!#';
+      const computedHash = await hashPassword(defaultPass);
 
-    toast.success(`Engineer ${created.name} onboarded`, {
-      description: `Role assigned: ${newEngineerRole}. Scoped globally for dispatch.`
-    });
-    setAddEngineerModalOpen(false);
-    setNewEngineerName('');
-    setNewEngineerEmail('');
+      const created = addUser({
+        name: newEngineerName.trim(),
+        email: newEngineerEmail.trim(),
+        roleType: 'KAA Internal Staff',
+        roleName: newEngineerRole,
+        mappedCompany: 'Global (All Companies)',
+        status: 'Active',
+        passwordHash: computedHash,
+        isPasswordResetRequired: true
+      });
+
+      toast.success(`Engineer ${created.name} onboarded`, {
+        description: `Role assigned: ${newEngineerRole}. Scoped globally for dispatch.`
+      });
+      setAddEngineerModalOpen(false);
+      setNewEngineerName('');
+      setNewEngineerEmail('');
+    } catch {
+      toast.error('Failed to onboard engineer');
+    } finally {
+      setIsSubmittingEng(false);
+    }
   };
 
   return (

@@ -64,6 +64,25 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Internal Staff Only Guard (Restricts Admin Masters, Inventory, Engineers, Field Visits, Reports & Settings)
+const InternalStaffRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isKaaInternal, isLoading } = useAuthStore();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!isKaaInternal) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 // Theme Provider Component
 const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const { theme } = useUIStore();
@@ -118,9 +137,9 @@ export function App() {
                 <Route path="tickets/:id" element={<TicketDetailPage />} />
                 <Route path="tickets/kanban" element={<KanbanPage />} />
                 
-                {/* Field Operations */}
-                <Route path="engineers" element={<EngineersPage />} />
-                <Route path="field-visits" element={<FieldVisitsPage />} />
+                {/* Field Operations (Internal Staff Only) */}
+                <Route path="engineers" element={<InternalStaffRoute><EngineersPage /></InternalStaffRoute>} />
+                <Route path="field-visits" element={<InternalStaffRoute><FieldVisitsPage /></InternalStaffRoute>} />
                 
                 {/* Assets & AMC */}
                 <Route path="assets" element={<AssetsPage />} />
@@ -128,11 +147,11 @@ export function App() {
                 <Route path="amc" element={<AMCContractsPage />} />
                 
                 {/* Inventory, KB, Admin Masters, Reports & Settings */}
-                <Route path="inventory" element={<InventoryPage />} />
+                <Route path="inventory" element={<InternalStaffRoute><InventoryPage /></InternalStaffRoute>} />
                 <Route path="knowledge-base" element={<KnowledgeBasePage />} />
-                <Route path="admin/masters" element={<MastersPage />} />
-                <Route path="reports" element={<ReportsPage />} />
-                <Route path="settings" element={<SettingsPage />} />
+                <Route path="admin/masters" element={<InternalStaffRoute><MastersPage /></InternalStaffRoute>} />
+                <Route path="reports" element={<InternalStaffRoute><ReportsPage /></InternalStaffRoute>} />
+                <Route path="settings" element={<InternalStaffRoute><SettingsPage /></InternalStaffRoute>} />
                 
                 {/* Catch all redirects to login if unauthenticated or dashboard if authenticated */}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

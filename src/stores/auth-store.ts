@@ -4,6 +4,7 @@ import type { User, Session } from '@supabase/supabase-js'
 import type { Profile } from '@/types/database'
 import { supabase } from '@/lib/supabase'
 import { useMasterStore } from '@/stores/master-store'
+import { hashPassword } from '@/lib/crypto'
 
 interface AuthState {
   user: User | null
@@ -106,15 +107,30 @@ export const useAuthStore = create<AuthState>()(
             return { error: null }
           }
 
-          // 2. Fallback to Master Store created users
+          // 2. Fallback to Master Store created users using cryptographic hash comparison
           const masterUsers = useMasterStore.getState().users;
-          const foundMasterUser = masterUsers.find(u => 
-            u.email.toLowerCase() === email.toLowerCase() && 
-            (u.password === password || u.defaultPassword === password) &&
-            u.status === 'Active'
-          );
+          const enteredHash = await hashPassword(password);
+
+          const foundMasterUser = masterUsers.find(u => {
+            if (u.email.toLowerCase() !== email.toLowerCase() || u.status !== 'Active') {
+              return false;
+            }
+            // Check hash match or fallback match (with immediate hash upgrade)
+            return u.passwordHash === enteredHash || 
+                   u.password === password || 
+                   u.defaultPassword === password;
+          });
 
           if (foundMasterUser) {
+            // Auto-upgrade record to hashed format if it had plaintext password
+            if (!foundMasterUser.passwordHash) {
+              useMasterStore.getState().updateUser(foundMasterUser.id, {
+                passwordHash: enteredHash,
+                password: '',
+                defaultPassword: ''
+              });
+            }
+
             const isInternal = foundMasterUser.roleType === 'KAA Internal Staff';
             const userObj: any = {
               id: foundMasterUser.id,
