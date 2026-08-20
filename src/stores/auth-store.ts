@@ -87,7 +87,9 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      signIn: async (email, password) => {
+      signIn: async (rawEmail, rawPassword) => {
+        const email = rawEmail.trim().toLowerCase();
+        const password = rawPassword.trim();
         try {
           // 1. Try Supabase Auth
           const { data, error } = await supabase.auth.signInWithPassword({ email, password })
