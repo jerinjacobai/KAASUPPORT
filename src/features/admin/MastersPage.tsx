@@ -1,6 +1,24 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Building2, Users, Package, Search, Lock, CheckCircle2, UserPlus, Cpu, KeyRound, Copy, Check, Eye, EyeOff, ShieldAlert, Trash2 } from 'lucide-react';
+import { 
+  Building2, 
+  Users, 
+  Package, 
+  Search, 
+  Lock, 
+  CheckCircle2, 
+  UserPlus, 
+  Cpu, 
+  KeyRound, 
+  Copy, 
+  Check, 
+  Eye, 
+  EyeOff, 
+  Trash2,
+  FileCheck2,
+  Boxes,
+  Warehouse
+} from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,13 +37,18 @@ export default function MastersPage() {
     companies: companiesList, 
     users: usersList, 
     assets: assetsList, 
+    amcContracts: amcList,
+    inventoryParts: partsList,
     addCompany, 
+    deleteCompany,
     addUser, 
     resetUserPassword,
     deleteUser,
     addAsset, 
-    deleteCompany,
-    deleteAsset
+    deleteAsset,
+    addAMCContract,
+    addInventoryPart,
+    deleteInventoryPart
   } = useMasterStore();
 
   // Modals state
@@ -33,6 +56,9 @@ export default function MastersPage() {
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [assetModalOpen, setAssetModalOpen] = useState(false);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [amcModalOpen, setAmcModalOpen] = useState(false);
+  const [partModalOpen, setPartModalOpen] = useState(false);
+
   const [selectedUserForPassword, setSelectedUserForPassword] = useState<UserMaster | null>(null);
 
   // New Company Form State
@@ -63,8 +89,27 @@ export default function MastersPage() {
   const [assetCategory] = useState('Machinery');
   const [assetMappedCompany, setAssetMappedCompany] = useState('');
 
+  // New AMC Form State
+  const [amcName, setAmcName] = useState('');
+  const [amcCompany, setAmcCompany] = useState('');
+  const [amcStartDate, setAmcStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [amcEndDate, setAmcEndDate] = useState('2027-12-31');
+  const [amcTotalVisits, setAmcTotalVisits] = useState('12');
+  const [amcIncludedLabor, setAmcIncludedLabor] = useState(true);
+
+  // New Part Form State
+  const [partName, setPartName] = useState('');
+  const [partSku, setPartSku] = useState('');
+  const [partCategory, setPartCategory] = useState('Hardware');
+  const [partLocation, setPartLocation] = useState('Central Warehouse, Zone A');
+  const [partPrice, setPartPrice] = useState('₹12,500');
+  const [partStock, setPartStock] = useState('10');
+  const [partMinStock, setPartMinStock] = useState('2');
+
   const [isSubmittingUser, setIsSubmittingUser] = useState(false);
   const [isSubmittingComp, setIsSubmittingComp] = useState(false);
+  const [isSubmittingAMC, setIsSubmittingAMC] = useState(false);
+  const [isSubmittingPart, setIsSubmittingPart] = useState(false);
 
   // Handlers
   const handleCreateCompany = (e: React.FormEvent) => {
@@ -133,7 +178,7 @@ export default function MastersPage() {
       // 2. Add user to master store
       const createdUser = addUser({
         name: userName.trim(),
-        email: userEmail.trim(),
+        email: userEmail.trim().toLowerCase(),
         roleType: userRoleType,
         roleName: userRoleName,
         mappedCompany: selectedCompany,
@@ -216,10 +261,10 @@ export default function MastersPage() {
 
     const createdAsset = addAsset({
       tag: assetTag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
-      name: assetName,
+      name: assetName.trim(),
       company: targetCompany,
       category: assetCategory,
-      model: assetModel || 'Standard Industrial Unit',
+      model: assetModel.trim() || 'Standard Industrial Unit',
       serial: `SN-${Math.floor(100000 + Math.random() * 900000)}`,
       status: 'Active',
       amcStatus: 'Active AMC',
@@ -236,6 +281,69 @@ export default function MastersPage() {
     setAssetModel('');
   };
 
+  const handleCreateAMCMaster = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmittingAMC) return;
+    if (!amcName.trim()) {
+      toast.error('Please enter AMC contract name');
+      return;
+    }
+    const targetCompany = amcCompany || (companiesList[0]?.name || 'KAA Client');
+    setIsSubmittingAMC(true);
+    try {
+      const created = addAMCContract({
+        name: amcName.trim(),
+        company: targetCompany,
+        startDate: amcStartDate,
+        endDate: amcEndDate,
+        totalVisits: parseInt(amcTotalVisits) || 12,
+        usedVisits: 0,
+        status: 'Active',
+        includedLabor: amcIncludedLabor
+      });
+
+      toast.success(`AMC Contract Created: ${created.contractNumber}`, {
+        description: `Linked to ${targetCompany} with ${created.totalVisits} annual maintenance visits.`
+      });
+
+      setAmcModalOpen(false);
+      setAmcName('');
+    } finally {
+      setIsSubmittingAMC(false);
+    }
+  };
+
+  const handleCreatePartMaster = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmittingPart) return;
+    if (!partName.trim()) {
+      toast.error('Please enter spare part name');
+      return;
+    }
+    setIsSubmittingPart(true);
+    try {
+      const created = addInventoryPart({
+        name: partName.trim(),
+        sku: partSku.trim() || `PRT-${Math.floor(1000 + Math.random() * 9000)}`,
+        category: partCategory,
+        location: partLocation,
+        unitPrice: partPrice.startsWith('₹') ? partPrice : `₹${partPrice}`,
+        stock: parseInt(partStock) || 10,
+        minStock: parseInt(partMinStock) || 2
+      });
+
+      toast.success(`Spare Part Master Registered: ${created.sku}`, {
+        description: `${created.name} added with ${created.stock} units initial stock.`
+      });
+
+      setPartModalOpen(false);
+      setPartName('');
+      setPartSku('');
+    } finally {
+      setIsSubmittingPart(false);
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -246,10 +354,10 @@ export default function MastersPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Admin Master Management & Asset Mapping"
-        description="Master registry to onboard companies, create users, manage passwords & roles, and map machinery assets"
+        title="Admin Masters & Core Entity Management"
+        description="Comprehensive central master registry for Companies, Users & Roles, Equipment Assets, AMC Contracts, and Spare Parts"
       >
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {activeTab === 'companies' && (
             <Button variant="default" onClick={() => setCompanyModalOpen(true)} className="gap-2 text-xs">
               <Building2 className="w-4 h-4" /> Add Company Master
@@ -265,19 +373,42 @@ export default function MastersPage() {
               <Cpu className="w-4 h-4" /> Map Asset to Company
             </Button>
           )}
+          {activeTab === 'amc' && (
+            <Button variant="default" onClick={() => {
+              if (companiesList.length === 0) {
+                toast.error('Please onboard a company first.');
+                return;
+              }
+              setAmcCompany(companiesList[0]?.name || '');
+              setAmcModalOpen(true);
+            }} className="gap-2 text-xs">
+              <FileCheck2 className="w-4 h-4" /> Create AMC Contract
+            </Button>
+          )}
+          {activeTab === 'parts' && (
+            <Button variant="default" onClick={() => setPartModalOpen(true)} className="gap-2 text-xs">
+              <Boxes className="w-4 h-4" /> Register Spare Part
+            </Button>
+          )}
         </div>
       </PageHeader>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-secondary/40 p-1 border border-border rounded-xl">
+        <TabsList className="bg-secondary/40 p-1 border border-border rounded-xl flex flex-wrap h-auto gap-1">
           <TabsTrigger value="companies" className="gap-2 text-xs">
-            <Building2 className="w-3.5 h-3.5 text-primary" /> Company Master ({companiesList.length})
+            <Building2 className="w-3.5 h-3.5 text-primary" /> Companies ({companiesList.length})
           </TabsTrigger>
           <TabsTrigger value="users" className="gap-2 text-xs">
-            <Users className="w-3.5 h-3.5 text-amber-400" /> User & Role Mapping ({usersList.length})
+            <Users className="w-3.5 h-3.5 text-amber-400" /> Users & Roles ({usersList.length})
           </TabsTrigger>
           <TabsTrigger value="assets" className="gap-2 text-xs">
-            <Package className="w-3.5 h-3.5 text-emerald-400" /> Asset & Equipment Mapping ({assetsList.length})
+            <Package className="w-3.5 h-3.5 text-emerald-400" /> Assets & Machinery ({assetsList.length})
+          </TabsTrigger>
+          <TabsTrigger value="amc" className="gap-2 text-xs">
+            <FileCheck2 className="w-3.5 h-3.5 text-cyan-400" /> AMC Contracts ({amcList.length})
+          </TabsTrigger>
+          <TabsTrigger value="parts" className="gap-2 text-xs">
+            <Boxes className="w-3.5 h-3.5 text-violet-400" /> Spare Parts & Inventory ({partsList.length})
           </TabsTrigger>
         </TabsList>
 
@@ -430,7 +561,7 @@ export default function MastersPage() {
           </div>
         </TabsContent>
 
-        {/* Tab 3: Asset & Product Mapping Master */}
+        {/* Tab 3: Asset & Machinery Mapping Master */}
         <TabsContent value="assets" className="mt-4 space-y-4">
           <div className="glass rounded-xl border border-border overflow-hidden shadow-lg">
             <table className="w-full text-left border-collapse text-xs">
@@ -471,6 +602,90 @@ export default function MastersPage() {
             </table>
           </div>
         </TabsContent>
+
+        {/* Tab 4: AMC Contracts Master */}
+        <TabsContent value="amc" className="mt-4 space-y-4">
+          <div className="glass rounded-xl border border-border overflow-hidden shadow-lg">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="bg-secondary/80 border-b border-border text-muted-foreground font-semibold uppercase">
+                <tr>
+                  <th className="p-3">Contract #</th>
+                  <th className="p-3">Agreement Name</th>
+                  <th className="p-3">Client Company</th>
+                  <th className="p-3">Period</th>
+                  <th className="p-3">Visits Quota</th>
+                  <th className="p-3">Labor Inclusions</th>
+                  <th className="p-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {amcList
+                  .filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.contractNumber.toLowerCase().includes(searchTerm.toLowerCase()) || c.company.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .map((c) => (
+                    <tr key={c.id} className="hover:bg-secondary/30 transition-colors">
+                      <td className="p-3 font-mono font-bold text-cyan-400">{c.contractNumber}</td>
+                      <td className="p-3 font-semibold text-foreground">{c.name}</td>
+                      <td className="p-3 font-bold text-emerald-400">{c.company}</td>
+                      <td className="p-3 text-muted-foreground">{c.startDate} to {c.endDate}</td>
+                      <td className="p-3 font-bold text-foreground">{c.usedVisits} / {c.totalVisits} visits</td>
+                      <td className="p-3">
+                        <Badge variant="outline" className={c.includedLabor ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : 'border-border'}>
+                          {c.includedLabor ? 'Labor Covered' : 'Labor Excluded'}
+                        </Badge>
+                      </td>
+                      <td className="p-3">
+                        <Badge variant="success">{c.status}</Badge>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
+
+        {/* Tab 5: Spare Parts & Inventory Master */}
+        <TabsContent value="parts" className="mt-4 space-y-4">
+          <div className="glass rounded-xl border border-border overflow-hidden shadow-lg">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="bg-secondary/80 border-b border-border text-muted-foreground font-semibold uppercase">
+                <tr>
+                  <th className="p-3">SKU</th>
+                  <th className="p-3">Component / Part Name</th>
+                  <th className="p-3">Category</th>
+                  <th className="p-3">Storage Location</th>
+                  <th className="p-3">Unit Price</th>
+                  <th className="p-3">Current Stock</th>
+                  <th className="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {partsList
+                  .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku.toLowerCase().includes(searchTerm.toLowerCase()) || p.location.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .map((p) => (
+                    <tr key={p.id} className="hover:bg-secondary/30 transition-colors">
+                      <td className="p-3 font-mono font-bold text-violet-400">{p.sku}</td>
+                      <td className="p-3 font-semibold text-foreground">{p.name}</td>
+                      <td className="p-3 text-muted-foreground">{p.category}</td>
+                      <td className="p-3 text-muted-foreground flex items-center gap-1">
+                        <Warehouse className="w-3 h-3 text-primary" /> {p.location}
+                      </td>
+                      <td className="p-3 font-mono text-foreground font-semibold">{p.unitPrice}</td>
+                      <td className="p-3">
+                        <Badge variant={p.stock <= p.minStock ? 'destructive' : 'success'}>
+                          {p.stock} units {p.stock <= p.minStock && '(Low)'}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-right">
+                        <Button variant="ghost" size="sm" onClick={() => { deleteInventoryPart(p.id); toast.info(`Removed ${p.sku}`); }} className="text-xs text-destructive hover:bg-destructive/10">
+                          <Trash2 className="w-3.5 h-3.5" /> Remove
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
       </Tabs>
 
       {/* Modal 1: Add Company Master */}
@@ -492,7 +707,7 @@ export default function MastersPage() {
                 type="text" 
                 value={compName}
                 onChange={(e) => setCompName(e.target.value)}
-                placeholder="E.g., Umbrella Corporation"
+                placeholder="E.g., Qatar Industrial Trading LLC"
                 className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
               />
             </div>
@@ -504,7 +719,7 @@ export default function MastersPage() {
                   type="text" 
                   value={compCode}
                   onChange={(e) => setCompCode(e.target.value)}
-                  placeholder="UMBR"
+                  placeholder="QITL"
                   className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
                 />
               </div>
@@ -518,6 +733,7 @@ export default function MastersPage() {
                 >
                   <option value="Industrial Manufacturing">Industrial Manufacturing</option>
                   <option value="Electronics & Automation">Electronics & Automation</option>
+                  <option value="Oil & Gas / Energy">Oil & Gas / Energy</option>
                   <option value="Pharma & Healthcare">Pharma & Healthcare</option>
                   <option value="Textiles & Logistics">Textiles & Logistics</option>
                 </select>
@@ -530,7 +746,7 @@ export default function MastersPage() {
                 type="email" 
                 value={compEmail}
                 onChange={(e) => setCompEmail(e.target.value)}
-                placeholder="admin@umbrella.com"
+                placeholder="info@qataritl.com"
                 className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
               />
             </div>
@@ -566,7 +782,7 @@ export default function MastersPage() {
                 type="text" 
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
-                placeholder="E.g., Michael Scott"
+                placeholder="E.g., User Name"
                 className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
               />
             </div>
@@ -577,7 +793,7 @@ export default function MastersPage() {
                 type="email" 
                 value={userEmail}
                 onChange={(e) => setUserEmail(e.target.value)}
-                placeholder="michael@dundermifflin.com"
+                placeholder="user@company.com"
                 className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
               />
             </div>
@@ -669,7 +885,7 @@ export default function MastersPage() {
                 </div>
               </div>
               <p className="text-[10px] text-muted-foreground mt-1">
-                User will be required to update/reset this default password upon first login.
+                Password is encrypted and synchronized directly into Supabase Auth.
               </p>
             </div>
 
@@ -693,13 +909,13 @@ export default function MastersPage() {
               <KeyRound className="w-5 h-5 text-primary" /> Reset User Password
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Update or issue a new temporary password for <strong>{selectedUserForPassword?.name}</strong> ({selectedUserForPassword?.email}).
+              Update or issue a new password for <strong>{selectedUserForPassword?.name}</strong> ({selectedUserForPassword?.email}).
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSavePasswordReset} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">New Temporary Password *</label>
+              <label className="text-xs font-medium text-foreground">New Password *</label>
               <div className="relative">
                 <input 
                   type={showResetPassword ? "text" : "password"} 
@@ -725,11 +941,6 @@ export default function MastersPage() {
                   </button>
                 </div>
               </div>
-            </div>
-
-            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2 text-xs text-amber-300">
-              <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>Resetting will flag the account to prompt password change on next sign-in.</span>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -813,6 +1024,210 @@ export default function MastersPage() {
               </Button>
               <Button type="submit" size="sm" className="text-xs">
                 Save & Map Asset
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal 5: Create AMC Contract */}
+      <Dialog open={amcModalOpen} onOpenChange={setAmcModalOpen}>
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <FileCheck2 className="w-5 h-5 text-cyan-400" /> Create AMC Contract Master
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Register an Annual Maintenance Contract linked to a client company.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreateAMCMaster} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Contract Title *</label>
+              <input 
+                type="text" 
+                value={amcName}
+                onChange={(e) => setAmcName(e.target.value)}
+                placeholder="E.g., Comprehensive Automation Support AMC"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Client Company *</label>
+              <select 
+                value={amcCompany}
+                onChange={(e) => setAmcCompany(e.target.value)}
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground font-semibold"
+              >
+                {companiesList.map(c => (
+                  <option key={c.id} value={c.name}>{c.name} ({c.code})</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Start Date</label>
+                <input 
+                  type="date" 
+                  value={amcStartDate}
+                  onChange={(e) => setAmcStartDate(e.target.value)}
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">End Date</label>
+                <input 
+                  type="date" 
+                  value={amcEndDate}
+                  onChange={(e) => setAmcEndDate(e.target.value)}
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Annual Visits Quota</label>
+                <input 
+                  type="number" 
+                  value={amcTotalVisits}
+                  onChange={(e) => setAmcTotalVisits(e.target.value)}
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                />
+              </div>
+
+              <div className="space-y-1 flex flex-col justify-end">
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-foreground pb-3">
+                  <input 
+                    type="checkbox" 
+                    checked={amcIncludedLabor}
+                    onChange={(e) => setAmcIncludedLabor(e.target.checked)}
+                    className="w-4 h-4 rounded text-primary"
+                  />
+                  <span>Includes Labor</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setAmcModalOpen(false)} className="text-xs">
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" className="text-xs">
+                Save AMC Contract
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal 6: Register Spare Part */}
+      <Dialog open={partModalOpen} onOpenChange={setPartModalOpen}>
+        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Boxes className="w-5 h-5 text-violet-400" /> Register Spare Part Master
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Add a new replacement part or component SKU to the inventory master.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCreatePartMaster} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Part / Component Name *</label>
+              <input 
+                type="text" 
+                value={partName}
+                onChange={(e) => setPartName(e.target.value)}
+                placeholder="E.g., Siemens PLC DI Module 16x24V"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">SKU Code</label>
+                <input 
+                  type="text" 
+                  value={partSku}
+                  onChange={(e) => setPartSku(e.target.value)}
+                  placeholder="PRT-5520"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Category</label>
+                <select 
+                  value={partCategory}
+                  onChange={(e) => setPartCategory(e.target.value)}
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                >
+                  <option value="Hardware">Hardware</option>
+                  <option value="PLC & Drives">PLC & Drives</option>
+                  <option value="Sensors & Cables">Sensors & Cables</option>
+                  <option value="Power Supplies">Power Supplies</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Initial Stock</label>
+                <input 
+                  type="number" 
+                  value={partStock}
+                  onChange={(e) => setPartStock(e.target.value)}
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Min Threshold</label>
+                <input 
+                  type="number" 
+                  value={partMinStock}
+                  onChange={(e) => setPartMinStock(e.target.value)}
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Unit Price</label>
+                <input 
+                  type="text" 
+                  value={partPrice}
+                  onChange={(e) => setPartPrice(e.target.value)}
+                  placeholder="₹12,500"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Storage Location</label>
+                <input 
+                  type="text" 
+                  value={partLocation}
+                  onChange={(e) => setPartLocation(e.target.value)}
+                  placeholder="Central Warehouse, Zone A"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setPartModalOpen(false)} className="text-xs">
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" className="text-xs">
+                Save Spare Part
               </Button>
             </div>
           </form>
