@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useMasterStore, type UserMaster } from '@/stores/master-store';
 import { hashPassword } from '@/lib/crypto';
+import { supabase } from '@/lib/supabase';
 
 export default function MastersPage() {
   const [activeTab, setActiveTab] = useState('companies');
@@ -114,6 +115,22 @@ export default function MastersPage() {
         ? 'Global (All Companies)' 
         : (userMappedCompany || (companiesList[0]?.name || ''));
 
+      // 1. Provision user directly into Supabase Auth & PostgreSQL profiles
+      try {
+        const { error: rpcError } = await (supabase.rpc as any)('admin_create_user', {
+          p_email: userEmail.trim().toLowerCase(),
+          p_password: rawPassword,
+          p_full_name: userName.trim(),
+          p_role_type: userRoleType,
+          p_role_name: userRoleName,
+          p_mapped_company: selectedCompany
+        });
+        if (rpcError) console.warn('Supabase admin_create_user notice:', rpcError.message);
+      } catch (err) {
+        console.warn('Supabase user creation notice:', err);
+      }
+
+      // 2. Add user to master store
       const createdUser = addUser({
         name: userName.trim(),
         email: userEmail.trim(),
@@ -158,6 +175,19 @@ export default function MastersPage() {
 
     const rawPassword = resetNewPassword.trim();
     const computedHash = await hashPassword(rawPassword);
+
+    try {
+      await (supabase.rpc as any)('admin_create_user', {
+        p_email: selectedUserForPassword.email.trim().toLowerCase(),
+        p_password: rawPassword,
+        p_full_name: selectedUserForPassword.name,
+        p_role_type: selectedUserForPassword.roleType,
+        p_role_name: selectedUserForPassword.roleName,
+        p_mapped_company: selectedUserForPassword.mappedCompany
+      });
+    } catch (err) {
+      console.warn('Supabase reset notice:', err);
+    }
 
     resetUserPassword(selectedUserForPassword.id, rawPassword);
     useMasterStore.getState().updateUser(selectedUserForPassword.id, {

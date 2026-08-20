@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useMasterStore } from '@/stores/master-store';
 import { hashPassword } from '@/lib/crypto';
+import { supabase } from '@/lib/supabase';
 import { Link } from 'react-router-dom';
 
 export default function EngineersPage() {
@@ -59,6 +60,19 @@ export default function EngineersPage() {
     try {
       const defaultPass = 'KaaPass2026!#';
       const computedHash = await hashPassword(defaultPass);
+
+      try {
+        await (supabase.rpc as any)('admin_create_user', {
+          p_email: newEngineerEmail.trim().toLowerCase(),
+          p_password: defaultPass,
+          p_full_name: newEngineerName.trim(),
+          p_role_type: 'KAA Internal Staff',
+          p_role_name: newEngineerRole,
+          p_mapped_company: 'Global (All Companies)'
+        });
+      } catch (err) {
+        console.warn('Supabase engineer creation notice:', err);
+      }
 
       const created = addUser({
         name: newEngineerName.trim(),

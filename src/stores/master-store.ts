@@ -476,6 +476,7 @@ export const useMasterStore = create<MasterState>()(
 
       syncFromSupabase: async () => {
         try {
+          // 1. Sync tickets
           const { data: dbTickets } = await supabase.from('tickets').select('*')
           if (dbTickets && dbTickets.length > 0) {
             const mappedDbTickets: TicketMaster[] = dbTickets.map((t: any) => ({
@@ -494,6 +495,28 @@ export const useMasterStore = create<MasterState>()(
             const newToAdd = mappedDbTickets.filter(t => !existingIds.has(t.id))
             if (newToAdd.length > 0) {
               set(state => ({ tickets: [...newToAdd, ...state.tickets] }))
+            }
+          }
+
+          // 2. Sync companies
+          const { data: dbCompanies } = await supabase.from('companies').select('*')
+          if (dbCompanies && dbCompanies.length > 0) {
+            const mappedDbCompanies: CompanyMaster[] = dbCompanies.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              code: c.code || c.name.slice(0, 4).toUpperCase(),
+              industry: c.industry || 'Industrial Automation',
+              email: c.email || '',
+              phone: c.phone || '',
+              assetsCount: 0,
+              usersCount: 0,
+              is_active: c.is_active ?? true,
+              created_at: c.created_at
+            }))
+            const existingCompNames = new Set(get().companies.map(c => c.name.toLowerCase()))
+            const newComps = mappedDbCompanies.filter(c => !existingCompNames.has(c.name.toLowerCase()))
+            if (newComps.length > 0) {
+              set(state => ({ companies: [...newComps, ...state.companies] }))
             }
           }
         } catch {
