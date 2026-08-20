@@ -108,6 +108,7 @@ export function App() {
   useEffect(() => {
     checkSession();
     useMasterStore.getState().purgeMockData();
+    useMasterStore.getState().syncFromSupabase();
   }, [checkSession]);
 
   return (
