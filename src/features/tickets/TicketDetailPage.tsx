@@ -35,8 +35,16 @@ export default function TicketDetailPage() {
 
   const foundTicket = tickets.find(t => t.id === id || t.ticket_number === id);
 
+  const normalize = (s?: string) => (s || '').trim().toLowerCase();
+  const targetCompany = normalize(userCompany || '');
+  const ticketCompany = normalize(foundTicket?.company || (foundTicket as any)?.contact_name || '');
+  const matchesTenant = isKaaInternal || !targetCompany || 
+    ticketCompany === targetCompany || 
+    ticketCompany.includes(targetCompany) || 
+    targetCompany.includes(ticketCompany);
+
   // Tenant Security Check
-  if (!foundTicket || (!isKaaInternal && foundTicket.company !== userCompany)) {
+  if (!foundTicket || !matchesTenant) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-center space-y-4 animate-fade-in">
         <h2 className="text-2xl font-bold text-foreground">Ticket Not Found</h2>

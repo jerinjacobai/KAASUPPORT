@@ -46,17 +46,25 @@ export default function TicketListPage() {
 
   // Combine store tickets and remote tickets avoiding duplicates
   const allTicketsMap = new Map();
-  storeTickets.forEach(t => allTicketsMap.set(t.id, t));
+  storeTickets.forEach(t => allTicketsMap.set(t.id || t.ticket_number, t));
   remoteTickets.forEach((t: any) => {
-    if (!allTicketsMap.has(t.id || t.ticket_number)) {
-      allTicketsMap.set(t.id || t.ticket_number, t);
+    const key = t.id || t.ticket_number;
+    if (key && !allTicketsMap.has(key)) {
+      allTicketsMap.set(key, t);
     }
   });
   const tickets = Array.from(allTicketsMap.values());
 
+  const normalize = (s?: string) => (s || '').trim().toLowerCase();
+  const targetCompany = normalize(userCompany || '');
+
   // Multi-tenant Row-Level Security Filtering + Status & Priority Filters
   const filteredTickets = tickets.filter((ticket: any) => {
-    const matchesTenant = isKaaInternal ? true : (ticket.company === userCompany);
+    const ticketComp = normalize(ticket.company || ticket.contact_name || '');
+    const matchesTenant = isKaaInternal || !targetCompany || 
+      ticketComp === targetCompany || 
+      ticketComp.includes(targetCompany) || 
+      targetCompany.includes(ticketComp);
     
     const matchesStatus = statusFilter === 'all' ? true : 
       (ticket.status || '').toLowerCase() === statusFilter.toLowerCase();
@@ -67,7 +75,7 @@ export default function TicketListPage() {
     const matchesSearch = 
       (ticket.id || ticket.ticket_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (ticket.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (ticket.company || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (ticket.company || ticket.contact_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (ticket.assignee?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchesTenant && matchesStatus && matchesPriority && matchesSearch;

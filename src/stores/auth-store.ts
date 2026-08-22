@@ -69,13 +69,19 @@ export const useAuthStore = create<AuthState>()(
                                session.user.email?.endsWith('@kaa-erp.com') || 
                                session.user.user_metadata?.is_kaa_internal;
 
+            let resolvedCompany = session.user.user_metadata?.company || get().userCompany || null;
+            if (!resolvedCompany && !isInternal) {
+              const { data: dbComp } = await (supabase.rpc as any)('get_user_company');
+              if (dbComp) resolvedCompany = dbComp;
+            }
+
             set({
               session,
               user: session.user,
               isKaaInternal: !!isInternal,
               roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
               permissions: ['*'],
-              userCompany: session.user.user_metadata?.company || get().userCompany || null,
+              userCompany: resolvedCompany,
               isLoading: false,
             })
           } else if (!get().user) {
@@ -96,13 +102,19 @@ export const useAuthStore = create<AuthState>()(
           if (!error && data?.user) {
             const isInternal = email.endsWith('@kaasupport.com') || email.endsWith('@kaa-erp.com') || data.user?.user_metadata?.is_kaa_internal;
             
+            let resolvedCompany = data.user?.user_metadata?.company || null;
+            if (!resolvedCompany && !isInternal) {
+              const { data: dbComp } = await (supabase.rpc as any)('get_user_company');
+              if (dbComp) resolvedCompany = dbComp;
+            }
+
             set({ 
               user: data.user, 
               session: data.session,
               isKaaInternal: !!isInternal,
               roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
               permissions: ['*'],
-              userCompany: data.user?.user_metadata?.company || null,
+              userCompany: resolvedCompany,
               isLoading: false
             })
             

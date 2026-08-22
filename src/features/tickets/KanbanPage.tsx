@@ -22,8 +22,16 @@ export default function KanbanPage() {
   const [draggedTicket, setDraggedTicket] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
+  const normalize = (s?: string) => (s || '').trim().toLowerCase();
+  const targetCompany = normalize(userCompany || '');
+
   const filteredTickets = tickets.filter(ticket => {
-    const matchesTenant = isKaaInternal ? true : (ticket.company === userCompany);
+    const ticketComp = normalize(ticket.company || (ticket as any)?.contact_name || '');
+    const matchesTenant = isKaaInternal || !targetCompany || 
+      ticketComp === targetCompany || 
+      ticketComp.includes(targetCompany) || 
+      targetCompany.includes(ticketComp);
+
     const matchesSearch = 
       (ticket.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (ticket.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||

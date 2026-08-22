@@ -6,32 +6,41 @@ export async function fetchTickets(isKaaInternal: boolean, userCompany: string |
     const { data, error } = await supabase.from('tickets').select('*')
     const storeTickets = useMasterStore.getState().tickets
 
-    if (!error && data && data.length > 0) {
-      const dbMapped = data.map((t: any) => ({
-        id: t.ticket_number || t.id,
-        ticket_number: t.ticket_number || t.id,
-        title: t.title || 'Support Request',
-        description: t.description || '',
-        company: t.contact_name || 'KAA Client',
-        priority: t.priority || 'medium',
-        status: t.status || 'open',
-        category: t.category || 'General',
-        assignee: { name: 'Unassigned', avatar: '' },
-        createdAt: t.created_at || new Date().toISOString()
-      }))
+    const dbMapped = (!error && data && data.length > 0) ? data.map((t: any) => ({
+      id: t.ticket_number || t.id,
+      ticket_number: t.ticket_number || t.id,
+      title: t.title || 'Support Request',
+      description: t.description || '',
+      company: t.contact_name || 'KAA Client',
+      priority: t.priority || 'medium',
+      status: t.status || 'open',
+      category: t.category || 'General',
+      assignee: { name: 'Unassigned', avatar: '' },
+      createdAt: t.created_at || new Date().toISOString()
+    })) : []
 
-      // Merge store & db tickets
-      const allMap = new Map()
-      storeTickets.forEach(t => allMap.set(t.id, t))
-      dbMapped.forEach((t: any) => allMap.set(t.id, t))
-      const combined = Array.from(allMap.values())
+    // Merge store & db tickets
+    const allMap = new Map()
+    storeTickets.forEach(t => allMap.set(t.id || t.ticket_number, t))
+    dbMapped.forEach((t: any) => allMap.set(t.id || t.ticket_number, t))
+    const combined = Array.from(allMap.values())
 
-      return combined.filter(t => isKaaInternal ? true : t.company === userCompany)
-    }
+    const normalize = (s?: string) => (s || '').trim().toLowerCase()
+    const targetComp = normalize(userCompany || '')
 
-    return storeTickets.filter(t => isKaaInternal ? true : t.company === userCompany)
+    return combined.filter((t: any) => {
+      if (isKaaInternal || !targetComp) return true
+      const ticketComp = normalize(t.company || t.contact_name || '')
+      return ticketComp === targetComp || ticketComp.includes(targetComp) || targetComp.includes(ticketComp)
+    })
   } catch {
-    return useMasterStore.getState().tickets.filter(t => isKaaInternal ? true : t.company === userCompany)
+    const normalize = (s?: string) => (s || '').trim().toLowerCase()
+    const targetComp = normalize(userCompany || '')
+    return useMasterStore.getState().tickets.filter((t: any) => {
+      if (isKaaInternal || !targetComp) return true
+      const ticketComp = normalize(t.company || t.contact_name || '')
+      return ticketComp === targetComp || ticketComp.includes(targetComp) || targetComp.includes(ticketComp)
+    })
   }
 }
 
@@ -43,22 +52,14 @@ export async function createTicket(ticketData: {
   company: string
   assetId?: string
 }) {
-  try {
-    const { data, error } = await supabase.from('tickets').insert([{
-      ticket_number: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
-      title: ticketData.title,
-      description: ticketData.description || '',
-      source: 'portal',
-      contact_name: ticketData.company,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }] as any).select().single()
-
-    if (error) {
-      console.warn('Supabase insert note:', error.message)
-    }
-    return data || { id: `TKT-${Math.floor(1000 + Math.random() * 9000)}`, ...ticketData }
-  } catch {
-    return { id: `TKT-${Math.floor(1000 + Math.random() * 9000)}`, ...ticketData }
-  }
+  return useMasterStore.getState().addTicket({
+    title: ticketData.title,
+    description: ticketData.description || '',
+    company: ticketData.company,
+    priority: ticketData.priority,
+    category: ticketData.category || 'General',
+    assetId: ticketData.assetId,
+    status: 'open',
+    assignee: { name: 'Unassigned', avatar: '' }
+  })
 }

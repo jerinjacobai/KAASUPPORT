@@ -437,6 +437,11 @@ export const useMasterStore = create<MasterState>()(
       addTicket: (ticketData) => {
         const nextIdNum = 1001 + get().tickets.length
         const ticketId = ticketData.id || `TKT-${nextIdNum}`
+        const matchedComp = get().companies.find(c => 
+          c.name.toLowerCase() === (ticketData.company || '').toLowerCase() || 
+          c.code.toLowerCase() === (ticketData.company || '').toLowerCase()
+        )
+
         const newTicket: TicketMaster = {
           id: ticketId,
           ticket_number: ticketId,
@@ -463,6 +468,7 @@ export const useMasterStore = create<MasterState>()(
           description: newTicket.description,
           source: 'portal',
           contact_name: newTicket.company,
+          company_id: matchedComp ? matchedComp.id : null,
           priority: newTicket.priority,
           status: newTicket.status,
           category: newTicket.category,
@@ -583,7 +589,7 @@ export const useMasterStore = create<MasterState>()(
 
           // 1. Sync Live Tickets
           const { data: dbTickets } = await (supabase.from as any)('tickets').select('*')
-          if (dbTickets && dbTickets.length > 0) {
+          if (dbTickets) {
             const mappedDbTickets: TicketMaster[] = dbTickets.map((t: any) => ({
               id: t.ticket_number || t.id,
               ticket_number: t.ticket_number || t.id,
@@ -596,7 +602,15 @@ export const useMasterStore = create<MasterState>()(
               assignee: { name: 'Unassigned', avatar: '' },
               createdAt: t.created_at || new Date().toISOString()
             }))
-            set({ tickets: mappedDbTickets })
+
+            const mergedMap = new Map<string, TicketMaster>()
+            mappedDbTickets.forEach(t => mergedMap.set(t.id, t))
+            get().tickets.forEach((t: TicketMaster) => {
+              if (!mergedMap.has(t.id)) {
+                mergedMap.set(t.id, t)
+              }
+            })
+            set({ tickets: Array.from(mergedMap.values()) })
           }
 
           // 2. Sync Live Companies

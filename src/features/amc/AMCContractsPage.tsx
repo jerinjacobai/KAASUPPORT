@@ -15,7 +15,13 @@ export default function AMCContractsPage() {
   const { amcContracts: allContracts, companies, addAMCContract } = useMasterStore();
   const [modalOpen, setModalOpen] = useState(false);
   
-  const contracts = allContracts.filter(c => isKaaInternal ? true : (c.company === userCompany));
+  const normalize = (s?: string) => (s || '').trim().toLowerCase();
+  const targetCompany = normalize(userCompany || '');
+  const contracts = allContracts.filter(c => {
+    if (isKaaInternal || !targetCompany) return true;
+    const amcComp = normalize(c.company || '');
+    return amcComp === targetCompany || amcComp.includes(targetCompany) || targetCompany.includes(amcComp);
+  });
 
   const [contractName, setContractName] = useState('');
   const [companyName, setCompanyName] = useState('');

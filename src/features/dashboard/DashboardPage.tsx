@@ -14,15 +14,24 @@ export default function DashboardPage() {
   const { isKaaInternal, userCompany } = useAuthStore();
   const { tickets, amcContracts } = useMasterStore();
 
-  const companyTickets = tickets.filter(ticket => 
-    isKaaInternal ? true : (ticket.company === userCompany)
-  );
+  const normalize = (s?: string) => (s || '').trim().toLowerCase();
+  const targetCompany = normalize(userCompany || '');
+
+  const companyTickets = tickets.filter(ticket => {
+    if (isKaaInternal || !targetCompany) return true;
+    const ticketComp = normalize(ticket.company || (ticket as any)?.contact_name || '');
+    return ticketComp === targetCompany || ticketComp.includes(targetCompany) || targetCompany.includes(ticketComp);
+  });
 
   const openCount = companyTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length;
   const resolvedCount = companyTickets.filter(t => t.status === 'resolved').length;
   const recentTickets = companyTickets.slice(0, 5);
 
-  const activeContracts = amcContracts.filter(c => isKaaInternal ? true : c.company === userCompany);
+  const activeContracts = amcContracts.filter(c => {
+    if (isKaaInternal || !targetCompany) return true;
+    const amcComp = normalize(c.company || '');
+    return amcComp === targetCompany || amcComp.includes(targetCompany) || targetCompany.includes(amcComp);
+  });
   const remainingVisitsStr = activeContracts.length > 0 
     ? `${activeContracts[0].totalVisits - activeContracts[0].usedVisits} / ${activeContracts[0].totalVisits}`
     : '0 / 0';

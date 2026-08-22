@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { useMasterStore } from '@/stores/master-store';
-import { createTicket } from '@/services/ticketService';
 import { Button } from '@/components/ui/button';
 
 const STEPS = ['Context', 'Issue Details', 'Attachments', 'Review & Submit'];
@@ -68,20 +67,6 @@ export default function CreateTicketPage() {
           status: 'open',
           assignee: { name: 'Unassigned', avatar: '' }
         });
-
-        // Background sync with Supabase table
-        try {
-          await createTicket({
-            title: title.trim(),
-            description: description.trim(),
-            priority: priority,
-            category: category,
-            company: company,
-            assetId: assetId
-          });
-        } catch (err) {
-          console.warn('Supabase sync note:', err);
-        }
 
         toast.success('Ticket created successfully', {
           description: `${newTicket.id} has been generated and logged under ${company}.`

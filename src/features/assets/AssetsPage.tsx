@@ -34,9 +34,13 @@ export default function AssetsPage() {
     setRegisterModalOpen(true);
   };
 
-  const tenantAssets = assetsList.filter(asset =>
-    isKaaInternal ? true : (asset.company === userCompany)
-  );
+  const normalize = (s?: string) => (s || '').trim().toLowerCase();
+  const targetCompany = normalize(userCompany || '');
+  const tenantAssets = assetsList.filter(asset => {
+    if (isKaaInternal || !targetCompany) return true;
+    const assetComp = normalize(asset.company || '');
+    return assetComp === targetCompany || assetComp.includes(targetCompany) || targetCompany.includes(assetComp);
+  });
 
   const filteredAssets = tenantAssets.filter(asset =>
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
