@@ -88,6 +88,13 @@ export default function MastersPage() {
   const [assetModel, setAssetModel] = useState('');
   const [assetCategory] = useState('Machinery');
   const [assetMappedCompany, setAssetMappedCompany] = useState('');
+  const [assetUser, setAssetUser] = useState('');
+  const [hardwareType, setHardwareType] = useState<'Laptops' | 'Monitor'>('Laptops');
+  const [assetDescription, setAssetDescription] = useState('');
+  const [assetRemarks, setAssetRemarks] = useState('');
+  const [assetSuggestion, setAssetSuggestion] = useState('');
+  const [provisionFile, setProvisionFile] = useState<File | null>(null);
+  const [savingAsset, setSavingAsset] = useState(false);
 
   // New AMC Form State
   const [amcName, setAmcName] = useState('');
@@ -250,7 +257,7 @@ export default function MastersPage() {
     setResetNewPassword('');
   };
 
-  const handleCreateAssetMapping = (e: React.FormEvent) => {
+  const handleCreateAssetMapping = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assetName.trim()) {
       toast.error('Please enter equipment name');
@@ -259,6 +266,18 @@ export default function MastersPage() {
 
     const targetCompany = assetMappedCompany || (companiesList[0]?.name || '');
 
+    setSavingAsset(true);
+    let provisionPath = '';
+    if (provisionFile) {
+      const safeName = provisionFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      provisionPath = `${crypto.randomUUID()}-${safeName}`;
+      const { error } = await supabase.storage.from('asset-provisions').upload(provisionPath, provisionFile);
+      if (error) {
+        toast.error(`Provision upload failed: ${error.message}`);
+        setSavingAsset(false);
+        return;
+      }
+    }
     const createdAsset = addAsset({
       tag: assetTag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
       name: assetName.trim(),
@@ -268,7 +287,13 @@ export default function MastersPage() {
       serial: `SN-${Math.floor(100000 + Math.random() * 900000)}`,
       status: 'Active',
       amcStatus: 'Active AMC',
-      warrantyExpires: '2027-12-31'
+      warrantyExpires: '2027-12-31',
+      assetUser: assetUser.trim(),
+      hardwareType,
+      description: assetDescription.trim(),
+      remarks: assetRemarks.trim(),
+      suggestion: assetSuggestion.trim(),
+      provisionPath
     });
 
     toast.success(`Asset ${createdAsset.name} Mapped to ${targetCompany}!`, {
@@ -279,6 +304,13 @@ export default function MastersPage() {
     setAssetName('');
     setAssetTag('');
     setAssetModel('');
+    setAssetUser('');
+    setHardwareType('Laptops');
+    setAssetDescription('');
+    setAssetRemarks('');
+    setAssetSuggestion('');
+    setProvisionFile(null);
+    setSavingAsset(false);
   };
 
   const handleCreateAMCMaster = (e: React.FormEvent) => {
@@ -957,19 +989,31 @@ export default function MastersPage() {
 
       {/* Modal 4: Map Asset/Product to Company */}
       <Dialog open={assetModalOpen} onOpenChange={setAssetModalOpen}>
-        <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
+        <DialogContent className="max-w-lg bg-card border-border text-card-foreground p-6 space-y-4 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <Cpu className="w-5 h-5 text-emerald-400" /> Map Machinery Asset to Client
+              <Cpu className="w-5 h-5 text-emerald-400" /> Add Asset to Client
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Assign an equipment model/serial number to a client company so their users can raise support tickets.
+              Register hardware, assign its user, and upload its provisioning document if available.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateAssetMapping} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Equipment / Product Name *</label>
+              <label className="text-xs font-medium text-foreground">Asset User</label>
+              <input type="text" value={assetUser} onChange={e => setAssetUser(e.target.value)} placeholder="User name" className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Hardware Type *</label>
+              <select value={hardwareType} onChange={e => setHardwareType(e.target.value as 'Laptops' | 'Monitor')} className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground">
+                <option value="Laptops">Laptops</option><option value="Monitor">Monitor</option>
+              </select>
+            </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Asset Name *</label>
               <input 
                 type="text" 
                 value={assetName}
@@ -978,6 +1022,13 @@ export default function MastersPage() {
                 className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
               />
             </div>
+
+            <div className="space-y-1"><label className="text-xs font-medium text-foreground">Description</label><textarea value={assetDescription} onChange={e => setAssetDescription(e.target.value)} rows={2} className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1"><label className="text-xs font-medium text-foreground">Remarks</label><textarea value={assetRemarks} onChange={e => setAssetRemarks(e.target.value)} rows={2} className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground" /></div>
+              <div className="space-y-1"><label className="text-xs font-medium text-foreground">Suggestion</label><textarea value={assetSuggestion} onChange={e => setAssetSuggestion(e.target.value)} rows={2} className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground" /></div>
+            </div>
+            <div className="space-y-1"><label className="text-xs font-medium text-foreground">Provisioning Document</label><input type="file" onChange={e => setProvisionFile(e.target.files?.[0] || null)} className="w-full text-xs text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-xs" /></div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
@@ -1023,7 +1074,7 @@ export default function MastersPage() {
                 Cancel
               </Button>
               <Button type="submit" size="sm" className="text-xs">
-                Save & Map Asset
+                {savingAsset ? 'Saving…' : 'Save Asset'}
               </Button>
             </div>
           </form>

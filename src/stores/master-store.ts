@@ -41,6 +41,12 @@ export interface AssetMaster {
   status: string
   amcStatus: string
   warrantyExpires: string
+  assetUser?: string
+  hardwareType?: 'Laptops' | 'Monitor'
+  description?: string
+  remarks?: string
+  suggestion?: string
+  provisionPath?: string
   created_at?: string
 }
 
@@ -339,6 +345,12 @@ export const useMasterStore = create<MasterState>()(
           status: assetData.status || 'Active',
           amcStatus: assetData.amcStatus || 'Active AMC',
           warrantyExpires: assetData.warrantyExpires || '2027-12-31',
+          assetUser: assetData.assetUser || '',
+          hardwareType: assetData.hardwareType || 'Laptops',
+          description: assetData.description || '',
+          remarks: assetData.remarks || '',
+          suggestion: assetData.suggestion || '',
+          provisionPath: assetData.provisionPath || '',
           created_at: new Date().toISOString()
         }
 
@@ -358,7 +370,13 @@ export const useMasterStore = create<MasterState>()(
           name: newAsset.name,
           model: newAsset.model,
           serial_number: newAsset.serial,
-          status: newAsset.status
+          status: newAsset.status,
+          asset_user: newAsset.assetUser,
+          hardware_type: newAsset.hardwareType,
+          description: newAsset.description,
+          remarks: newAsset.remarks,
+          suggestion: newAsset.suggestion,
+          provision_path: newAsset.provisionPath
         }]).then(({ error }: any) => {
           if (error) console.warn('Supabase asset insert warning:', error.message)
         })
@@ -661,6 +679,12 @@ export const useMasterStore = create<MasterState>()(
               status: a.status || 'Active',
               amcStatus: 'Active AMC',
               warrantyExpires: '2027-12-31',
+              assetUser: a.asset_user || '',
+              hardwareType: a.hardware_type || 'Laptops',
+              description: a.description || '',
+              remarks: a.remarks || '',
+              suggestion: a.suggestion || '',
+              provisionPath: a.provision_path || '',
               created_at: a.created_at
             }))
             set({ assets: mappedAssets })

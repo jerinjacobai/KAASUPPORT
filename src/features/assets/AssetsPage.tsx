@@ -180,7 +180,20 @@ export default function AssetsPage() {
                     <span>Warranty:</span>
                     <span className="text-foreground">{asset.warrantyExpires}</span>
                   </div>
+                  <div className="flex justify-between"><span>Hardware:</span><span className="text-foreground">{asset.hardwareType || asset.category}</span></div>
+                  {asset.assetUser && <div className="flex justify-between"><span>Asset user:</span><span className="text-foreground">{asset.assetUser}</span></div>}
                 </div>
+                {(asset.description || asset.remarks || asset.suggestion) && <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                  {asset.description && <p><span className="font-medium text-foreground">Description:</span> {asset.description}</p>}
+                  {asset.remarks && <p><span className="font-medium text-foreground">Remarks:</span> {asset.remarks}</p>}
+                  {asset.suggestion && <p><span className="font-medium text-foreground">Suggestion:</span> {asset.suggestion}</p>}
+                </div>}
+                {asset.provisionPath && <button type="button" className="mt-2 text-xs text-primary hover:underline" onClick={async () => {
+                  const { supabase } = await import('@/lib/supabase');
+                  const { data, error } = await supabase.storage.from('asset-provisions').createSignedUrl(asset.provisionPath!, 60);
+                  if (error) toast.error(`Could not open provision: ${error.message}`);
+                  else window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+                }}>Open provisioning document</button>}
               </div>
 
               <div className="pt-3 border-t border-border/50 flex items-center justify-between">

@@ -94,7 +94,15 @@ export interface Database {
         Row: {
           id: string
           name: string
+          asset_tag: string | null
           serial_number: string | null
+          model: string | null
+          asset_user: string | null
+          hardware_type: string
+          description: string | null
+          remarks: string | null
+          suggestion: string | null
+          provision_path: string | null
           company_id: string | null
           category_id: string | null
           status: string
