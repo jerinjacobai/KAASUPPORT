@@ -54,7 +54,7 @@ export default function AssetsPage() {
     setHistoryModalOpen(true);
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAssetName.trim()) {
       toast.error('Please enter equipment name');
@@ -67,7 +67,8 @@ export default function AssetsPage() {
       return;
     }
 
-    const created = addAsset({
+    try {
+    const created = await addAsset({
       tag: newAssetTag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
       name: newAssetName.trim(),
       company: selectedComp,
@@ -87,6 +88,9 @@ export default function AssetsPage() {
     setNewAssetName('');
     setNewAssetTag('');
     setNewAssetModel('');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not register asset.');
+    }
   };
 
   const handlePrintQR = () => {

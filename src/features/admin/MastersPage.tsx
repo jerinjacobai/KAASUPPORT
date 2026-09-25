@@ -268,17 +268,16 @@ export default function MastersPage() {
 
     setSavingAsset(true);
     let provisionPath = '';
-    if (provisionFile) {
-      const safeName = provisionFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      provisionPath = `${crypto.randomUUID()}-${safeName}`;
-      const { error } = await supabase.storage.from('asset-provisions').upload(provisionPath, provisionFile);
-      if (error) {
-        toast.error(`Provision upload failed: ${error.message}`);
-        setSavingAsset(false);
-        return;
+    try {
+      if (provisionFile) {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) throw new Error('Please sign in again before uploading a provision.');
+        const safeName = provisionFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        provisionPath = `${user.id}/${crypto.randomUUID()}-${safeName}`;
+        const { error } = await supabase.storage.from('asset-provisions').upload(provisionPath, provisionFile);
+        if (error) throw new Error(`Provision upload failed: ${error.message}`);
       }
-    }
-    const createdAsset = addAsset({
+      const createdAsset = await addAsset({
       tag: assetTag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
       name: assetName.trim(),
       company: targetCompany,
@@ -294,23 +293,28 @@ export default function MastersPage() {
       remarks: assetRemarks.trim(),
       suggestion: assetSuggestion.trim(),
       provisionPath
-    });
+      });
 
-    toast.success(`Asset ${createdAsset.name} Mapped to ${targetCompany}!`, {
-      description: `Tag ${createdAsset.tag} is now available for ${targetCompany} users.`
-    });
+      toast.success(`Asset ${createdAsset.name} Mapped to ${targetCompany}!`, {
+        description: `Tag ${createdAsset.tag} is now available for ${targetCompany} users.`
+      });
 
-    setAssetModalOpen(false);
-    setAssetName('');
-    setAssetTag('');
-    setAssetModel('');
-    setAssetUser('');
-    setHardwareType('Laptops');
-    setAssetDescription('');
-    setAssetRemarks('');
-    setAssetSuggestion('');
-    setProvisionFile(null);
-    setSavingAsset(false);
+      setAssetModalOpen(false);
+      setAssetName('');
+      setAssetTag('');
+      setAssetModel('');
+      setAssetUser('');
+      setHardwareType('Laptops');
+      setAssetDescription('');
+      setAssetRemarks('');
+      setAssetSuggestion('');
+      setProvisionFile(null);
+    } catch (error) {
+      if (provisionPath) await supabase.storage.from('asset-provisions').remove([provisionPath]);
+      toast.error(error instanceof Error ? error.message : 'Could not save asset.');
+    } finally {
+      setSavingAsset(false);
+    }
   };
 
   const handleCreateAMCMaster = (e: React.FormEvent) => {
@@ -1073,7 +1077,7 @@ export default function MastersPage() {
               <Button type="button" variant="outline" size="sm" onClick={() => setAssetModalOpen(false)} className="text-xs">
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="text-xs">
+              <Button type="submit" size="sm" className="text-xs" disabled={savingAsset}>
                 {savingAsset ? 'Saving…' : 'Save Asset'}
               </Button>
             </div>

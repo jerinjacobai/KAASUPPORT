@@ -125,7 +125,7 @@ interface MasterState {
   resetUserPassword: (id: string, newPassword?: string) => string
   deleteUser: (id: string) => void
 
-  addAsset: (asset: Omit<AssetMaster, 'id'> & { id?: string }) => AssetMaster
+  addAsset: (asset: Omit<AssetMaster, 'id'> & { id?: string }) => Promise<AssetMaster>
   updateAsset: (id: string, updates: Partial<AssetMaster>) => void
   deleteAsset: (id: string) => void
 
@@ -332,10 +332,9 @@ export const useMasterStore = create<MasterState>()(
         })
       },
 
-      addAsset: (assetData) => {
-        const newId = assetData.id || `AST-${Date.now()}`
+      addAsset: async (assetData) => {
         const newAsset: AssetMaster = {
-          id: newId,
+          id: assetData.id || '',
           tag: assetData.tag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
           name: assetData.name,
           company: assetData.company,
@@ -354,32 +353,36 @@ export const useMasterStore = create<MasterState>()(
           created_at: new Date().toISOString()
         }
 
-        set((state) => {
-          const updatedCompanies = state.companies.map(c => 
-            c.name === newAsset.company ? { ...c, assetsCount: c.assetsCount + 1 } : c
-          )
-          return {
-            assets: [newAsset, ...state.assets],
-            companies: updatedCompanies
-          }
-        })
+        const { data: company, error: companyError } = await (supabase.from as any)('companies')
+          .select('id').eq('name', newAsset.company).single()
+        if (companyError || !company?.id) {
+          throw new Error(companyError?.message || `Company "${newAsset.company}" was not found.`)
+        }
 
-        // Persist to Supabase assets table
-        ;(supabase.from as any)('assets').insert([{
+        const { data: insertedAsset, error: insertError } = await (supabase.from as any)('assets').insert({
+          company_id: company.id,
           asset_tag: newAsset.tag,
           name: newAsset.name,
           model: newAsset.model,
           serial_number: newAsset.serial,
-          status: newAsset.status,
+          status: 'active',
           asset_user: newAsset.assetUser,
           hardware_type: newAsset.hardwareType,
           description: newAsset.description,
           remarks: newAsset.remarks,
           suggestion: newAsset.suggestion,
           provision_path: newAsset.provisionPath
-        }]).then(({ error }: any) => {
-          if (error) console.warn('Supabase asset insert warning:', error.message)
-        })
+        }).select('id, created_at').single()
+        if (insertError || !insertedAsset) {
+          throw new Error(insertError?.message || 'Could not save asset.')
+        }
+
+        newAsset.id = insertedAsset.id
+        newAsset.created_at = insertedAsset.created_at || newAsset.created_at
+        set((state) => ({
+          assets: [newAsset, ...state.assets],
+          companies: state.companies.map(c => c.id === company.id ? { ...c, assetsCount: c.assetsCount + 1 } : c)
+        }))
 
         return newAsset
       },
@@ -672,7 +675,7 @@ export const useMasterStore = create<MasterState>()(
               id: a.id,
               tag: a.asset_tag || `AST-${a.id.slice(0, 6)}`,
               name: a.name,
-              company: 'KAA Client',
+              company: get().companies.find((company: CompanyMaster) => company.id === a.company_id)?.name || 'KAA Client',
               category: 'Machinery',
               model: a.model || 'Standard Unit',
               serial: a.serial_number || 'N/A',
