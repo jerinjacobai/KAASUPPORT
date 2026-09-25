@@ -50,21 +50,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-background">
-      {/* Background Mesh */}
-      <div className="absolute inset-0 z-0 opacity-30">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/30 blur-[120px] animate-pulse-glow" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-violet-600/20 blur-[100px]" />
-      </div>
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-background bg-[radial-gradient(ellipse_at_top,rgba(124,131,255,0.11),transparent_48%)]">
 
       <div className="w-full max-w-md z-10 p-4 animate-slide-in-up">
-        <div className="glass rounded-2xl p-8 shadow-2xl border border-border">
+        <div className="rounded-2xl p-8 sm:p-9 bg-card border border-border shadow-2xl shadow-black/15">
           
           <div className="flex flex-col items-center mb-8 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-primary to-violet-600 flex items-center justify-center shadow-xl shadow-primary/30 mb-4 border border-white/10">
-              <span className="text-3xl font-extrabold text-white leading-none">K</span>
+            <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 mb-4">
+              <span className="text-2xl font-bold text-primary-foreground leading-none">K</span>
             </div>
-            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground/90 to-foreground/70 tracking-tight">
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
               KAA SUPPORT PORTAL
             </h1>
             <p className="text-xs text-muted-foreground mt-1.5 max-w-xs">
@@ -81,7 +76,7 @@ export default function LoginPage() {
                   type="email" 
                   autoComplete="email"
                   {...register('email')}
-                  className="w-full bg-secondary/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-2.5 pl-10 pr-4 text-sm transition-all outline-none text-foreground placeholder:text-muted-foreground"
+                  className="w-full bg-background border border-input focus:border-primary/70 focus:ring-2 focus:ring-primary/15 rounded-lg py-2.5 pl-10 pr-4 text-sm transition-all outline-none text-foreground placeholder:text-muted-foreground"
                   placeholder="admin@kaasupport.com"
                 />
               </div>
@@ -98,7 +93,7 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"} 
                   autoComplete="current-password"
                   {...register('password')}
-                  className="w-full bg-secondary/50 border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-2.5 pl-10 pr-10 text-sm transition-all outline-none text-foreground placeholder:text-muted-foreground"
+                  className="w-full bg-background border border-input focus:border-primary/70 focus:ring-2 focus:ring-primary/15 rounded-lg py-2.5 pl-10 pr-10 text-sm transition-all outline-none text-foreground placeholder:text-muted-foreground"
                   placeholder="••••••••••••"
                 />
                 <button 
@@ -116,7 +111,7 @@ export default function LoginPage() {
             <button 
               type="submit" 
               disabled={isSubmitting}
-              className="w-full mt-6 bg-gradient-to-r from-indigo-500 via-primary to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40 flex items-center justify-center gap-2 text-sm disabled:opacity-70"
+              className="w-full mt-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-lg transition-colors shadow-md shadow-primary/15 flex items-center justify-center gap-2 text-sm disabled:opacity-70"
             >
               {isSubmitting ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

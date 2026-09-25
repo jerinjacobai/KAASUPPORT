@@ -57,13 +57,13 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="h-full flex flex-col glass bg-background/80 backdrop-blur-xl border-r border-border text-card-foreground relative z-10">
+    <aside className="h-full flex flex-col bg-card border-r border-border/80 text-card-foreground relative z-10">
       {/* Subtle top gradient overlay */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none -z-10" />
+      <div className="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-primary/[0.045] to-transparent pointer-events-none -z-10" />
       {/* Brand Header */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-border shrink-0">
         <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary to-indigo-500 flex items-center justify-center text-primary-foreground font-black text-xl shadow-lg shadow-primary/20 shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg shadow-sm shadow-primary/20 shrink-0">
             K
           </div>
           {!sidebarCollapsed && (
@@ -99,15 +99,13 @@ export function Sidebar() {
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-all group relative overflow-hidden",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors group relative overflow-hidden",
                     isActive ? 
-                    "bg-secondary/80 text-foreground font-semibold shadow-sm" : 
-                    "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                    "bg-primary/[0.09] text-foreground font-semibold" :
+                    "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
                   )}
                 >
-                  {isActive && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full" />
-                  )}
+                  {isActive && <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-primary rounded-r-full" />}
                   <Icon className={cn("w-4 h-4 shrink-0 transition-transform group-hover:scale-110", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
                   {!sidebarCollapsed && (
                     <span className="truncate flex-1">{item.name}</span>

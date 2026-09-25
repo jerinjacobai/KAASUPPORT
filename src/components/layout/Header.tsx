@@ -109,7 +109,7 @@ export function Header() {
   const breadcrumbs = paths.map(p => p.charAt(0).toUpperCase() + p.slice(1).replace(/-/g, ' '));
 
   return (
-    <header className="h-16 border-b border-border glass sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between shrink-0">
+    <header className="h-16 border-b border-border/80 bg-background/90 backdrop-blur-xl sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between shrink-0">
       
       {/* Left section - Mobile Toggle & Breadcrumbs */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -144,7 +144,7 @@ export function Header() {
         <button 
           type="button"
           onClick={() => setSearchOpen(true)}
-          className="w-full bg-secondary/40 hover:bg-secondary/70 border border-border hover:border-primary/40 rounded-full py-1.5 pl-3.5 pr-3 text-xs text-muted-foreground flex items-center justify-between transition-all group shadow-sm"
+          className="w-full bg-card/80 hover:bg-card border border-border/80 hover:border-primary/40 rounded-xl py-2 pl-3.5 pr-3 text-xs text-muted-foreground flex items-center justify-between transition-all group"
         >
           <div className="flex items-center gap-2 truncate">
             <Search className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
@@ -161,12 +161,12 @@ export function Header() {
         
         {/* RLS Multi-Tenant Scope Badge */}
         {isKaaInternal ? (
-          <Badge variant="outline" className="hidden sm:flex items-center gap-1.5 text-[11px] py-1 border-indigo-500/30 bg-indigo-500/10 text-indigo-300">
-            <Globe className="w-3 h-3 text-indigo-400" /> Admin Scope
+          <Badge variant="outline" className="hidden sm:flex items-center gap-1.5 text-[11px] py-1 border-primary/20 bg-primary/10 text-primary">
+            <Globe className="w-3 h-3" /> Admin Scope
           </Badge>
         ) : (
-          <Badge variant="outline" className="flex items-center gap-1.5 text-[11px] py-1 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-semibold truncate max-w-[140px] sm:max-w-none">
-            <Lock className="w-3 h-3 text-emerald-400 shrink-0" /> {userCompany}
+          <Badge variant="outline" className="flex items-center gap-1.5 text-[11px] py-1 border-emerald-600/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold truncate max-w-[140px] sm:max-w-none">
+            <Lock className="w-3 h-3 shrink-0" /> {userCompany}
           </Badge>
         )}
 
@@ -177,8 +177,6 @@ export function Header() {
           title="Notifications"
         >
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full animate-ping" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
         </button>
 
         {/* Theme Toggle Button */}

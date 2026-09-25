@@ -35,7 +35,7 @@ export function Tooltip({ content, children, delayMs = 300, className }: Tooltip
     >
       {children}
       {isVisible && (
-        <div className={cn("absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 px-3 py-1.5 text-xs text-zinc-100 bg-zinc-800 border border-zinc-700 rounded-md shadow-md animate-in fade-in zoom-in-95 pointer-events-none whitespace-nowrap", className)}>
+        <div className={cn("absolute top-full left-1/2 z-50 mt-2 -translate-x-1/2 px-3 py-1.5 text-xs text-popover-foreground bg-popover border border-border rounded-lg shadow-lg animate-in fade-in zoom-in-95 pointer-events-none whitespace-nowrap", className)}>
           {content}
         </div>
       )}

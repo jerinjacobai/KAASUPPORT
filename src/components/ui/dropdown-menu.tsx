@@ -105,7 +105,7 @@ export const DropdownMenuContent = React.forwardRef<HTMLDivElement, React.HTMLAt
           }}
           style={{ ...position, ...props.style, zIndex: 9999 }}
           className={cn(
-            'min-w-[8rem] max-h-[calc(100vh-1rem)] overflow-y-auto rounded-md border border-zinc-800 bg-zinc-950/95 backdrop-blur-md p-1 text-zinc-100 shadow-md animate-in fade-in-0 zoom-in-95',
+            'min-w-[8rem] max-h-[calc(100vh-1rem)] overflow-y-auto rounded-xl border border-border bg-popover/95 backdrop-blur-md p-1.5 text-popover-foreground shadow-xl shadow-black/15 animate-in fade-in-0 zoom-in-95',
             className
           )}
         >
@@ -129,7 +129,7 @@ export const DropdownMenuItem = React.forwardRef<HTMLDivElement, React.HTMLAttri
           ctx?.setIsOpen(false)
         }}
         className={cn(
-          'relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-zinc-800 focus:bg-zinc-800 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+          'relative flex cursor-pointer select-none items-center rounded-lg px-2.5 py-2 text-sm outline-none transition-colors hover:bg-accent focus:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
           className
         )}
         {...props}
@@ -143,7 +143,7 @@ export const DropdownMenuLabel = React.forwardRef<HTMLDivElement, React.HTMLAttr
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('px-2 py-1.5 text-sm font-semibold text-zinc-400', className)}
+      className={cn('px-2.5 py-2 text-sm font-semibold text-muted-foreground', className)}
       {...props}
     />
   )
@@ -154,7 +154,7 @@ export const DropdownMenuSeparator = React.forwardRef<HTMLDivElement, React.HTML
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('-mx-1 my-1 h-px bg-zinc-800', className)}
+      className={cn('-mx-1 my-1 h-px bg-border/80', className)}
       {...props}
     />
   )

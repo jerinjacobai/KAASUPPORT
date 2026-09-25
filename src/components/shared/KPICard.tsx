@@ -28,20 +28,18 @@ export function KPICard({ title, value, change, trend = 'neutral', icon: Icon, s
 
   return (
     <div 
-      className={cn("glass relative overflow-hidden rounded-xl p-5 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group animate-card-enter", className)}
+      className={cn("glass relative overflow-hidden rounded-xl p-5 transition-shadow duration-200 hover:shadow-lg hover:shadow-black/10 group animate-card-enter", className)}
       style={{ '--stagger': index || 0 } as React.CSSProperties}
     >
-      <div className="absolute top-0 left-0 right-0 gradient-accent-bar bg-gradient-to-r from-primary via-violet-500 to-indigo-500" />
-      
-      <div className="flex justify-between items-start mb-4 mt-1">
+      <div className="flex justify-between items-start mb-5">
         <h3 className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">{title}</h3>
-        <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0 group-hover:scale-105 transition-transform">
-          <Icon className="w-5 h-5" />
+        <div className="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/15 shrink-0">
+          <Icon className="w-[18px] h-[18px]" />
         </div>
       </div>
       
       <div className="flex items-baseline gap-3">
-        <span className="text-3xl font-bold tracking-tight text-foreground">{value}</span>
+        <span className="text-[1.85rem] font-semibold tracking-tight text-foreground">{value}</span>
         
         {change !== undefined && (
           <div className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border", getTrendColor())}>

@@ -7,17 +7,17 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-transparent bg-indigo-500/15 text-indigo-400',
-        secondary: 'border-transparent bg-zinc-800 text-zinc-100',
-        destructive: 'border-transparent bg-red-500/15 text-red-400',
-        outline: 'text-zinc-300 border-zinc-700',
-        success: 'border-transparent bg-emerald-500/15 text-emerald-400',
-        warning: 'border-transparent bg-amber-500/15 text-amber-400',
-        info: 'border-transparent bg-blue-500/15 text-blue-400',
-        'priority-critical': 'border-transparent bg-red-500/20 text-red-400 animate-pulse',
-        'priority-high': 'border-transparent bg-orange-500/15 text-orange-400',
-        'priority-medium': 'border-transparent bg-yellow-500/15 text-yellow-400',
-        'priority-low': 'border-transparent bg-emerald-500/15 text-emerald-400',
+        default: 'border-primary/20 bg-primary/10 text-primary',
+        secondary: 'border-transparent bg-secondary text-secondary-foreground',
+        destructive: 'border-destructive/20 bg-destructive/10 text-destructive',
+        outline: 'text-muted-foreground border-border',
+        success: 'border-emerald-600/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+        warning: 'border-amber-600/20 bg-amber-500/10 text-amber-700 dark:text-amber-300',
+        info: 'border-blue-600/20 bg-blue-500/10 text-blue-700 dark:text-blue-300',
+        'priority-critical': 'border-destructive/20 bg-destructive/10 text-destructive',
+        'priority-high': 'border-orange-600/20 bg-orange-500/10 text-orange-700 dark:text-orange-300',
+        'priority-medium': 'border-yellow-600/20 bg-yellow-500/10 text-yellow-800 dark:text-yellow-300',
+        'priority-low': 'border-emerald-600/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
       },
     },
     defaultVariants: {

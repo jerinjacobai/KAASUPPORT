@@ -74,10 +74,10 @@ export const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttribut
     if (!ctx?.isOpen || !mounted) return null
 
     return createPortal(
-      <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
         {/* Backdrop */}
         <div 
-          className="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity"
+          className="fixed inset-0 bg-black/55 backdrop-blur-sm transition-opacity"
           onClick={() => { ctx.setIsOpen(false); ctx.onOpenChange?.(false) }}
         />
         
@@ -85,7 +85,7 @@ export const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttribut
         <div
           ref={ref}
           className={cn(
-            'relative z-50 w-full max-w-xl rounded-2xl border border-border bg-card text-card-foreground shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden my-auto',
+            'relative z-50 w-full max-w-xl rounded-2xl border border-border/90 bg-card text-card-foreground shadow-2xl shadow-black/25 animate-in fade-in zoom-in-95 duration-200 overflow-hidden my-auto',
             className
           )}
           {...props}
