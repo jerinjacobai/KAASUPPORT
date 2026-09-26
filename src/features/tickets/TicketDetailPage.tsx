@@ -81,17 +81,22 @@ export default function TicketDetailPage() {
     setEditModalOpen(true);
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editTitle.trim()) {
       toast.error('Please enter a ticket title');
       return;
     }
-    updateTicket(ticket.id, {
-      title: editTitle.trim(),
-      description: editDescription.trim(),
-      priority: editPriority
-    });
+    try {
+      await updateTicket(ticket.id, {
+        title: editTitle.trim(),
+        description: editDescription.trim(),
+        priority: editPriority
+      });
+    } catch (error) {
+      toast.error('Ticket changes were not saved', { description: error instanceof Error ? error.message : 'Please try again.' });
+      return;
+    }
 
     const newEvent: TimelineEvent = {
       id: `EVT-${Date.now()}`,
@@ -106,8 +111,13 @@ export default function TicketDetailPage() {
     setEditModalOpen(false);
   };
 
-  const handleMarkResolved = () => {
-    updateTicket(ticket.id, { status: 'resolved' });
+  const handleMarkResolved = async () => {
+    try {
+      await updateTicket(ticket.id, { status: 'resolved' });
+    } catch (error) {
+      toast.error('Ticket status was not saved', { description: error instanceof Error ? error.message : 'Please try again.' });
+      return;
+    }
     const newEvent: TimelineEvent = {
       id: `EVT-${Date.now()}`,
       type: 'status_change',
@@ -119,8 +129,13 @@ export default function TicketDetailPage() {
     toast.success(`Ticket ${ticket.id} marked as Resolved!`);
   };
 
-  const handleReopenTicket = () => {
-    updateTicket(ticket.id, { status: 'open' });
+  const handleReopenTicket = async () => {
+    try {
+      await updateTicket(ticket.id, { status: 'open' });
+    } catch (error) {
+      toast.error('Ticket status was not saved', { description: error instanceof Error ? error.message : 'Please try again.' });
+      return;
+    }
     const newEvent: TimelineEvent = {
       id: `EVT-${Date.now()}`,
       type: 'status_change',

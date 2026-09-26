@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useMasterStore } from '@/stores/master-store';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 const KANBAN_COLUMNS = [
   { id: 'open', title: 'New / Open', color: 'border-blue-500/40 bg-blue-500/5' },
@@ -58,12 +59,16 @@ export default function KanbanPage() {
     setDragOverCol(null);
   };
 
-  const handleDrop = (e: React.DragEvent, statusId: string) => {
+  const handleDrop = async (e: React.DragEvent, statusId: string) => {
     e.preventDefault();
     setDragOverCol(null);
     if (!draggedTicket || !isKaaInternal) return;
     
-    updateTicket(draggedTicket, { status: statusId });
+    try {
+      await updateTicket(draggedTicket, { status: statusId });
+    } catch (error) {
+      toast.error('Ticket could not be moved', { description: error instanceof Error ? error.message : 'Please try again.' });
+    }
     setDraggedTicket(null);
   };
 

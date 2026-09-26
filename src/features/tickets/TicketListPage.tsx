@@ -140,11 +140,15 @@ export default function TicketListPage() {
     });
   };
 
-  const handleQuickStatusChange = (ticketId: string, newStatus: string) => {
-    updateTicket(ticketId, { status: newStatus });
-    toast.success(`Ticket ${ticketId} updated`, {
-      description: `Status changed to ${newStatus.replace('_', ' ')}.`
-    });
+  const handleQuickStatusChange = async (ticketId: string, newStatus: string) => {
+    try {
+      await updateTicket(ticketId, { status: newStatus });
+      toast.success(`Ticket ${ticketId} updated`, {
+        description: `Status changed to ${newStatus.replace('_', ' ')}.`
+      });
+    } catch (error) {
+      toast.error('Ticket status was not saved', { description: error instanceof Error ? error.message : 'Please try again.' });
+    }
   };
 
   const handleOpenEdit = (ticket: any) => {
@@ -155,7 +159,7 @@ export default function TicketListPage() {
     setEditModalOpen(true);
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editTitle.trim()) {
       toast.error('Ticket title is required');
@@ -163,7 +167,8 @@ export default function TicketListPage() {
     }
 
     if (editingTicket) {
-      updateTicket(editingTicket.id, {
+      try {
+      await updateTicket(editingTicket.id, {
         title: editTitle.trim(),
         description: editDescription.trim(),
         priority: editPriority,
@@ -174,6 +179,9 @@ export default function TicketListPage() {
       });
       setEditModalOpen(false);
       setEditingTicket(null);
+      } catch (error) {
+        toast.error('Ticket changes were not saved', { description: error instanceof Error ? error.message : 'Please try again.' });
+      }
     }
   };
 

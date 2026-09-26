@@ -133,7 +133,7 @@ interface MasterState {
   updateAMCContract: (id: string, updates: Partial<AMCContractMaster>) => void
 
   addTicket: (ticket: Omit<TicketMaster, 'id'> & { id?: string }) => Promise<TicketMaster>
-  updateTicket: (id: string, updates: Partial<TicketMaster>) => void
+  updateTicket: (id: string, updates: Partial<TicketMaster>) => Promise<void>
   setTickets: (tickets: TicketMaster[]) => void
 
   addInventoryPart: (part: Omit<InventoryPartMaster, 'id'> & { id?: string }) => Promise<InventoryPartMaster>
@@ -502,14 +502,13 @@ export const useMasterStore = create<MasterState>()(
         return newTicket
       },
 
-      updateTicket: (id, updates) => {
+      updateTicket: async (id, updates) => {
+        const { data, error } = await (supabase.from as any)('tickets')
+          .update(updates).or(`ticket_number.eq.${id},id.eq.${id}`).select('id').single()
+        if (error || !data) throw new Error(error?.message || 'Ticket was not updated.')
         set((state) => ({
           tickets: state.tickets.map(t => (t.id === id || t.ticket_number === id) ? { ...t, ...updates } : t)
         }))
-
-        ;(supabase.from as any)('tickets').update(updates).or(`ticket_number.eq.${id},id.eq.${id}`).then(({ error }: any) => {
-          if (error) console.warn('Supabase ticket update warning:', error.message)
-        })
       },
 
       setTickets: (tickets) => set({ tickets }),
