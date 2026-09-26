@@ -148,7 +148,7 @@ export default function AMCContractsPage() {
     }
   };
 
-  const handleCreateContract = (e: React.FormEvent) => {
+  const handleCreateContract = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contractName.trim()) {
       toast.error('Please enter contract title');
@@ -161,7 +161,8 @@ export default function AMCContractsPage() {
       return;
     }
 
-    const newContract = addAMCContract({
+    try {
+    const newContract = await addAMCContract({
       name: contractName.trim(),
       company: selectedComp,
       startDate: new Date().toISOString().split('T')[0],
@@ -177,6 +178,9 @@ export default function AMCContractsPage() {
     });
     setModalOpen(false);
     setContractName('');
+    } catch (error) {
+      toast.error('Failed to create AMC contract', { description: error instanceof Error ? error.message : 'Please try again.' });
+    }
   };
 
   return (

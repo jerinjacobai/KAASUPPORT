@@ -35,14 +35,15 @@ export default function KnowledgeBasePage() {
     });
   };
 
-  const handleCreateArticleSubmit = (e: React.FormEvent) => {
+  const handleCreateArticleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) {
       toast.error('Please enter article title');
       return;
     }
 
-    const created = addKBArticle({
+    try {
+    const created = await addKBArticle({
       title: newTitle.trim(),
       category: newCategory,
       content: newContent.trim() || 'Troubleshooting and step-by-step resolution procedure for this component.'
@@ -55,6 +56,9 @@ export default function KnowledgeBasePage() {
     setCreateModalOpen(false);
     setNewTitle('');
     setNewContent('');
+    } catch (error) {
+      toast.error('Failed to publish article', { description: error instanceof Error ? error.message : 'Please try again.' });
+    }
   };
 
   return (

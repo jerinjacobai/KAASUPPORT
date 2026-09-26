@@ -119,7 +119,7 @@ export default function MastersPage() {
   const [isSubmittingPart, setIsSubmittingPart] = useState(false);
 
   // Handlers
-  const handleCreateCompany = (e: React.FormEvent) => {
+  const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmittingComp) return;
     if (!compName.trim()) {
@@ -128,7 +128,7 @@ export default function MastersPage() {
     }
     setIsSubmittingComp(true);
     try {
-      const createdComp = addCompany({
+      const createdComp = await addCompany({
         name: compName.trim(),
         code: compCode.trim() || compName.trim().slice(0, 4).toUpperCase(),
         industry: compIndustry,
@@ -145,6 +145,8 @@ export default function MastersPage() {
       setCompCode('');
       setCompEmail('');
       setCompPhone('');
+    } catch (error) {
+      toast.error('Failed to create company', { description: error instanceof Error ? error.message : 'Please try again.' });
     } finally {
       setIsSubmittingComp(false);
     }
@@ -215,24 +217,18 @@ export default function MastersPage() {
     const computedHash = await hashPassword(rawPassword);
 
     try {
-      await (supabase.rpc as any)('admin_create_user', {
-        p_email: selectedUserForPassword.email.trim().toLowerCase(),
-        p_password: rawPassword,
-        p_full_name: selectedUserForPassword.name,
-        p_role_type: selectedUserForPassword.roleType,
-        p_role_name: selectedUserForPassword.roleName,
-        p_mapped_company: selectedUserForPassword.mappedCompany
+      await resetUserPassword(selectedUserForPassword.id, rawPassword);
+      useMasterStore.getState().updateUser(selectedUserForPassword.id, {
+        passwordHash: computedHash,
+        password: '',
+        defaultPassword: ''
       });
-    } catch (err) {
-      console.warn('Supabase reset notice:', err);
+    } catch (error) {
+      toast.error('Failed to reset password', {
+        description: error instanceof Error ? error.message : 'Please try again.'
+      });
+      return;
     }
-
-    resetUserPassword(selectedUserForPassword.id, rawPassword);
-    useMasterStore.getState().updateUser(selectedUserForPassword.id, {
-      passwordHash: computedHash,
-      password: '',
-      defaultPassword: ''
-    });
 
     toast.success(`Password Reset for ${selectedUserForPassword.name}!`, {
       description: `New password updated: ${rawPassword}`
@@ -303,7 +299,7 @@ export default function MastersPage() {
     }
   };
 
-  const handleCreateAMCMaster = (e: React.FormEvent) => {
+  const handleCreateAMCMaster = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmittingAMC) return;
     if (!amcName.trim()) {
@@ -313,7 +309,7 @@ export default function MastersPage() {
     const targetCompany = amcCompany || (companiesList[0]?.name || 'KAA Client');
     setIsSubmittingAMC(true);
     try {
-      const created = addAMCContract({
+      const created = await addAMCContract({
         name: amcName.trim(),
         company: targetCompany,
         startDate: amcStartDate,
@@ -330,12 +326,14 @@ export default function MastersPage() {
 
       setAmcModalOpen(false);
       setAmcName('');
+    } catch (error) {
+      toast.error('Failed to create AMC contract', { description: error instanceof Error ? error.message : 'Please try again.' });
     } finally {
       setIsSubmittingAMC(false);
     }
   };
 
-  const handleCreatePartMaster = (e: React.FormEvent) => {
+  const handleCreatePartMaster = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmittingPart) return;
     if (!partName.trim()) {
@@ -344,7 +342,7 @@ export default function MastersPage() {
     }
     setIsSubmittingPart(true);
     try {
-      const created = addInventoryPart({
+      const created = await addInventoryPart({
         name: partName.trim(),
         sku: partSku.trim() || `PRT-${Math.floor(1000 + Math.random() * 9000)}`,
         category: partCategory,
@@ -361,6 +359,8 @@ export default function MastersPage() {
       setPartModalOpen(false);
       setPartName('');
       setPartSku('');
+    } catch (error) {
+      toast.error('Failed to create spare part', { description: error instanceof Error ? error.message : 'Please try again.' });
     } finally {
       setIsSubmittingPart(false);
     }

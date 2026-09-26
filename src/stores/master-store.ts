@@ -116,32 +116,32 @@ interface MasterState {
   isSyncing: boolean
 
   // Actions
-  addCompany: (company: Omit<CompanyMaster, 'id' | 'assetsCount' | 'usersCount'> & { id?: string }) => CompanyMaster
+  addCompany: (company: Omit<CompanyMaster, 'id' | 'assetsCount' | 'usersCount'> & { id?: string }) => Promise<CompanyMaster>
   updateCompany: (id: string, updates: Partial<CompanyMaster>) => void
   deleteCompany: (id: string) => void
 
   addUser: (user: Omit<UserMaster, 'id'> & { id?: string }) => Promise<UserMaster>
   updateUser: (id: string, updates: Partial<UserMaster>) => void
-  resetUserPassword: (id: string, newPassword?: string) => string
+  resetUserPassword: (id: string, newPassword?: string) => Promise<string>
   deleteUser: (id: string) => void
 
   addAsset: (asset: Omit<AssetMaster, 'id'> & { id?: string }) => Promise<AssetMaster>
   updateAsset: (id: string, updates: Partial<AssetMaster>) => void
   deleteAsset: (id: string) => void
 
-  addAMCContract: (contract: Omit<AMCContractMaster, 'id' | 'contractNumber'> & { id?: string; contractNumber?: string }) => AMCContractMaster
+  addAMCContract: (contract: Omit<AMCContractMaster, 'id' | 'contractNumber'> & { id?: string; contractNumber?: string }) => Promise<AMCContractMaster>
   updateAMCContract: (id: string, updates: Partial<AMCContractMaster>) => void
 
-  addTicket: (ticket: Omit<TicketMaster, 'id'> & { id?: string }) => TicketMaster
+  addTicket: (ticket: Omit<TicketMaster, 'id'> & { id?: string }) => Promise<TicketMaster>
   updateTicket: (id: string, updates: Partial<TicketMaster>) => void
   setTickets: (tickets: TicketMaster[]) => void
 
-  addInventoryPart: (part: Omit<InventoryPartMaster, 'id'> & { id?: string }) => InventoryPartMaster
+  addInventoryPart: (part: Omit<InventoryPartMaster, 'id'> & { id?: string }) => Promise<InventoryPartMaster>
   updateInventoryPart: (id: string, updates: Partial<InventoryPartMaster>) => void
-  reserveInventoryStock: (id: string, quantity?: number) => void
+  reserveInventoryStock: (id: string, quantity?: number) => Promise<number>
   deleteInventoryPart: (id: string) => void
 
-  addKBArticle: (article: Omit<KBArticleMaster, 'id' | 'views' | 'helpful' | 'lastUpdated'> & { id?: string }) => KBArticleMaster
+  addKBArticle: (article: Omit<KBArticleMaster, 'id' | 'views' | 'helpful' | 'lastUpdated'> & { id?: string }) => Promise<KBArticleMaster>
 
   purgeMockData: () => void
   syncFromSupabase: () => Promise<void>
@@ -187,10 +187,9 @@ export const useMasterStore = create<MasterState>()(
         }))
       },
 
-      addCompany: (compData) => {
-        const newId = compData.id || `COMP-${Date.now()}`
+      addCompany: async (compData) => {
         const newCompany: CompanyMaster = {
-          id: newId,
+          id: compData.id || '',
           name: compData.name,
           code: compData.code || compData.name.slice(0, 4).toUpperCase(),
           industry: compData.industry || 'Industrial Manufacturing',
@@ -202,19 +201,18 @@ export const useMasterStore = create<MasterState>()(
           created_at: new Date().toISOString()
         }
 
-        set((state) => ({ companies: [newCompany, ...state.companies] }))
-
-        // Persist to Supabase PostgreSQL table
-        ;(supabase.from as any)('companies').insert([{
+        const { data, error } = await (supabase.from as any)('companies').insert({
           name: newCompany.name,
           code: newCompany.code,
           industry: newCompany.industry,
           email: newCompany.email,
           phone: newCompany.phone,
           is_active: newCompany.is_active
-        }]).then(({ error }: any) => {
-          if (error) console.warn('Supabase company insert warning:', error.message)
-        })
+        }).select('*').single()
+        if (error || !data) throw new Error(error?.message || 'Could not save company.')
+        newCompany.id = data.id
+        newCompany.created_at = data.created_at
+        set((state) => ({ companies: [newCompany, ...state.companies] }))
 
         return newCompany
       },
@@ -307,29 +305,23 @@ export const useMasterStore = create<MasterState>()(
         }
       },
 
-      resetUserPassword: (id, newPassword) => {
+      resetUserPassword: async (id, newPassword) => {
         const passwordToSet = newPassword || `KaaReset${Math.floor(1000 + Math.random() * 9000)}!`
         const foundUser = get().users.find(u => u.id === id)
-        
-        set((state) => ({
-          users: state.users.map(u => u.id === id ? { 
-            ...u, 
-            isPasswordResetRequired: true 
-          } : u)
-        }))
+        if (!foundUser) throw new Error('User was not found in the directory.')
+        const { error } = await (supabase.rpc as any)('admin_create_user', {
+          p_email: foundUser.email.toLowerCase(),
+          p_password: passwordToSet,
+          p_full_name: foundUser.name,
+          p_role_type: foundUser.roleType,
+          p_role_name: foundUser.roleName,
+          p_mapped_company: foundUser.mappedCompany
+        })
+        if (error) throw new Error(error.message)
 
-        if (foundUser) {
-          ;(supabase.rpc as any)('admin_create_user', {
-            p_email: foundUser.email.toLowerCase(),
-            p_password: passwordToSet,
-            p_full_name: foundUser.name,
-            p_role_type: foundUser.roleType,
-            p_role_name: foundUser.roleName,
-            p_mapped_company: foundUser.mappedCompany
-          }).then(({ error }: any) => {
-            if (error) console.warn('Supabase resetUserPassword notice:', error.message)
-          })
-        }
+        set((state) => ({
+          users: state.users.map(u => u.id === id ? { ...u, isPasswordResetRequired: true } : u)
+        }))
 
         return passwordToSet
       },
@@ -419,7 +411,7 @@ export const useMasterStore = create<MasterState>()(
         })
       },
 
-      addAMCContract: (contractData) => {
+      addAMCContract: async (contractData) => {
         const nextNum = get().amcContracts.length + 1
         const numStr = `AMC-2026-${nextNum < 10 ? '00' : '0'}${nextNum}`
         const newContract: AMCContractMaster = {
@@ -436,23 +428,25 @@ export const useMasterStore = create<MasterState>()(
           created_at: new Date().toISOString()
         }
 
-        set((state) => ({
-          amcContracts: [newContract, ...state.amcContracts]
-        }))
-
-        // Persist to Supabase amc_contracts table
-        ;(supabase.from as any)('amc_contracts').insert([{
+        const { data: company, error: companyError } = await (supabase.from as any)('companies')
+          .select('id').eq('name', newContract.company).maybeSingle()
+        if (companyError) throw new Error(companyError.message)
+        const { data, error } = await (supabase.from as any)('amc_contracts').insert({
+          company_id: company?.id || null,
           contract_number: newContract.contractNumber,
           name: newContract.name,
-          status: newContract.status,
+          status: newContract.status.toLowerCase(),
           start_date: newContract.startDate,
           end_date: newContract.endDate,
           total_visits: newContract.totalVisits,
           used_visits: newContract.usedVisits,
           included_labor: newContract.includedLabor
-        }]).then(({ error }: any) => {
-          if (error) console.warn('Supabase amc_contracts insert warning:', error.message)
-        })
+        }).select('id, contract_number, created_at').single()
+        if (error || !data) throw new Error(error?.message || 'Could not save AMC contract.')
+        newContract.id = data.id
+        newContract.contractNumber = data.contract_number || newContract.contractNumber
+        newContract.created_at = data.created_at
+        set((state) => ({ amcContracts: [newContract, ...state.amcContracts] }))
 
         return newContract
       },
@@ -467,7 +461,7 @@ export const useMasterStore = create<MasterState>()(
         })
       },
 
-      addTicket: (ticketData) => {
+      addTicket: async (ticketData) => {
         const nextIdNum = 1001 + get().tickets.length
         const ticketId = ticketData.id || `TKT-${nextIdNum}`
         const matchedComp = get().companies.find(c => 
@@ -490,25 +484,24 @@ export const useMasterStore = create<MasterState>()(
           slaBreached: false
         }
 
-        set((state) => ({
-          tickets: [newTicket, ...state.tickets]
-        }))
-
-        // Persist directly to Supabase tickets table
-        ;(supabase.from as any)('tickets').insert([{
+        if (!matchedComp) throw new Error(`Company "${ticketData.company}" was not found. Select a valid client company.`)
+        const { data, error } = await (supabase.from as any)('tickets').insert({
           ticket_number: newTicket.ticket_number,
           title: newTicket.title,
           description: newTicket.description,
           source: 'portal',
           contact_name: newTicket.company,
-          company_id: matchedComp ? matchedComp.id : null,
+          company_id: matchedComp.id,
           priority: newTicket.priority,
           status: newTicket.status,
           category: newTicket.category,
           created_at: newTicket.createdAt
-        }]).then(({ error }: any) => {
-          if (error) console.warn('Supabase ticket insert warning:', error.message)
-        })
+        }).select('id, ticket_number, created_at').single()
+        if (error || !data) throw new Error(error?.message || 'Could not save ticket.')
+        newTicket.id = data.ticket_number || data.id
+        newTicket.ticket_number = data.ticket_number || newTicket.id
+        newTicket.createdAt = data.created_at || newTicket.createdAt
+        set((state) => ({ tickets: [newTicket, ...state.tickets] }))
 
         return newTicket
       },
@@ -525,7 +518,7 @@ export const useMasterStore = create<MasterState>()(
 
       setTickets: (tickets) => set({ tickets }),
 
-      addInventoryPart: (partData) => {
+      addInventoryPart: async (partData) => {
         const nextId = (get().inventoryParts || []).length + 1
         const newPart: InventoryPartMaster = {
           id: partData.id || `PRT-${nextId}`,
@@ -539,20 +532,52 @@ export const useMasterStore = create<MasterState>()(
           created_at: new Date().toISOString()
         }
 
-        set((state) => ({
-          inventoryParts: [newPart, ...(state.inventoryParts || [])]
-        }))
+        const { data: categoryData, error: categoryError } = await (supabase.from as any)('part_categories')
+          .select('id').eq('name', newPart.category).limit(1).maybeSingle()
+        if (categoryError) throw new Error(categoryError.message)
+        let categoryId = categoryData?.id
+        if (!categoryId) {
+          const { data: createdCategory, error: createCategoryError } = await (supabase.from as any)('part_categories')
+            .insert({ name: newPart.category }).select('id').single()
+          if (createCategoryError || !createdCategory) throw new Error(createCategoryError?.message || 'Could not save part category.')
+          categoryId = createdCategory.id
+        }
 
-        // Persist to Supabase parts table
-        ;(supabase.from as any)('parts').insert([{
+        const { data: warehouseData, error: warehouseError } = await (supabase.from as any)('warehouses')
+          .select('id').eq('name', newPart.location).limit(1).maybeSingle()
+        if (warehouseError) throw new Error(warehouseError.message)
+        let warehouseId = warehouseData?.id
+        if (!warehouseId) {
+          const { data: createdWarehouse, error: createWarehouseError } = await (supabase.from as any)('warehouses')
+            .insert({ name: newPart.location, is_active: true }).select('id').single()
+          if (createWarehouseError || !createdWarehouse) throw new Error(createWarehouseError?.message || 'Could not save warehouse.')
+          warehouseId = createdWarehouse.id
+        }
+
+        const { data, error } = await (supabase.from as any)('parts').insert({
           name: newPart.name,
           sku: newPart.sku,
+          category_id: categoryId,
           unit_price: parseFloat(newPart.unitPrice.replace(/[^0-9.]/g, '')) || 0,
           min_stock_level: newPart.minStock,
           is_active: true
-        }]).then(({ error }: any) => {
-          if (error) console.warn('Supabase parts insert warning:', error.message)
+        }).select('id, sku, created_at').single()
+        if (error || !data) throw new Error(error?.message || 'Could not save spare part.')
+
+        const { error: stockError } = await (supabase.from as any)('stock_levels').insert({
+          part_id: data.id,
+          warehouse_id: warehouseId,
+          quantity: newPart.stock
         })
+        if (stockError) {
+          await (supabase.from as any)('parts').delete().eq('id', data.id)
+          throw new Error(`Part was not added because its opening stock could not be saved: ${stockError.message}`)
+        }
+
+        newPart.id = data.id
+        newPart.sku = data.sku
+        newPart.created_at = data.created_at
+        set((state) => ({ inventoryParts: [newPart, ...(state.inventoryParts || [])] }))
 
         return newPart
       },
@@ -567,13 +592,26 @@ export const useMasterStore = create<MasterState>()(
         })
       },
 
-      reserveInventoryStock: (id, quantity = 1) => {
+      reserveInventoryStock: async (id, quantity = 1) => {
+        const part = get().inventoryParts.find(item => item.id === id)
+        if (!part) throw new Error('Spare part was not found.')
+        const { data: warehouse, error: warehouseError } = await (supabase.from as any)('warehouses')
+          .select('id').eq('name', part.location).limit(1).maybeSingle()
+        if (warehouseError || !warehouse) throw new Error(warehouseError?.message || 'Warehouse was not found.')
+        const { data: stockLevel, error: stockError } = await (supabase.from as any)('stock_levels')
+          .select('id, quantity, reserved_quantity').eq('part_id', id).eq('warehouse_id', warehouse.id).single()
+        if (stockError || !stockLevel) throw new Error(stockError?.message || 'Stock level was not found.')
+        const availableStock = stockLevel.quantity - (stockLevel.reserved_quantity || 0)
+        if (availableStock < quantity) throw new Error('Not enough stock is available to reserve.')
+        const newReservedQuantity = (stockLevel.reserved_quantity || 0) + quantity
+        const remainingStock = stockLevel.quantity - newReservedQuantity
+        const { error: updateError } = await (supabase.from as any)('stock_levels')
+          .update({ reserved_quantity: newReservedQuantity }).eq('id', stockLevel.id)
+        if (updateError) throw new Error(updateError.message)
         set((state) => ({
-          inventoryParts: (state.inventoryParts || []).map(p => p.id === id ? { 
-            ...p, 
-            stock: Math.max(0, p.stock - quantity) 
-          } : p)
+          inventoryParts: (state.inventoryParts || []).map(item => item.id === id ? { ...item, stock: remainingStock } : item)
         }))
+        return remainingStock
       },
 
       deleteInventoryPart: (id) => {
@@ -586,7 +624,7 @@ export const useMasterStore = create<MasterState>()(
         })
       },
 
-      addKBArticle: (articleData) => {
+      addKBArticle: async (articleData) => {
         const nextId = (get().kbArticles || []).length + 1
         const newArticle: KBArticleMaster = {
           id: articleData.id || `${nextId}`,
@@ -599,19 +637,16 @@ export const useMasterStore = create<MasterState>()(
           created_at: new Date().toISOString()
         }
 
-        set((state) => ({
-          kbArticles: [newArticle, ...(state.kbArticles || [])]
-        }))
-
-        // Persist to Supabase kb_articles table
-        ;(supabase.from as any)('kb_articles').insert([{
+        const { data, error } = await (supabase.from as any)('kb_articles').insert({
           title: newArticle.title,
           slug: newArticle.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
           content: newArticle.content,
           status: 'published'
-        }]).then(({ error }: any) => {
-          if (error) console.warn('Supabase kb_articles insert warning:', error.message)
-        })
+        }).select('id, created_at').single()
+        if (error || !data) throw new Error(error?.message || 'Could not save knowledge article.')
+        newArticle.id = data.id
+        newArticle.created_at = data.created_at
+        set((state) => ({ kbArticles: [newArticle, ...(state.kbArticles || [])] }))
 
         return newArticle
       },
@@ -636,19 +671,12 @@ export const useMasterStore = create<MasterState>()(
               createdAt: t.created_at || new Date().toISOString()
             }))
 
-            const mergedMap = new Map<string, TicketMaster>()
-            mappedDbTickets.forEach(t => mergedMap.set(t.id, t))
-            get().tickets.forEach((t: TicketMaster) => {
-              if (!mergedMap.has(t.id)) {
-                mergedMap.set(t.id, t)
-              }
-            })
-            set({ tickets: Array.from(mergedMap.values()) })
+            set({ tickets: mappedDbTickets })
           }
 
           // 2. Sync Live Companies
           const { data: dbCompanies } = await (supabase.from as any)('companies').select('*')
-          if (dbCompanies && dbCompanies.length > 0) {
+          if (Array.isArray(dbCompanies)) {
             const mappedDbCompanies: CompanyMaster[] = dbCompanies.map((c: any) => ({
               id: c.id,
               name: c.name,
@@ -684,7 +712,7 @@ export const useMasterStore = create<MasterState>()(
 
           // 4. Sync Live Assets
           const { data: dbAssets } = await (supabase.from as any)('assets').select('*')
-          if (dbAssets && dbAssets.length > 0) {
+          if (Array.isArray(dbAssets)) {
             const mappedAssets: AssetMaster[] = dbAssets.map((a: any) => ({
               id: a.id,
               tag: a.asset_tag || `AST-${a.id.slice(0, 6)}`,
@@ -709,12 +737,12 @@ export const useMasterStore = create<MasterState>()(
 
           // 5. Sync Live AMC Contracts
           const { data: dbContracts } = await (supabase.from as any)('amc_contracts').select('*')
-          if (dbContracts && dbContracts.length > 0) {
+          if (Array.isArray(dbContracts)) {
             const mappedContracts: AMCContractMaster[] = dbContracts.map((c: any) => ({
               id: c.id,
               contractNumber: c.contract_number || `AMC-${c.id.slice(0, 6)}`,
               name: c.name,
-              company: 'KAA Client',
+              company: get().companies.find((company: CompanyMaster) => company.id === c.company_id)?.name || 'KAA Client',
               startDate: c.start_date || '2026-01-01',
               endDate: c.end_date || '2026-12-31',
               totalVisits: c.total_visits || 12,
@@ -728,15 +756,18 @@ export const useMasterStore = create<MasterState>()(
 
           // 6. Sync Live Spare Parts
           const { data: dbParts } = await (supabase.from as any)('parts').select('*')
-          if (dbParts && dbParts.length > 0) {
+          const { data: dbStockLevels } = await (supabase.from as any)('stock_levels').select('*')
+          const { data: dbWarehouses } = await (supabase.from as any)('warehouses').select('id, name')
+          const { data: dbPartCategories } = await (supabase.from as any)('part_categories').select('id, name')
+          if (Array.isArray(dbParts)) {
             const mappedParts: InventoryPartMaster[] = dbParts.map((p: any) => ({
               id: p.id,
               sku: p.sku,
               name: p.name,
-              category: 'Hardware',
-              location: 'Central Warehouse, Zone A',
+              category: dbPartCategories?.find((category: any) => category.id === p.category_id)?.name || 'Hardware',
+              location: dbWarehouses?.find((warehouse: any) => warehouse.id === dbStockLevels?.find((level: any) => level.part_id === p.id)?.warehouse_id)?.name || 'Unassigned warehouse',
               unitPrice: `₹${p.unit_price || '0'}`,
-              stock: 10,
+              stock: dbStockLevels?.filter((level: any) => level.part_id === p.id).reduce((sum: number, level: any) => sum + (Number(level.available_quantity ?? level.quantity) || 0), 0) || 0,
               minStock: p.min_stock_level || 2,
               created_at: p.created_at
             }))
@@ -745,7 +776,7 @@ export const useMasterStore = create<MasterState>()(
 
           // 7. Sync Live KB Articles
           const { data: dbArticles } = await (supabase.from as any)('kb_articles').select('*')
-          if (dbArticles && dbArticles.length > 0) {
+          if (Array.isArray(dbArticles)) {
             const mappedArticles: KBArticleMaster[] = dbArticles.map((a: any) => ({
               id: a.id,
               title: a.title,

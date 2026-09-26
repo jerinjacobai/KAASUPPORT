@@ -30,27 +30,28 @@ export default function InventoryPage() {
 
   const lowStockParts = (inventoryParts || []).filter(p => p.stock <= p.minStock);
 
-  const handleReservePart = (part: any) => {
-    if (part.stock <= 0) {
-      toast.error(`Out of Stock: ${part.sku}`, {
-        description: 'No units available to reserve. Please issue a restock PO.'
+  const handleReservePart = async (part: any) => {
+    try {
+      const remainingStock = await reserveInventoryStock(part.id, 1);
+      toast.success(`Spare Part Reserved: ${part.sku}`, {
+        description: `1 unit of ${part.name} allocated to dispatch. Remaining stock: ${remainingStock}`
       });
-      return;
+    } catch (error) {
+      toast.error(`Could not reserve ${part.sku}`, {
+        description: error instanceof Error ? error.message : 'Please try again.'
+      });
     }
-    reserveInventoryStock(part.id, 1);
-    toast.success(`Spare Part Reserved: ${part.sku}`, {
-      description: `1 unit of ${part.name} allocated to dispatch. Remaining stock: ${part.stock - 1}`
-    });
   };
 
-  const handleAddPartSubmit = (e: React.FormEvent) => {
+  const handleAddPartSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!partName.trim()) {
       toast.error('Please enter spare part name');
       return;
     }
 
-    const created = addInventoryPart({
+    try {
+    const created = await addInventoryPart({
       name: partName.trim(),
       sku: partSku.trim() || `PRT-${Math.floor(1000 + Math.random() * 9000)}`,
       category: partCategory,
@@ -69,6 +70,9 @@ export default function InventoryPage() {
     setPartSku('');
     setPartPrice('₹12,500');
     setPartStock('10');
+    } catch (error) {
+      toast.error('Failed to add spare part', { description: error instanceof Error ? error.message : 'Please try again.' });
+    }
   };
 
   const handleCreatePOSubmit = (e: React.FormEvent) => {

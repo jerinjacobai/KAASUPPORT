@@ -57,7 +57,7 @@ export default function CreateTicketPage() {
       setIsSubmitting(true);
       try {
         // Submit Ticket to master store & Supabase
-        const newTicket = addTicket({
+        const newTicket = await addTicket({
           title: title.trim(),
           description: description.trim() || 'No additional details provided.',
           company: company,
@@ -74,7 +74,9 @@ export default function CreateTicketPage() {
 
         navigate(`/tickets/${newTicket.id}`);
       } catch (err) {
-        toast.error('Failed to create ticket. Please try again.');
+        toast.error('Failed to create ticket', {
+          description: err instanceof Error ? err.message : 'Please try again.'
+        });
       } finally {
         setIsSubmitting(false);
       }
