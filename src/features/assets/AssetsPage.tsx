@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 export default function AssetsPage() {
   const { isKaaInternal, userCompany } = useAuthStore();
   const { assets: assetsList, companies: companiesList, addAsset } = useMasterStore();
+  const activeCompanies = companiesList.filter(company => company.is_active);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
@@ -26,11 +27,11 @@ export default function AssetsPage() {
   const [newAssetCompany, setNewAssetCompany] = useState('');
 
   const handleOpenRegister = () => {
-    if (companiesList.length === 0) {
-      toast.error('No companies registered yet. Onboard a company in Admin Masters first.');
+    if (activeCompanies.length === 0) {
+      toast.error('No active companies are available. Activate or onboard a company in Admin Masters first.');
       return;
     }
-    setNewAssetCompany(companiesList[0].name);
+    setNewAssetCompany(activeCompanies[0].name);
     setRegisterModalOpen(true);
   };
 
@@ -61,7 +62,7 @@ export default function AssetsPage() {
       return;
     }
 
-    const selectedComp = newAssetCompany || companiesList[0]?.name;
+    const selectedComp = newAssetCompany || activeCompanies[0]?.name;
     if (!selectedComp) {
       toast.error('Please select an owner company');
       return;
@@ -279,7 +280,7 @@ export default function AssetsPage() {
                 onChange={(e) => setNewAssetCompany(e.target.value)}
                 className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
               >
-                {companiesList.map(c => (
+                {activeCompanies.map(c => (
                   <option key={c.id} value={c.name}>{c.name} ({c.code})</option>
                 ))}
               </select>

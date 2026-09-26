@@ -118,16 +118,16 @@ interface MasterState {
   // Actions
   addCompany: (company: Omit<CompanyMaster, 'id' | 'assetsCount' | 'usersCount'> & { id?: string }) => Promise<CompanyMaster>
   updateCompany: (id: string, updates: Partial<CompanyMaster>) => void
-  deleteCompany: (id: string) => void
+  deleteCompany: (id: string) => Promise<void>
 
   addUser: (user: Omit<UserMaster, 'id'> & { id?: string }) => Promise<UserMaster>
   updateUser: (id: string, updates: Partial<UserMaster>) => void
   resetUserPassword: (id: string, newPassword?: string) => Promise<string>
-  deleteUser: (id: string) => void
+  deleteUser: (id: string) => Promise<void>
 
   addAsset: (asset: Omit<AssetMaster, 'id'> & { id?: string }) => Promise<AssetMaster>
   updateAsset: (id: string, updates: Partial<AssetMaster>) => void
-  deleteAsset: (id: string) => void
+  deleteAsset: (id: string) => Promise<void>
 
   addAMCContract: (contract: Omit<AMCContractMaster, 'id' | 'contractNumber'> & { id?: string; contractNumber?: string }) => Promise<AMCContractMaster>
   updateAMCContract: (id: string, updates: Partial<AMCContractMaster>) => void
@@ -139,7 +139,7 @@ interface MasterState {
   addInventoryPart: (part: Omit<InventoryPartMaster, 'id'> & { id?: string }) => Promise<InventoryPartMaster>
   updateInventoryPart: (id: string, updates: Partial<InventoryPartMaster>) => void
   reserveInventoryStock: (id: string, quantity?: number) => Promise<number>
-  deleteInventoryPart: (id: string) => void
+  deleteInventoryPart: (id: string) => Promise<void>
 
   addKBArticle: (article: Omit<KBArticleMaster, 'id' | 'views' | 'helpful' | 'lastUpdated'> & { id?: string }) => Promise<KBArticleMaster>
 
@@ -227,14 +227,13 @@ export const useMasterStore = create<MasterState>()(
         })
       },
 
-      deleteCompany: (id) => {
+      deleteCompany: async (id) => {
+        const { data, error } = await (supabase.from as any)('companies')
+          .update({ is_active: false }).eq('id', id).select('id').single()
+        if (error || !data) throw new Error(error?.message || 'Company was not updated.')
         set((state) => ({
-          companies: state.companies.filter(c => c.id !== id)
+          companies: state.companies.map(company => company.id === id ? { ...company, is_active: false } : company)
         }))
-
-        ;(supabase.from as any)('companies').delete().eq('id', id).then(({ error }: any) => {
-          if (error) console.warn('Supabase company delete warning:', error.message)
-        })
       },
 
       addUser: async (userData) => {
@@ -326,14 +325,13 @@ export const useMasterStore = create<MasterState>()(
         return passwordToSet
       },
 
-      deleteUser: (id) => {
+      deleteUser: async (id) => {
+        const { data, error } = await (supabase.from as any)('profiles')
+          .update({ is_active: false }).eq('id', id).select('id').single()
+        if (error || !data) throw new Error(error?.message || 'User was not deactivated.')
         set((state) => ({
-          users: state.users.filter(u => u.id !== id)
+          users: state.users.map(user => user.id === id ? { ...user, status: 'Inactive' } : user)
         }))
-
-        ;(supabase.from as any)('profiles').update({ is_active: false }).eq('id', id).then(({ error }: any) => {
-          if (error) console.warn('Supabase user deactivation warning:', error.message)
-        })
       },
 
       addAsset: async (assetData) => {
@@ -401,14 +399,12 @@ export const useMasterStore = create<MasterState>()(
         })
       },
 
-      deleteAsset: (id) => {
+      deleteAsset: async (id) => {
+        const { data, error } = await (supabase.from as any)('assets').delete().eq('id', id).select('id').single()
+        if (error || !data) throw new Error(error?.message || 'Asset was not deleted.')
         set((state) => ({
-          assets: state.assets.filter(a => a.id !== id)
+          assets: state.assets.filter(asset => asset.id !== id)
         }))
-
-        ;(supabase.from as any)('assets').delete().eq('id', id).then(({ error }: any) => {
-          if (error) console.warn('Supabase asset delete warning:', error.message)
-        })
       },
 
       addAMCContract: async (contractData) => {
@@ -606,7 +602,7 @@ export const useMasterStore = create<MasterState>()(
         const newReservedQuantity = (stockLevel.reserved_quantity || 0) + quantity
         const remainingStock = stockLevel.quantity - newReservedQuantity
         const { error: updateError } = await (supabase.from as any)('stock_levels')
-          .update({ reserved_quantity: newReservedQuantity }).eq('id', stockLevel.id)
+          .update({ reserved_quantity: newReservedQuantity }).eq('id', stockLevel.id).select('id').single()
         if (updateError) throw new Error(updateError.message)
         set((state) => ({
           inventoryParts: (state.inventoryParts || []).map(item => item.id === id ? { ...item, stock: remainingStock } : item)
@@ -614,14 +610,12 @@ export const useMasterStore = create<MasterState>()(
         return remainingStock
       },
 
-      deleteInventoryPart: (id) => {
+      deleteInventoryPart: async (id) => {
+        const { data, error } = await (supabase.from as any)('parts').delete().eq('id', id).select('id').single()
+        if (error || !data) throw new Error(error?.message || 'Spare part was not deleted.')
         set((state) => ({
-          inventoryParts: (state.inventoryParts || []).filter(p => p.id !== id)
+          inventoryParts: (state.inventoryParts || []).filter(part => part.id !== id)
         }))
-
-        ;(supabase.from as any)('parts').delete().eq('id', id).then(({ error }: any) => {
-          if (error) console.warn('Supabase parts delete warning:', error.message)
-        })
       },
 
       addKBArticle: async (articleData) => {

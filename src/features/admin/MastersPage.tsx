@@ -50,6 +50,7 @@ export default function MastersPage() {
     addInventoryPart,
     deleteInventoryPart
   } = useMasterStore();
+  const activeCompaniesList = companiesList.filter(company => company.is_active);
 
   // Modals state
   const [companyModalOpen, setCompanyModalOpen] = useState(false);
@@ -167,7 +168,7 @@ export default function MastersPage() {
 
       const selectedCompany = userRoleType === 'KAA Internal Staff' 
         ? 'Global (All Companies)' 
-        : (userMappedCompany || (companiesList[0]?.name || ''));
+        : (userMappedCompany || (activeCompaniesList[0]?.name || ''));
 
       const createdUser = await addUser({
         name: userName.trim(),
@@ -246,7 +247,7 @@ export default function MastersPage() {
       return;
     }
 
-    const targetCompany = assetMappedCompany || (companiesList[0]?.name || '');
+    const targetCompany = assetMappedCompany || (activeCompaniesList[0]?.name || '');
 
     setSavingAsset(true);
     let provisionPath = '';
@@ -306,7 +307,7 @@ export default function MastersPage() {
       toast.error('Please enter AMC contract name');
       return;
     }
-    const targetCompany = amcCompany || (companiesList[0]?.name || 'KAA Client');
+    const targetCompany = amcCompany || (activeCompaniesList[0]?.name || 'KAA Client');
     setIsSubmittingAMC(true);
     try {
       const created = await addAMCContract({
@@ -366,6 +367,42 @@ export default function MastersPage() {
     }
   };
 
+  const handleDeactivateCompany = async (company: typeof companiesList[number]) => {
+    try {
+      await deleteCompany(company.id);
+      toast.success(`${company.name} deactivated`, { description: 'Existing tickets and assets were kept.' });
+    } catch (error) {
+      toast.error('Could not deactivate company', { description: error instanceof Error ? error.message : 'Please try again.' });
+    }
+  };
+
+  const handleDeactivateUser = async (user: UserMaster) => {
+    try {
+      await deleteUser(user.id);
+      toast.success(`${user.name} deactivated`);
+    } catch (error) {
+      toast.error('Could not deactivate user', { description: error instanceof Error ? error.message : 'Please try again.' });
+    }
+  };
+
+  const handleDeleteAsset = async (asset: typeof assetsList[number]) => {
+    try {
+      await deleteAsset(asset.id);
+      toast.success(`Deleted asset ${asset.tag}`);
+    } catch (error) {
+      toast.error('Could not delete asset', { description: error instanceof Error ? error.message : 'Please try again.' });
+    }
+  };
+
+  const handleDeletePart = async (part: typeof partsList[number]) => {
+    try {
+      await deleteInventoryPart(part.id);
+      toast.success(`Removed ${part.sku}`);
+    } catch (error) {
+      toast.error('Could not remove spare part', { description: error instanceof Error ? error.message : 'Please try again.' });
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -401,7 +438,7 @@ export default function MastersPage() {
                 toast.error('Please onboard a company first.');
                 return;
               }
-              setAmcCompany(companiesList[0]?.name || '');
+              setAmcCompany(activeCompaniesList[0]?.name || '');
               setAmcModalOpen(true);
             }} className="gap-2 text-xs">
               <FileCheck2 className="w-4 h-4" /> Create AMC Contract
@@ -499,11 +536,11 @@ export default function MastersPage() {
                     </div>
 
                     <div className="pt-3 border-t border-border/50 flex items-center justify-between">
-                      <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Tenant Active
+                      <span className={`text-[11px] font-semibold flex items-center gap-1 ${comp.is_active ? 'text-emerald-400' : 'text-muted-foreground'}`}>
+                        <CheckCircle2 className="w-3.5 h-3.5" /> {comp.is_active ? 'Tenant Active' : 'Tenant Inactive'}
                       </span>
-                      <Button variant="ghost" size="sm" onClick={() => { deleteCompany(comp.id); toast.info(`Deleted ${comp.name}`); }} className="text-xs text-destructive hover:text-destructive gap-1">
-                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      <Button variant="ghost" size="sm" disabled={!comp.is_active} onClick={() => void handleDeactivateCompany(comp)} className="text-xs text-destructive hover:text-destructive gap-1">
+                        <Trash2 className="w-3.5 h-3.5" /> Deactivate
                       </Button>
                     </div>
                   </div>
@@ -570,7 +607,8 @@ export default function MastersPage() {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => { deleteUser(usr.id); toast.info(`Removed user ${usr.name}`); }} 
+                          disabled={usr.status === 'Inactive'}
+                          onClick={() => void handleDeactivateUser(usr)}
                           className="text-[11px] py-1 h-7 text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -614,7 +652,7 @@ export default function MastersPage() {
                         </Badge>
                       </td>
                       <td className="p-3 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => { deleteAsset(ast.id); toast.info(`Deleted asset ${ast.tag}`); }} className="text-xs text-destructive hover:bg-destructive/10">
+                        <Button variant="ghost" size="sm" onClick={() => void handleDeleteAsset(ast)} className="text-xs text-destructive hover:bg-destructive/10">
                           <Trash2 className="w-3.5 h-3.5" /> Remove
                         </Button>
                       </td>
@@ -698,7 +736,7 @@ export default function MastersPage() {
                         </Badge>
                       </td>
                       <td className="p-3 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => { deleteInventoryPart(p.id); toast.info(`Removed ${p.sku}`); }} className="text-xs text-destructive hover:bg-destructive/10">
+                        <Button variant="ghost" size="sm" onClick={() => void handleDeletePart(p)} className="text-xs text-destructive hover:bg-destructive/10">
                           <Trash2 className="w-3.5 h-3.5" /> Remove
                         </Button>
                       </td>
@@ -868,7 +906,7 @@ export default function MastersPage() {
                   onChange={(e) => setUserMappedCompany(e.target.value)}
                   className="w-full bg-card border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground font-semibold"
                 >
-                  {companiesList.map(c => (
+                  {activeCompaniesList.map(c => (
                     <option key={c.id} value={c.name}>{c.name} ({c.code})</option>
                   ))}
                 </select>
@@ -1053,7 +1091,7 @@ export default function MastersPage() {
                 onChange={(e) => setAssetMappedCompany(e.target.value)}
                 className="w-full bg-card border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground font-semibold"
               >
-                {companiesList.map(c => (
+                {activeCompaniesList.map(c => (
                   <option key={c.id} value={c.name}>{c.name} ({c.code})</option>
                 ))}
               </select>
@@ -1102,7 +1140,7 @@ export default function MastersPage() {
                 onChange={(e) => setAmcCompany(e.target.value)}
                 className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground font-semibold"
               >
-                {companiesList.map(c => (
+                {activeCompaniesList.map(c => (
                   <option key={c.id} value={c.name}>{c.name} ({c.code})</option>
                 ))}
               </select>

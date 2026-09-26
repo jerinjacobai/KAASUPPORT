@@ -13,7 +13,8 @@ const STEPS = ['Context', 'Issue Details', 'Attachments', 'Review & Submit'];
 export default function CreateTicketPage() {
   const navigate = useNavigate();
   const { isKaaInternal, userCompany } = useAuthStore();
-  const { companies, assets, addTicket } = useMasterStore();
+  const { companies: allCompanies, assets, addTicket } = useMasterStore();
+  const companies = allCompanies.filter(company => company.is_active);
   
   const [currentStep, setCurrentStep] = useState(0);
   const [company, setCompany] = useState('');

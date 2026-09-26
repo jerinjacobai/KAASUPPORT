@@ -12,7 +12,8 @@ import { Link } from 'react-router-dom';
 
 export default function AMCContractsPage() {
   const { isKaaInternal, userCompany } = useAuthStore();
-  const { amcContracts: allContracts, companies, addAMCContract } = useMasterStore();
+  const { amcContracts: allContracts, companies: allCompanies, addAMCContract } = useMasterStore();
+  const companies = allCompanies.filter(company => company.is_active);
   const [modalOpen, setModalOpen] = useState(false);
   
   const normalize = (s?: string) => (s || '').trim().toLowerCase();
