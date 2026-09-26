@@ -167,23 +167,7 @@ export default function MastersPage() {
         ? 'Global (All Companies)' 
         : (userMappedCompany || (companiesList[0]?.name || ''));
 
-      // 1. Provision user directly into Supabase Auth & PostgreSQL profiles
-      try {
-        const { error: rpcError } = await (supabase.rpc as any)('admin_create_user', {
-          p_email: userEmail.trim().toLowerCase(),
-          p_password: rawPassword,
-          p_full_name: userName.trim(),
-          p_role_type: userRoleType,
-          p_role_name: userRoleName,
-          p_mapped_company: selectedCompany
-        });
-        if (rpcError) console.warn('Supabase admin_create_user notice:', rpcError.message);
-      } catch (err) {
-        console.warn('Supabase user creation notice:', err);
-      }
-
-      // 2. Add user to master store
-      const createdUser = addUser({
+      const createdUser = await addUser({
         name: userName.trim(),
         email: userEmail.trim().toLowerCase(),
         roleType: userRoleType,
@@ -204,8 +188,10 @@ export default function MastersPage() {
       setUserName('');
       setUserEmail('');
       setUserPassword('KaaPass2026!#');
-    } catch {
-      toast.error('Failed to create user. Please try again.');
+    } catch (error) {
+      toast.error('Failed to create user', {
+        description: error instanceof Error ? error.message : 'Please try again.'
+      });
     } finally {
       setIsSubmittingUser(false);
     }

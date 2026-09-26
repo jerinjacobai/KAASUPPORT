@@ -120,7 +120,7 @@ interface MasterState {
   updateCompany: (id: string, updates: Partial<CompanyMaster>) => void
   deleteCompany: (id: string) => void
 
-  addUser: (user: Omit<UserMaster, 'id'> & { id?: string }) => UserMaster
+  addUser: (user: Omit<UserMaster, 'id'> & { id?: string }) => Promise<UserMaster>
   updateUser: (id: string, updates: Partial<UserMaster>) => void
   resetUserPassword: (id: string, newPassword?: string) => string
   deleteUser: (id: string) => void
@@ -239,20 +239,44 @@ export const useMasterStore = create<MasterState>()(
         })
       },
 
-      addUser: (userData) => {
-        const newId = userData.id || `USR-${Date.now()}`
+      addUser: async (userData) => {
         const generatedPassword = userData.password || userData.defaultPassword || `KaaPass2026!#`
+        const normalizedEmail = userData.email.trim().toLowerCase()
+        const { error: createError } = await (supabase.rpc as any)('admin_create_user', {
+          p_email: normalizedEmail,
+          p_password: generatedPassword,
+          p_full_name: userData.name.trim(),
+          p_role_type: userData.roleType,
+          p_role_name: userData.roleName || (userData.roleType === 'KAA Internal Staff' ? 'Field Engineer' : 'Client Requester'),
+          p_mapped_company: userData.roleType === 'KAA Internal Staff' ? 'Global (All Companies)' : userData.mappedCompany
+        })
+
+        if (createError) throw new Error(createError.message)
+
+        // The create RPC may return an ID, while older versions return void.
+        // Resolve void responses from the same directory used by the page on refresh.
+        const { data: directoryData, error: directoryError } = await (supabase.rpc as any)('get_users_directory')
+        if (directoryError) {
+          throw new Error(`User creation was accepted, but the directory could not confirm it: ${directoryError.message}`)
+        }
+        const directoryRecord = (Array.isArray(directoryData) ? directoryData : []).find(
+          (record: any) => String(record.email || '').trim().toLowerCase() === normalizedEmail
+        )
+        if (!directoryRecord?.id) {
+          throw new Error('Supabase accepted the create request, but the new user is missing from its directory. Check the admin_create_user and get_users_directory functions before retrying.')
+        }
+
         const newUser: UserMaster = {
-          id: newId,
+          id: directoryRecord.id,
           name: userData.name,
-          email: userData.email,
+          email: normalizedEmail,
           roleType: userData.roleType,
           roleName: userData.roleName || (userData.roleType === 'KAA Internal Staff' ? 'Field Engineer' : 'Client Requester'),
           mappedCompany: userData.roleType === 'KAA Internal Staff' ? 'Global (All Companies)' : userData.mappedCompany,
           status: userData.status || 'Active',
           passwordHash: userData.passwordHash,
           isPasswordResetRequired: true,
-          created_at: new Date().toISOString()
+          created_at: directoryRecord?.created_at || new Date().toISOString()
         }
 
         set((state) => {
@@ -263,18 +287,6 @@ export const useMasterStore = create<MasterState>()(
             users: [newUser, ...state.users],
             companies: updatedCompanies
           }
-        })
-
-        // Persist directly to Supabase Auth & PostgreSQL Profiles
-        ;(supabase.rpc as any)('admin_create_user', {
-          p_email: newUser.email.toLowerCase(),
-          p_password: generatedPassword,
-          p_full_name: newUser.name,
-          p_role_type: newUser.roleType,
-          p_role_name: newUser.roleName,
-          p_mapped_company: newUser.mappedCompany
-        }).then(({ error }: any) => {
-          if (error) console.warn('Supabase admin_create_user notice:', error.message)
         })
 
         return newUser
@@ -653,8 +665,10 @@ export const useMasterStore = create<MasterState>()(
           }
 
           // 3. Sync Live Users Directory (via security-definer database function)
-          const { data: dbUsers } = await (supabase.rpc as any)('get_users_directory')
-          if (dbUsers && dbUsers.length > 0) {
+          const { data: dbUsers, error: usersError } = await (supabase.rpc as any)('get_users_directory')
+          if (usersError) {
+            console.warn('Supabase users directory sync warning:', usersError.message)
+          } else if (Array.isArray(dbUsers)) {
             const mappedUsers: UserMaster[] = dbUsers.map((u: any) => ({
               id: u.id,
               name: u.name || 'User',
