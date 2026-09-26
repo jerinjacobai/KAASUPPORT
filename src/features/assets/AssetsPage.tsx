@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Cpu, QrCode, Search, ShieldCheck, Wrench, Plus, AlertTriangle, Printer, History, Building2 } from 'lucide-react';
+import { Cpu, QrCode, Search, Plus, Printer, History, Building2, FileSpreadsheet } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -8,14 +8,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useMasterStore } from '@/stores/master-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { Link } from 'react-router-dom';
+import { AssetExcelImportModal } from './AssetExcelImportModal';
 
 export default function AssetsPage() {
   const { isKaaInternal, userCompany } = useAuthStore();
-  const { assets: assetsList, companies: companiesList, addAsset } = useMasterStore();
+  const { assets: assetsList, companies: companiesList, hardwareTypes, addAsset, addHardwareType } = useMasterStore();
   const activeCompanies = companiesList.filter(company => company.is_active);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [excelModalOpen, setExcelModalOpen] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
@@ -23,7 +25,11 @@ export default function AssetsPage() {
   const [newAssetName, setNewAssetName] = useState('');
   const [newAssetTag, setNewAssetTag] = useState('');
   const [newAssetModel, setNewAssetModel] = useState('');
-  const [newAssetCategory] = useState('Machinery');
+  const [newAssetHardwareType, setNewAssetHardwareType] = useState('PLC / Controller');
+  const [customHardwareType, setCustomHardwareType] = useState('');
+  const [isCustomType, setIsCustomType] = useState(false);
+  const [newAssetSerial, setNewAssetSerial] = useState('');
+  const [newAssetUser, setNewAssetUser] = useState('');
   const [newAssetCompany, setNewAssetCompany] = useState('');
 
   const handleOpenRegister = () => {
@@ -32,6 +38,9 @@ export default function AssetsPage() {
       return;
     }
     setNewAssetCompany(activeCompanies[0].name);
+    setNewAssetHardwareType(hardwareTypes[0]?.name || 'PLC / Controller');
+    setIsCustomType(false);
+    setCustomHardwareType('');
     setRegisterModalOpen(true);
   };
 
@@ -47,6 +56,7 @@ export default function AssetsPage() {
     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     asset.tag.toLowerCase().includes(searchTerm.toLowerCase()) ||
     asset.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (asset.hardwareType || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     asset.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -68,27 +78,38 @@ export default function AssetsPage() {
       return;
     }
 
+    const finalType = isCustomType ? (customHardwareType.trim() || 'Machinery') : newAssetHardwareType;
+
+    // Save custom type to master store if new
+    if (isCustomType && customHardwareType.trim()) {
+      addHardwareType(customHardwareType.trim()).catch(() => {});
+    }
+
     try {
-    const created = await addAsset({
-      tag: newAssetTag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
-      name: newAssetName.trim(),
-      company: selectedComp,
-      category: newAssetCategory,
-      model: newAssetModel || 'Standard Machinery Unit',
-      serial: `SN-${Math.floor(100000 + Math.random() * 900000)}`,
-      status: 'Active',
-      amcStatus: 'Active AMC',
-      warrantyExpires: '2027-12-31'
-    });
+      const created = await addAsset({
+        tag: newAssetTag.trim() || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
+        name: newAssetName.trim(),
+        company: selectedComp,
+        hardwareType: finalType,
+        category: finalType,
+        model: newAssetModel.trim() || 'Standard Machinery Unit',
+        serial: newAssetSerial.trim() || `SN-${Math.floor(100000 + Math.random() * 900000)}`,
+        assetUser: newAssetUser.trim() || '',
+        status: 'Active',
+        amcStatus: 'Active AMC',
+        warrantyExpires: '2027-12-31'
+      });
 
-    toast.success(`Asset ${created.name} Registered!`, {
-      description: `Tag ${created.tag} assigned under ${selectedComp}.`
-    });
+      toast.success(`Asset ${created.name} Registered!`, {
+        description: `Tag ${created.tag} assigned under ${selectedComp} (${finalType}).`
+      });
 
-    setRegisterModalOpen(false);
-    setNewAssetName('');
-    setNewAssetTag('');
-    setNewAssetModel('');
+      setRegisterModalOpen(false);
+      setNewAssetName('');
+      setNewAssetTag('');
+      setNewAssetModel('');
+      setNewAssetSerial('');
+      setNewAssetUser('');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not register asset.');
     }
@@ -106,14 +127,20 @@ export default function AssetsPage() {
         title="Asset Registry & Equipment"
         description="Track machinery, servers, hardware components, warranties and AMC contract links"
       >
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setQrModalOpen(true)} className="gap-2 text-xs">
             <QrCode className="w-4 h-4 text-primary" /> Scan / Print QR
           </Button>
+
           {isKaaInternal && (
-            <Button variant="default" onClick={handleOpenRegister} className="gap-2 text-xs">
-              <Plus className="w-4 h-4" /> Register Asset
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setExcelModalOpen(true)} className="gap-2 text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> Import Excel / CSV
+              </Button>
+              <Button variant="default" onClick={handleOpenRegister} className="gap-2 text-xs">
+                <Plus className="w-4 h-4" /> Register Asset
+              </Button>
+            </>
           )}
         </div>
       </PageHeader>
@@ -123,7 +150,7 @@ export default function AssetsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by asset tag, name, serial number or company..."
+            placeholder="Search by asset tag, name, serial number, hardware type or company..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-background border border-border rounded-lg pl-9 pr-4 py-2 text-xs focus:outline-none focus:border-primary text-foreground"
@@ -138,88 +165,81 @@ export default function AssetsPage() {
           <p className="text-xs text-muted-foreground mt-1 max-w-sm">
             {companiesList.length === 0 
               ? "Onboard a client company in Admin Masters first, then click below to register an asset."
-              : "Click 'Register Asset' above to add machinery to your client registry."}
+              : "Click 'Register Asset' or 'Import Excel' above to add machinery to your client registry."}
           </p>
-          {companiesList.length === 0 ? (
-            <Link to="/masters">
-              <Button size="sm" className="mt-4 gap-2 text-xs">
-                <Building2 className="w-4 h-4" /> Go to Admin Masters
+          <div className="flex gap-2 mt-4">
+            {isKaaInternal && (
+              <Button onClick={() => setExcelModalOpen(true)} variant="outline" size="sm" className="gap-2 text-xs">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> Import Excel
               </Button>
-            </Link>
-          ) : (
-            <Button onClick={handleOpenRegister} size="sm" className="mt-4 gap-2 text-xs">
-              <Plus className="w-4 h-4" /> Register Asset
-            </Button>
-          )}
+            )}
+            {companiesList.length === 0 ? (
+              <Link to="/masters">
+                <Button size="sm" className="gap-2 text-xs">
+                  <Building2 className="w-4 h-4" /> Go to Admin Masters
+                </Button>
+              </Link>
+            ) : (
+              <Button onClick={handleOpenRegister} size="sm" className="gap-2 text-xs">
+                <Plus className="w-4 h-4" /> Register Asset
+              </Button>
+            )}
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredAssets.map((asset) => (
-            <div key={asset.id} className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all flex flex-col justify-between space-y-4 shadow-lg">
+            <div key={asset.id} className="glass rounded-xl p-6 border border-border hover:border-primary/50 transition-all flex flex-col justify-between space-y-4 shadow-lg group">
               <div>
                 <div className="flex items-start justify-between mb-3">
                   <div className="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20">
                     <Cpu className="w-6 h-6" />
                   </div>
-                  <Badge variant={asset.status === 'Active' ? 'success' : 'warning'}>
-                    {asset.status}
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant="outline" className="font-mono text-xs border-primary/30 text-primary">
+                      {asset.tag}
+                    </Badge>
+                    <Badge variant={asset.status === 'Active' ? 'success' : 'secondary'} className="text-[10px]">
+                      {asset.status}
+                    </Badge>
+                  </div>
+                </div>
+
+                <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">{asset.name}</h3>
+                <div className="flex items-center gap-2 mt-1 mb-3">
+                  <span className="text-xs font-semibold text-emerald-400">{asset.company}</span>
+                  <span className="text-xs text-muted-foreground">•</span>
+                  <Badge variant="outline" className="text-[10px] text-zinc-400 border-zinc-700">
+                    {asset.hardwareType || asset.category}
                   </Badge>
                 </div>
 
-                <span className="text-xs font-mono text-primary font-bold">{asset.tag}</span>
-                <h3 className="font-semibold text-base text-foreground mt-1 mb-1">{asset.name}</h3>
-                <p className="text-xs text-muted-foreground mb-4 flex items-center gap-1">
-                  <Building2 className="w-3.5 h-3.5 text-primary" /> Client: <span className="font-medium text-foreground">{asset.company}</span>
-                </p>
-
-                <div className="space-y-2 text-xs text-muted-foreground bg-secondary/40 p-3 rounded-lg border border-border/50 font-mono">
+                <div className="space-y-2 text-xs text-muted-foreground bg-secondary/30 p-3 rounded-lg border border-border/50">
                   <div className="flex justify-between">
                     <span>Model:</span>
-                    <span className="font-medium text-foreground">{asset.model}</span>
+                    <span className="font-mono text-foreground font-medium">{asset.model}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Serial:</span>
-                    <span className="text-foreground">{asset.serial}</span>
+                    <span>Serial No:</span>
+                    <span className="font-mono text-foreground">{asset.serial}</span>
                   </div>
+                  {asset.assetUser && (
+                    <div className="flex justify-between">
+                      <span>Assigned User:</span>
+                      <span className="text-foreground font-medium">{asset.assetUser}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
-                    <span>Warranty:</span>
-                    <span className="text-foreground">{asset.warrantyExpires}</span>
+                    <span>AMC Contract:</span>
+                    <span className="text-emerald-400 font-semibold">{asset.amcStatus}</span>
                   </div>
-                  <div className="flex justify-between"><span>Hardware:</span><span className="text-foreground">{asset.hardwareType || asset.category}</span></div>
-                  {asset.assetUser && <div className="flex justify-between"><span>Asset user:</span><span className="text-foreground">{asset.assetUser}</span></div>}
                 </div>
-                {(asset.description || asset.remarks || asset.suggestion) && <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                  {asset.description && <p><span className="font-medium text-foreground">Description:</span> {asset.description}</p>}
-                  {asset.remarks && <p><span className="font-medium text-foreground">Remarks:</span> {asset.remarks}</p>}
-                  {asset.suggestion && <p><span className="font-medium text-foreground">Suggestion:</span> {asset.suggestion}</p>}
-                </div>}
-                {asset.provisionPath && <button type="button" className="mt-2 text-xs text-primary hover:underline" onClick={async () => {
-                  const { supabase } = await import('@/lib/supabase');
-                  const { data, error } = await supabase.storage.from('asset-provisions').createSignedUrl(asset.provisionPath!, 60);
-                  if (error) toast.error(`Could not open provision: ${error.message}`);
-                  else window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
-                }}>Open provisioning document</button>}
               </div>
 
-              <div className="pt-3 border-t border-border/50 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs">
-                  {asset.amcStatus === 'Active AMC' ? (
-                    <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-                      <ShieldCheck className="w-3.5 h-3.5" /> Covered under AMC
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-rose-400 font-semibold">
-                      <AlertTriangle className="w-3.5 h-3.5" /> No AMC Coverage
-                    </span>
-                  )}
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => handleOpenHistory(asset)}
-                  className="text-xs gap-1 hover:text-primary"
-                >
-                  <Wrench className="w-3.5 h-3.5" /> History
+              <div className="pt-3 border-t border-border/50 flex items-center justify-between text-xs">
+                <span className="text-[11px] text-muted-foreground">Expires: {asset.warrantyExpires}</span>
+                <Button variant="ghost" size="sm" onClick={() => handleOpenHistory(asset)} className="text-xs gap-1 h-7 text-primary hover:text-primary">
+                  <History className="w-3.5 h-3.5" /> History
                 </Button>
               </div>
             </div>
@@ -231,13 +251,15 @@ export default function AssetsPage() {
       <Dialog open={registerModalOpen} onOpenChange={setRegisterModalOpen}>
         <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold">Register New Machinery Asset</DialogTitle>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <Cpu className="w-5 h-5 text-primary" /> Register New Machinery Asset
+            </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Add equipment to the central asset registry with serial and warranty specs.
+              Add a piece of equipment to client registry. Hardware type and serial number are mapped to support tickets.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleRegisterSubmit} className="space-y-4">
+          <form onSubmit={handleRegisterSubmit} className="space-y-3">
             <div className="space-y-1">
               <label className="text-xs font-medium text-foreground">Equipment Name *</label>
               <input 
@@ -257,7 +279,7 @@ export default function AssetsPage() {
                   value={newAssetTag}
                   onChange={(e) => setNewAssetTag(e.target.value)}
                   placeholder="AST-2026-991"
-                  className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                  className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-mono"
                 />
               </div>
 
@@ -268,6 +290,74 @@ export default function AssetsPage() {
                   value={newAssetModel}
                   onChange={(e) => setNewAssetModel(e.target.value)}
                   placeholder="CPU 1518-4 PN/DP"
+                  className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+
+            {/* Hardware Type Master Dropdown */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-foreground">Hardware Type *</label>
+                <button
+                  type="button"
+                  onClick={() => setIsCustomType(!isCustomType)}
+                  className="text-[10px] text-primary hover:underline"
+                >
+                  {isCustomType ? '← Select Existing' : '+ Enter Custom Type'}
+                </button>
+              </div>
+
+              {isCustomType ? (
+                <input
+                  type="text"
+                  value={customHardwareType}
+                  onChange={(e) => setCustomHardwareType(e.target.value)}
+                  placeholder="E.g., Robotic Gripper Arm"
+                  className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+                />
+              ) : (
+                <select
+                  value={newAssetHardwareType}
+                  onChange={(e) => setNewAssetHardwareType(e.target.value)}
+                  className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
+                >
+                  {hardwareTypes.map((hw) => (
+                    <option key={hw.id} value={hw.name}>{hw.name}</option>
+                  ))}
+                  {hardwareTypes.length === 0 && (
+                    <>
+                      <option value="PLC / Controller">PLC / Controller</option>
+                      <option value="VFD / Motor Drive">VFD / Motor Drive</option>
+                      <option value="HMI / Touch Panel">HMI / Touch Panel</option>
+                      <option value="Server / Rack">Server / Rack</option>
+                      <option value="Workstation / Laptop">Workstation / Laptop</option>
+                      <option value="Industrial Machinery">Industrial Machinery</option>
+                    </>
+                  )}
+                </select>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Serial Number</label>
+                <input 
+                  type="text" 
+                  value={newAssetSerial}
+                  onChange={(e) => setNewAssetSerial(e.target.value)}
+                  placeholder="SN-998822"
+                  className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-foreground">Assigned User / Operator</label>
+                <input 
+                  type="text" 
+                  value={newAssetUser}
+                  onChange={(e) => setNewAssetUser(e.target.value)}
+                  placeholder="Line 1 Maintenance"
                   className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
                 />
               </div>
@@ -297,6 +387,9 @@ export default function AssetsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Excel Bulk Import Modal */}
+      <AssetExcelImportModal open={excelModalOpen} onOpenChange={setExcelModalOpen} />
 
       {/* QR Code Scanner / Print Modal */}
       <Dialog open={qrModalOpen} onOpenChange={setQrModalOpen}>

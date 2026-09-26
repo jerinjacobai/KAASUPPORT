@@ -9,7 +9,6 @@ import {
   Map, 
   Package, 
   FileText, 
-  Database, 
   BookOpen, 
   BarChart3, 
   Settings,
@@ -42,9 +41,6 @@ export function Sidebar() {
     { group: 'Assets & Contracts', items: [
       { name: isKaaInternal ? 'All Assets' : 'My Assets', path: '/assets', icon: Package },
       { name: 'AMC Contracts', path: '/amc', icon: FileText },
-      ...(isKaaInternal ? [
-        { name: 'Inventory', path: '/inventory', icon: Database },
-      ] : []),
     ]},
     { group: 'Help & Analytics', items: [
       { name: 'Knowledge Base', path: '/knowledge-base', icon: BookOpen },

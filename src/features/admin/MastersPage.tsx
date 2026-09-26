@@ -16,8 +16,8 @@ import {
   EyeOff, 
   Trash2,
   FileCheck2,
-  Boxes,
-  Warehouse
+  FileSpreadsheet,
+  Layers
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useMasterStore, type UserMaster } from '@/stores/master-store';
 import { hashPassword } from '@/lib/crypto';
 import { supabase } from '@/lib/supabase';
+import { AssetExcelImportModal } from '@/features/assets/AssetExcelImportModal';
 
 export default function MastersPage() {
   const [activeTab, setActiveTab] = useState('companies');
@@ -38,7 +39,7 @@ export default function MastersPage() {
     users: usersList, 
     assets: assetsList, 
     amcContracts: amcList,
-    inventoryParts: partsList,
+    hardwareTypes: hardwareTypesList,
     addCompany, 
     deleteCompany,
     addUser, 
@@ -47,8 +48,8 @@ export default function MastersPage() {
     addAsset, 
     deleteAsset,
     addAMCContract,
-    addInventoryPart,
-    deleteInventoryPart
+    addHardwareType,
+    deleteHardwareType
   } = useMasterStore();
   const activeCompaniesList = companiesList.filter(company => company.is_active);
 
@@ -58,7 +59,8 @@ export default function MastersPage() {
   const [assetModalOpen, setAssetModalOpen] = useState(false);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [amcModalOpen, setAmcModalOpen] = useState(false);
-  const [partModalOpen, setPartModalOpen] = useState(false);
+  const [excelImportModalOpen, setExcelImportModalOpen] = useState(false);
+  const [hwModalOpen, setHwModalOpen] = useState(false);
 
   const [selectedUserForPassword, setSelectedUserForPassword] = useState<UserMaster | null>(null);
 
@@ -83,6 +85,12 @@ export default function MastersPage() {
   const [resetNewPassword, setResetNewPassword] = useState('');
   const [showResetPassword, setShowResetPassword] = useState(false);
 
+  // New Hardware Type State
+  const [hwName, setHwName] = useState('');
+  const [hwCode, setHwCode] = useState('');
+  const [hwDescription, setHwDescription] = useState('');
+  const [isSubmittingHw, setIsSubmittingHw] = useState(false);
+
   // New Asset Form State
   const [assetName, setAssetName] = useState('');
   const [assetTag, setAssetTag] = useState('');
@@ -90,7 +98,9 @@ export default function MastersPage() {
   const [assetCategory] = useState('Machinery');
   const [assetMappedCompany, setAssetMappedCompany] = useState('');
   const [assetUser, setAssetUser] = useState('');
-  const [hardwareType, setHardwareType] = useState<'Laptops' | 'Monitor'>('Laptops');
+  const [hardwareType, setHardwareType] = useState('PLC');
+  const [isCustomHardwareType, setIsCustomHardwareType] = useState(false);
+  const [customHardwareType, setCustomHardwareType] = useState('');
   const [assetDescription, setAssetDescription] = useState('');
   const [assetRemarks, setAssetRemarks] = useState('');
   const [assetSuggestion, setAssetSuggestion] = useState('');
@@ -105,19 +115,9 @@ export default function MastersPage() {
   const [amcTotalVisits, setAmcTotalVisits] = useState('12');
   const [amcIncludedLabor, setAmcIncludedLabor] = useState(true);
 
-  // New Part Form State
-  const [partName, setPartName] = useState('');
-  const [partSku, setPartSku] = useState('');
-  const [partCategory, setPartCategory] = useState('Hardware');
-  const [partLocation, setPartLocation] = useState('Central Warehouse, Zone A');
-  const [partPrice, setPartPrice] = useState('₹12,500');
-  const [partStock, setPartStock] = useState('10');
-  const [partMinStock, setPartMinStock] = useState('2');
-
   const [isSubmittingUser, setIsSubmittingUser] = useState(false);
   const [isSubmittingComp, setIsSubmittingComp] = useState(false);
   const [isSubmittingAMC, setIsSubmittingAMC] = useState(false);
-  const [isSubmittingPart, setIsSubmittingPart] = useState(false);
 
   // Handlers
   const handleCreateCompany = async (e: React.FormEvent) => {
@@ -240,6 +240,45 @@ export default function MastersPage() {
     setResetNewPassword('');
   };
 
+  const handleCreateHardwareType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmittingHw) return;
+    if (!hwName.trim()) {
+      toast.error('Please enter hardware type name');
+      return;
+    }
+    setIsSubmittingHw(true);
+    try {
+      const created = await addHardwareType({
+        name: hwName.trim(),
+        code: hwCode.trim() || hwName.trim().toUpperCase().replace(/[^A-Z0-9]/g, '_').slice(0, 10),
+        description: hwDescription.trim() || `${hwName.trim()} Industrial Hardware`
+      });
+      toast.success(`Hardware Type '${created.name}' registered!`);
+      setHwModalOpen(false);
+      setHwName('');
+      setHwCode('');
+      setHwDescription('');
+    } catch (error) {
+      toast.error('Failed to create hardware type', {
+        description: error instanceof Error ? error.message : 'Please try again.'
+      });
+    } finally {
+      setIsSubmittingHw(false);
+    }
+  };
+
+  const handleDeleteHardwareType = async (hw: typeof hardwareTypesList[number]) => {
+    try {
+      await deleteHardwareType(hw.id);
+      toast.success(`Hardware type '${hw.name}' removed`);
+    } catch (error) {
+      toast.error('Failed to remove hardware type', {
+        description: error instanceof Error ? error.message : 'Please try again.'
+      });
+    }
+  };
+
   const handleCreateAssetMapping = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assetName.trim()) {
@@ -248,6 +287,7 @@ export default function MastersPage() {
     }
 
     const targetCompany = assetMappedCompany || (activeCompaniesList[0]?.name || '');
+    const selectedHwType = isCustomHardwareType ? customHardwareType.trim() : hardwareType;
 
     setSavingAsset(true);
     let provisionPath = '';
@@ -261,21 +301,21 @@ export default function MastersPage() {
         if (error) throw new Error(`Provision upload failed: ${error.message}`);
       }
       const createdAsset = await addAsset({
-      tag: assetTag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
-      name: assetName.trim(),
-      company: targetCompany,
-      category: assetCategory,
-      model: assetModel.trim() || 'Standard Industrial Unit',
-      serial: `SN-${Math.floor(100000 + Math.random() * 900000)}`,
-      status: 'Active',
-      amcStatus: 'Active AMC',
-      warrantyExpires: '2027-12-31',
-      assetUser: assetUser.trim(),
-      hardwareType,
-      description: assetDescription.trim(),
-      remarks: assetRemarks.trim(),
-      suggestion: assetSuggestion.trim(),
-      provisionPath
+        tag: assetTag || `AST-2026-${Math.floor(100 + Math.random() * 900)}`,
+        name: assetName.trim(),
+        company: targetCompany,
+        category: selectedHwType || assetCategory,
+        model: assetModel.trim() || 'Standard Industrial Unit',
+        serial: `SN-${Math.floor(100000 + Math.random() * 900000)}`,
+        status: 'Active',
+        amcStatus: 'Active AMC',
+        warrantyExpires: '2027-12-31',
+        assetUser: assetUser.trim(),
+        hardwareType: selectedHwType || 'PLC',
+        description: assetDescription.trim(),
+        remarks: assetRemarks.trim(),
+        suggestion: assetSuggestion.trim(),
+        provisionPath
       });
 
       toast.success(`Asset ${createdAsset.name} Mapped to ${targetCompany}!`, {
@@ -287,7 +327,9 @@ export default function MastersPage() {
       setAssetTag('');
       setAssetModel('');
       setAssetUser('');
-      setHardwareType('Laptops');
+      setHardwareType('PLC');
+      setIsCustomHardwareType(false);
+      setCustomHardwareType('');
       setAssetDescription('');
       setAssetRemarks('');
       setAssetSuggestion('');
@@ -334,39 +376,6 @@ export default function MastersPage() {
     }
   };
 
-  const handleCreatePartMaster = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmittingPart) return;
-    if (!partName.trim()) {
-      toast.error('Please enter spare part name');
-      return;
-    }
-    setIsSubmittingPart(true);
-    try {
-      const created = await addInventoryPart({
-        name: partName.trim(),
-        sku: partSku.trim() || `PRT-${Math.floor(1000 + Math.random() * 9000)}`,
-        category: partCategory,
-        location: partLocation,
-        unitPrice: partPrice.startsWith('₹') ? partPrice : `₹${partPrice}`,
-        stock: parseInt(partStock) || 10,
-        minStock: parseInt(partMinStock) || 2
-      });
-
-      toast.success(`Spare Part Master Registered: ${created.sku}`, {
-        description: `${created.name} added with ${created.stock} units initial stock.`
-      });
-
-      setPartModalOpen(false);
-      setPartName('');
-      setPartSku('');
-    } catch (error) {
-      toast.error('Failed to create spare part', { description: error instanceof Error ? error.message : 'Please try again.' });
-    } finally {
-      setIsSubmittingPart(false);
-    }
-  };
-
   const handleDeactivateCompany = async (company: typeof companiesList[number]) => {
     try {
       await deleteCompany(company.id);
@@ -394,15 +403,6 @@ export default function MastersPage() {
     }
   };
 
-  const handleDeletePart = async (part: typeof partsList[number]) => {
-    try {
-      await deleteInventoryPart(part.id);
-      toast.success(`Removed ${part.sku}`);
-    } catch (error) {
-      toast.error('Could not remove spare part', { description: error instanceof Error ? error.message : 'Please try again.' });
-    }
-  };
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -414,7 +414,7 @@ export default function MastersPage() {
     <div className="space-y-6">
       <PageHeader
         title="Admin Masters & Core Entity Management"
-        description="Comprehensive central master registry for Companies, Users & Roles, Equipment Assets, AMC Contracts, and Spare Parts"
+        description="Comprehensive central master registry for Companies, Users & Roles, Hardware Types, Equipment Assets, and AMC Contracts"
       >
         <div className="flex flex-wrap gap-2">
           {activeTab === 'companies' && (
@@ -427,10 +427,20 @@ export default function MastersPage() {
               <UserPlus className="w-4 h-4" /> Create & Map User
             </Button>
           )}
-          {activeTab === 'assets' && (
-            <Button variant="default" onClick={() => setAssetModalOpen(true)} className="gap-2 text-xs">
-              <Cpu className="w-4 h-4" /> Map Asset to Company
+          {activeTab === 'hardwareTypes' && (
+            <Button variant="default" onClick={() => setHwModalOpen(true)} className="gap-2 text-xs">
+              <Layers className="w-4 h-4" /> Add Hardware Type
             </Button>
+          )}
+          {activeTab === 'assets' && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setExcelImportModalOpen(true)} className="gap-2 text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-400" /> Import Excel
+              </Button>
+              <Button variant="default" onClick={() => setAssetModalOpen(true)} className="gap-2 text-xs">
+                <Cpu className="w-4 h-4" /> Map Asset to Company
+              </Button>
+            </div>
           )}
           {activeTab === 'amc' && (
             <Button variant="default" onClick={() => {
@@ -444,11 +454,6 @@ export default function MastersPage() {
               <FileCheck2 className="w-4 h-4" /> Create AMC Contract
             </Button>
           )}
-          {activeTab === 'parts' && (
-            <Button variant="default" onClick={() => setPartModalOpen(true)} className="gap-2 text-xs">
-              <Boxes className="w-4 h-4" /> Register Spare Part
-            </Button>
-          )}
         </div>
       </PageHeader>
 
@@ -460,14 +465,14 @@ export default function MastersPage() {
           <TabsTrigger value="users" className="gap-2 text-xs">
             <Users className="w-3.5 h-3.5 text-amber-400" /> Users & Roles ({usersList.length})
           </TabsTrigger>
+          <TabsTrigger value="hardwareTypes" className="gap-2 text-xs">
+            <Layers className="w-3.5 h-3.5 text-purple-400" /> Hardware Types ({hardwareTypesList.length})
+          </TabsTrigger>
           <TabsTrigger value="assets" className="gap-2 text-xs">
             <Package className="w-3.5 h-3.5 text-emerald-400" /> Assets & Machinery ({assetsList.length})
           </TabsTrigger>
           <TabsTrigger value="amc" className="gap-2 text-xs">
             <FileCheck2 className="w-3.5 h-3.5 text-cyan-400" /> AMC Contracts ({amcList.length})
-          </TabsTrigger>
-          <TabsTrigger value="parts" className="gap-2 text-xs">
-            <Boxes className="w-3.5 h-3.5 text-violet-400" /> Spare Parts & Inventory ({partsList.length})
           </TabsTrigger>
         </TabsList>
 
@@ -621,6 +626,73 @@ export default function MastersPage() {
           </div>
         </TabsContent>
 
+        {/* Tab: Hardware Types Master */}
+        <TabsContent value="hardwareTypes" className="mt-4 space-y-4">
+          <div className="flex justify-between items-center bg-secondary/20 p-4 rounded-xl border border-border">
+            <div>
+              <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+                <Layers className="w-4 h-4 text-purple-400" /> Industrial Hardware Types Registry
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Standard hardware categories (e.g. PLC, VFD, HMI, Sensors, Robots) selectable during asset mapping and Excel import.
+              </p>
+            </div>
+            <Button size="sm" onClick={() => setHwModalOpen(true)} className="gap-2 text-xs">
+              <Layers className="w-4 h-4" /> Add Hardware Type
+            </Button>
+          </div>
+
+          <div className="glass rounded-xl border border-border overflow-hidden shadow-lg">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="bg-secondary/80 border-b border-border text-muted-foreground font-semibold uppercase">
+                <tr>
+                  <th className="p-3">Type Code</th>
+                  <th className="p-3">Hardware Name</th>
+                  <th className="p-3">Description / Industrial Classification</th>
+                  <th className="p-3">Mapped Assets Count</th>
+                  <th className="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {hardwareTypesList
+                  .filter(h => h.name.toLowerCase().includes(searchTerm.toLowerCase()) || (h.code ? h.code.toLowerCase().includes(searchTerm.toLowerCase()) : false))
+                  .map((hw) => {
+                    const mappedCount = assetsList.filter(a => a.hardwareType === hw.name || a.category === hw.name).length;
+                    return (
+                      <tr key={hw.id} className="hover:bg-secondary/30 transition-colors">
+                        <td className="p-3 font-mono font-bold text-purple-400">{hw.code || 'HW'}</td>
+                        <td className="p-3 font-semibold text-foreground">{hw.name}</td>
+                        <td className="p-3 text-muted-foreground">{hw.description || 'Standard Industrial Hardware'}</td>
+                        <td className="p-3">
+                          <Badge variant="outline" className="border-border text-foreground font-mono">
+                            {mappedCount} assets
+                          </Badge>
+                        </td>
+                        <td className="p-3 text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => void handleDeleteHardwareType(hw)} 
+                            className="text-xs text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Remove
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                {hardwareTypesList.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                      No hardware types registered yet. Click "Add Hardware Type" to add one.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
+
         {/* Tab 3: Asset & Machinery Mapping Master */}
         <TabsContent value="assets" className="mt-4 space-y-4">
           <div className="glass rounded-xl border border-border overflow-hidden shadow-lg">
@@ -629,6 +701,7 @@ export default function MastersPage() {
                 <tr>
                   <th className="p-3">Asset Tag</th>
                   <th className="p-3">Equipment / Product Name</th>
+                  <th className="p-3">Hardware Type</th>
                   <th className="p-3">Model / Serial #</th>
                   <th className="p-3">Mapped Client Company</th>
                   <th className="p-3">AMC Status</th>
@@ -642,6 +715,11 @@ export default function MastersPage() {
                     <tr key={ast.id} className="hover:bg-secondary/30 transition-colors">
                       <td className="p-3 font-mono font-bold text-primary">{ast.tag}</td>
                       <td className="p-3 font-semibold text-foreground">{ast.name}</td>
+                      <td className="p-3">
+                        <Badge variant="outline" className="border-purple-500/30 text-purple-400 bg-purple-500/10 font-medium">
+                          {ast.hardwareType || ast.category || 'Equipment'}
+                        </Badge>
+                      </td>
                       <td className="p-3 font-mono text-muted-foreground">{ast.model} ({ast.serial})</td>
                       <td className="p-3 font-bold text-emerald-400 flex items-center gap-1">
                         <Building2 className="w-3.5 h-3.5 text-primary" /> {ast.company}
@@ -695,50 +773,6 @@ export default function MastersPage() {
                       </td>
                       <td className="p-3">
                         <Badge variant="success">{c.status}</Badge>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </TabsContent>
-
-        {/* Tab 5: Spare Parts & Inventory Master */}
-        <TabsContent value="parts" className="mt-4 space-y-4">
-          <div className="glass rounded-xl border border-border overflow-hidden shadow-lg">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead className="bg-secondary/80 border-b border-border text-muted-foreground font-semibold uppercase">
-                <tr>
-                  <th className="p-3">SKU</th>
-                  <th className="p-3">Component / Part Name</th>
-                  <th className="p-3">Category</th>
-                  <th className="p-3">Storage Location</th>
-                  <th className="p-3">Unit Price</th>
-                  <th className="p-3">Current Stock</th>
-                  <th className="p-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {partsList
-                  .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku.toLowerCase().includes(searchTerm.toLowerCase()) || p.location.toLowerCase().includes(searchTerm.toLowerCase()))
-                  .map((p) => (
-                    <tr key={p.id} className="hover:bg-secondary/30 transition-colors">
-                      <td className="p-3 font-mono font-bold text-violet-400">{p.sku}</td>
-                      <td className="p-3 font-semibold text-foreground">{p.name}</td>
-                      <td className="p-3 text-muted-foreground">{p.category}</td>
-                      <td className="p-3 text-muted-foreground flex items-center gap-1">
-                        <Warehouse className="w-3 h-3 text-primary" /> {p.location}
-                      </td>
-                      <td className="p-3 font-mono text-foreground font-semibold">{p.unitPrice}</td>
-                      <td className="p-3">
-                        <Badge variant={p.stock <= p.minStock ? 'destructive' : 'success'}>
-                          {p.stock} units {p.stock <= p.minStock && '(Low)'}
-                        </Badge>
-                      </td>
-                      <td className="p-3 text-right">
-                        <Button variant="ghost" size="sm" onClick={() => void handleDeletePart(p)} className="text-xs text-destructive hover:bg-destructive/10">
-                          <Trash2 className="w-3.5 h-3.5" /> Remove
-                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -1034,10 +1068,45 @@ export default function MastersPage() {
               <input type="text" value={assetUser} onChange={e => setAssetUser(e.target.value)} placeholder="User name" className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Hardware Type *</label>
-              <select value={hardwareType} onChange={e => setHardwareType(e.target.value as 'Laptops' | 'Monitor')} className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground">
-                <option value="Laptops">Laptops</option><option value="Monitor">Monitor</option>
-              </select>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-foreground">Hardware Type *</label>
+                <button
+                  type="button"
+                  onClick={() => setIsCustomHardwareType(!isCustomHardwareType)}
+                  className="text-[10px] text-primary hover:underline font-medium"
+                >
+                  {isCustomHardwareType ? '← Choose from Master' : '+ Custom Type'}
+                </button>
+              </div>
+              {isCustomHardwareType ? (
+                <input
+                  type="text"
+                  value={customHardwareType}
+                  onChange={e => setCustomHardwareType(e.target.value)}
+                  placeholder="Enter custom hardware type..."
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground"
+                />
+              ) : (
+                <select
+                  value={hardwareType}
+                  onChange={e => setHardwareType(e.target.value)}
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground"
+                >
+                  {hardwareTypesList.map(ht => (
+                    <option key={ht.id} value={ht.name}>{ht.name}{ht.code ? ` (${ht.code})` : ''}</option>
+                  ))}
+                  {hardwareTypesList.length === 0 && (
+                    <>
+                      <option value="PLC">PLC</option>
+                      <option value="VFD">VFD</option>
+                      <option value="HMI">HMI</option>
+                      <option value="Server">Server</option>
+                      <option value="Laptops">Laptops</option>
+                      <option value="Monitor">Monitor</option>
+                    </>
+                  )}
+                </select>
+              )}
             </div>
             </div>
             <div className="space-y-1">
@@ -1204,114 +1273,69 @@ export default function MastersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal 6: Register Spare Part */}
-      <Dialog open={partModalOpen} onOpenChange={setPartModalOpen}>
+      {/* Modal: Add Hardware Type Master */}
+      <Dialog open={hwModalOpen} onOpenChange={setHwModalOpen}>
         <DialogContent className="max-w-md bg-card border-border text-card-foreground p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <Boxes className="w-5 h-5 text-violet-400" /> Register Spare Part Master
+              <Layers className="w-5 h-5 text-purple-400" /> Add Industrial Hardware Type
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Add a new replacement part or component SKU to the inventory master.
+              Define a new category or hardware classification for automation equipment.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleCreatePartMaster} className="space-y-4">
+          <form onSubmit={handleCreateHardwareType} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Part / Component Name *</label>
+              <label className="text-xs font-medium text-foreground">Hardware Type Name *</label>
               <input 
                 type="text" 
-                value={partName}
-                onChange={(e) => setPartName(e.target.value)}
-                placeholder="E.g., Siemens PLC DI Module 16x24V"
+                value={hwName}
+                onChange={(e) => setHwName(e.target.value)}
+                placeholder="E.g., Programmable Logic Controller (PLC)"
                 className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">SKU Code</label>
-                <input 
-                  type="text" 
-                  value={partSku}
-                  onChange={(e) => setPartSku(e.target.value)}
-                  placeholder="PRT-5520"
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Category</label>
-                <select 
-                  value={partCategory}
-                  onChange={(e) => setPartCategory(e.target.value)}
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
-                >
-                  <option value="Hardware">Hardware</option>
-                  <option value="PLC & Drives">PLC & Drives</option>
-                  <option value="Sensors & Cables">Sensors & Cables</option>
-                  <option value="Power Supplies">Power Supplies</option>
-                </select>
-              </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Short Code</label>
+              <input 
+                type="text" 
+                value={hwCode}
+                onChange={(e) => setHwCode(e.target.value)}
+                placeholder="E.g., PLC"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground uppercase"
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Initial Stock</label>
-                <input 
-                  type="number" 
-                  value={partStock}
-                  onChange={(e) => setPartStock(e.target.value)}
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Min Threshold</label>
-                <input 
-                  type="number" 
-                  value={partMinStock}
-                  onChange={(e) => setPartMinStock(e.target.value)}
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Unit Price</label>
-                <input 
-                  type="text" 
-                  value={partPrice}
-                  onChange={(e) => setPartPrice(e.target.value)}
-                  placeholder="₹12,500"
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Storage Location</label>
-                <input 
-                  type="text" 
-                  value={partLocation}
-                  onChange={(e) => setPartLocation(e.target.value)}
-                  placeholder="Central Warehouse, Zone A"
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
-                />
-              </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-foreground">Description / Notes</label>
+              <textarea 
+                value={hwDescription}
+                onChange={(e) => setHwDescription(e.target.value)}
+                rows={3}
+                placeholder="E.g., Industrial digital computers for manufacturing and process control"
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground"
+              />
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setPartModalOpen(false)} className="text-xs">
+              <Button type="button" variant="outline" size="sm" onClick={() => setHwModalOpen(false)} className="text-xs">
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="text-xs">
-                Save Spare Part
+              <Button type="submit" size="sm" className="text-xs" disabled={isSubmittingHw}>
+                {isSubmittingHw ? 'Saving…' : 'Register Hardware Type'}
               </Button>
             </div>
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Asset Bulk Excel Import Modal */}
+      <AssetExcelImportModal
+        isOpen={excelImportModalOpen}
+        onClose={() => setExcelImportModalOpen(false)}
+      />
     </div>
   );
 }

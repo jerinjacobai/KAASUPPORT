@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { ArrowLeft, Check, ChevronRight, UploadCloud, Lock, Building2 } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, UploadCloud, Lock, Building2, FileText, X, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/auth-store';
 import { useMasterStore } from '@/stores/master-store';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/lib/supabase';
 
 const STEPS = ['Context', 'Issue Details', 'Attachments', 'Review & Submit'];
 
 export default function CreateTicketPage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { isKaaInternal, userCompany } = useAuthStore();
   const { companies: allCompanies, assets, addTicket } = useMasterStore();
   const companies = allCompanies.filter(company => company.is_active);
@@ -23,7 +25,9 @@ export default function CreateTicketPage() {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('medium');
   const [category, setCategory] = useState('Hardware');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Initialize company state once companies are loaded
   useEffect(() => {
@@ -41,6 +45,24 @@ export default function CreateTicketPage() {
     ast.company === company
   );
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      const validFiles = newFiles.filter(f => {
+        if (f.size > 25 * 1024 * 1024) {
+          toast.error(`File ${f.name} exceeds 25MB limit.`);
+          return false;
+        }
+        return true;
+      });
+      setSelectedFiles(prev => [...prev, ...validFiles]);
+    }
+  };
+
+  const handleRemoveFile = (indexToRemove: number) => {
+    setSelectedFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const handleNext = async () => {
     if (isSubmitting) return;
 
@@ -57,16 +79,52 @@ export default function CreateTicketPage() {
     } else {
       setIsSubmitting(true);
       try {
+        const uploadedAttachments: { name: string; url: string; size: number; type: string }[] = [];
+
+        if (selectedFiles.length > 0) {
+          setIsUploading(true);
+          for (const file of selectedFiles) {
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const filePath = `tickets/${Date.now()}-${Math.random().toString(36).substring(2, 7)}-${safeName}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('ticket-attachments')
+              .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+            if (uploadError) {
+              console.warn('Storage upload error:', uploadError);
+              uploadedAttachments.push({
+                name: file.name,
+                url: '#',
+                size: file.size,
+                type: file.type
+              });
+            } else {
+              const { data: urlData } = supabase.storage
+                .from('ticket-attachments')
+                .getPublicUrl(filePath);
+
+              uploadedAttachments.push({
+                name: file.name,
+                url: urlData.publicUrl,
+                size: file.size,
+                type: file.type
+              });
+            }
+          }
+        }
+
         // Submit Ticket to master store & Supabase
         const newTicket = await addTicket({
           title: title.trim(),
           description: description.trim() || 'No additional details provided.',
           company: company,
-          assetId: assetId,
+          assetId: assetId || undefined,
           priority: priority,
           category: category,
           status: 'open',
-          assignee: { name: 'Unassigned', avatar: '' }
+          assignee: { name: 'Unassigned', avatar: '' },
+          attachments: uploadedAttachments
         });
 
         toast.success('Ticket created successfully', {
@@ -80,6 +138,7 @@ export default function CreateTicketPage() {
         });
       } finally {
         setIsSubmitting(false);
+        setIsUploading(false);
       }
     }
   };
@@ -283,17 +342,62 @@ export default function CreateTicketPage() {
             {/* Step 3: Attachments */}
             {currentStep === 2 && (
               <div className="space-y-6 animate-slide-in-right">
-                <h2 className="text-lg font-semibold border-b border-border pb-3">Supporting Attachments & Photos</h2>
+                <div className="border-b border-border pb-3 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold">Supporting Attachments & Photos</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">Upload equipment photos, log files, wiring schematics, or error screenshots.</p>
+                  </div>
+                  <span className="text-xs font-mono text-muted-foreground">{selectedFiles.length} file(s) attached</span>
+                </div>
                 
-                <div className="border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-8 text-center transition-colors cursor-pointer space-y-3">
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  multiple 
+                  className="hidden" 
+                  accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.zip"
+                />
+
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-border hover:border-primary/60 rounded-xl p-8 text-center transition-all cursor-pointer space-y-3 bg-secondary/10 hover:bg-secondary/20"
+                >
                   <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
                     <UploadCloud className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium">Click to upload or drag & drop files</p>
-                    <p className="text-xs text-muted-foreground mt-1">Images, PDF logs, diagnostics XML up to 25MB</p>
+                    <p className="text-sm font-medium text-foreground">Click to browse or drag & drop files</p>
+                    <p className="text-xs text-muted-foreground mt-1">Images (PNG, JPG), PDF diagnostics, error logs, spreadsheets up to 25MB each</p>
                   </div>
                 </div>
+
+                {selectedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase">Selected Files ({selectedFiles.length})</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {selectedFiles.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card/60">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <FileText className="w-4 h-4 text-primary shrink-0" />
+                            <div className="truncate">
+                              <p className="text-xs font-medium text-foreground truncate">{file.name}</p>
+                              <p className="text-[10px] text-muted-foreground font-mono">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFile(idx)}
+                            className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-2"
+                            title="Remove file"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -302,7 +406,7 @@ export default function CreateTicketPage() {
               <div className="space-y-6 animate-slide-in-right">
                 <h2 className="text-lg font-semibold border-b border-border pb-3">Review & Submit Ticket</h2>
                 
-                <div className="bg-secondary/30 rounded-xl p-5 border border-border space-y-3 text-sm">
+                <div className="bg-secondary/30 rounded-xl p-5 border border-border space-y-4 text-sm">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <span className="text-muted-foreground text-xs block">COMPANY</span>
@@ -321,6 +425,35 @@ export default function CreateTicketPage() {
                       <span className="font-medium text-foreground">{category}</span>
                     </div>
                   </div>
+
+                  {assetId && (
+                    <div className="pt-3 border-t border-border/50">
+                      <span className="text-muted-foreground text-xs block">ASSOCIATED ASSET</span>
+                      <span className="font-medium text-foreground">
+                        {availableAssets.find(a => a.id === assetId)?.name || assetId}
+                      </span>
+                    </div>
+                  )}
+
+                  {selectedFiles.length > 0 && (
+                    <div className="pt-3 border-t border-border/50">
+                      <span className="text-muted-foreground text-xs block mb-1">ATTACHMENTS ({selectedFiles.length})</span>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedFiles.map((f, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded bg-secondary/80 text-foreground border border-border">
+                            <Paperclip className="w-3 h-3 text-primary" /> {f.name} ({(f.size / (1024 * 1024)).toFixed(2)} MB)
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {isUploading && (
+                    <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg flex items-center gap-2 text-xs text-primary">
+                      <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      Uploading attachments to secure cloud storage...
+                    </div>
+                  )}
                 </div>
               </div>
             )}

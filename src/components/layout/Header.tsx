@@ -20,7 +20,6 @@ import {
   PlusCircle, 
   X,
   LayoutDashboard,
-  Cpu,
   BookOpen,
   ArrowRight
 } from 'lucide-react';
@@ -63,7 +62,6 @@ export function Header() {
     { name: 'Field Visit Schedules', icon: Building2, path: '/field-visits', category: 'Navigation' },
     { name: 'Assets & Machinery', icon: Package, path: '/assets', category: 'Navigation' },
     { name: 'AMC Contracts', icon: Shield, path: '/amc', category: 'Navigation' },
-    { name: 'Inventory & Parts', icon: Cpu, path: '/inventory', category: 'Navigation' },
     { name: 'Knowledge Base', icon: BookOpen, path: '/knowledge-base', category: 'Navigation' },
     { name: 'Executive Reports', icon: BarChart3, path: '/reports', category: 'Navigation' },
     { name: 'Admin Master Config', icon: Building2, path: '/admin/masters', category: 'Navigation' },
