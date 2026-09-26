@@ -600,9 +600,9 @@ export const useMasterStore = create<MasterState>()(
         if (availableStock < quantity) throw new Error('Not enough stock is available to reserve.')
         const newReservedQuantity = (stockLevel.reserved_quantity || 0) + quantity
         const remainingStock = stockLevel.quantity - newReservedQuantity
-        const { error: updateError } = await (supabase.from as any)('stock_levels')
+        const { data: updatedStock, error: updateError } = await (supabase.from as any)('stock_levels')
           .update({ reserved_quantity: newReservedQuantity }).eq('id', stockLevel.id).select('id').single()
-        if (updateError) throw new Error(updateError.message)
+        if (updateError || !updatedStock) throw new Error(updateError?.message || 'Stock reservation was not saved.')
         set((state) => ({
           inventoryParts: (state.inventoryParts || []).map(item => item.id === id ? { ...item, stock: remainingStock } : item)
         }))
