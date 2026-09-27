@@ -2,7 +2,7 @@ import { KPICard } from '@/components/shared/KPICard';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PriorityBadge } from '@/components/shared/PriorityBadge';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Ticket, Activity, Clock, ShieldCheck, Download, Building2, Wrench, Lock, PlusCircle } from 'lucide-react';
+import { Ticket, Activity, Clock, ShieldCheck, Download, Building2, Wrench, Lock, PlusCircle, FolderTree, Users, Package, Layers, ArrowUpRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useAuthStore } from '@/stores/auth-store';
 import { useMasterStore } from '@/stores/master-store';
@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 
 export default function DashboardPage() {
   const { isKaaInternal, userCompany } = useAuthStore();
-  const { tickets, amcContracts } = useMasterStore();
+  const { tickets, amcContracts, companies, users, assets } = useMasterStore();
 
   const normalize = (s?: string) => (s || '').trim().toLowerCase();
   const targetCompany = normalize(userCompany || '');
@@ -234,7 +234,10 @@ export default function DashboardPage() {
               <PlusCircle className="w-4 h-4" /> Raise Ticket
             </Link>
           )}
-          <button onClick={handleExportSummary} className="bg-secondary hover:bg-secondary/80 text-foreground px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-2">
+          <Link to="/admin/masters" className="bg-secondary hover:bg-secondary/80 text-foreground px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-2 border border-border shadow-sm">
+            <FolderTree className="w-4 h-4 text-purple-400" /> Admin Masters
+          </Link>
+          <button onClick={handleExportSummary} className="bg-secondary hover:bg-secondary/80 text-foreground px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-2 border border-border shadow-sm">
             <Download className="w-4 h-4" /> Export Summary
           </button>
         </div>
@@ -292,6 +295,110 @@ export default function DashboardPage() {
           icon={ShieldCheck}
           subtitle="Target >= 90%"
         />
+      </div>
+
+      {/* Admin Masters Quick Access Section */}
+      <div className="space-y-3 animate-slide-in-up" style={{ animationDelay: '0.15s' }}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <FolderTree className="w-3.5 h-3.5 text-purple-400" /> System Masters & Administration
+          </h3>
+          <Link to="/admin/masters" className="text-xs text-primary hover:underline font-medium flex items-center gap-1">
+            Open All Masters <ArrowUpRight className="w-3 h-3" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Card 1: Company Master */}
+          <Link
+            to="/admin/masters?tab=companies"
+            className="glass rounded-xl p-3.5 border border-border hover:border-emerald-500/50 hover:bg-emerald-500/[0.04] transition-all group shadow-sm flex items-center gap-3.5"
+          >
+            <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:scale-105 transition-transform shrink-0">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-foreground group-hover:text-emerald-400 transition-colors">
+                  Company Master
+                </span>
+                <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400 font-mono">
+                  {companies.length}
+                </Badge>
+              </div>
+              <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                ISS Global & Client Profiles
+              </p>
+            </div>
+          </Link>
+
+          {/* Card 2: User Directory */}
+          <Link
+            to="/admin/masters?tab=users"
+            className="glass rounded-xl p-3.5 border border-border hover:border-amber-500/50 hover:bg-amber-500/[0.04] transition-all group shadow-sm flex items-center gap-3.5"
+          >
+            <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 group-hover:scale-105 transition-transform shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-foreground group-hover:text-amber-400 transition-colors">
+                  User Directory
+                </span>
+                <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400 font-mono">
+                  {users.length}
+                </Badge>
+              </div>
+              <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                28 Corporate Users & Roles
+              </p>
+            </div>
+          </Link>
+
+          {/* Card 3: Asset Registry */}
+          <Link
+            to="/assets"
+            className="glass rounded-xl p-3.5 border border-border hover:border-primary/50 hover:bg-primary/[0.04] transition-all group shadow-sm flex items-center gap-3.5"
+          >
+            <div className="p-2.5 rounded-lg bg-primary/10 text-primary border border-primary/20 group-hover:scale-105 transition-transform shrink-0">
+              <Package className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                  Asset Registry
+                </span>
+                <Badge variant="outline" className="text-[10px] border-primary/30 text-primary font-mono">
+                  {assets.length}
+                </Badge>
+              </div>
+              <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                Reassign & Manage Devices
+              </p>
+            </div>
+          </Link>
+
+          {/* Card 4: Hardware Types Master */}
+          <Link
+            to="/admin/masters?tab=hardwareTypes"
+            className="glass rounded-xl p-3.5 border border-border hover:border-purple-500/50 hover:bg-purple-500/[0.04] transition-all group shadow-sm flex items-center gap-3.5"
+          >
+            <div className="p-2.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 group-hover:scale-105 transition-transform shrink-0">
+              <Layers className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-foreground group-hover:text-purple-400 transition-colors">
+                  Hardware Types
+                </span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-purple-400 transition-colors" />
+              </div>
+              <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                Laptops, Monitors, Phones
+              </p>
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* Main Charts Section */}

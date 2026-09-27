@@ -67,9 +67,13 @@ export const useAuthStore = create<AuthState>()(
           if (!error && session) {
             const isInternal = session.user.email?.endsWith('@kaasupport.com') || 
                                session.user.email?.endsWith('@kaa-erp.com') || 
+                               session.user.email?.toLowerCase() === 'qataritl037@gmail.com' ||
                                session.user.user_metadata?.is_kaa_internal;
 
             let resolvedCompany = session.user.user_metadata?.company || get().userCompany || null;
+            if (resolvedCompany === 'International Technical Legacy' || resolvedCompany === 'KAA Client') {
+              resolvedCompany = 'ISS Global Forwarding W.L.L';
+            }
             if (!resolvedCompany && !isInternal) {
               const { data: dbComp } = await (supabase.rpc as any)('get_user_company');
               if (dbComp) resolvedCompany = dbComp;
@@ -100,9 +104,15 @@ export const useAuthStore = create<AuthState>()(
           // 1. Try Supabase Auth
           const { data, error } = await supabase.auth.signInWithPassword({ email, password })
           if (!error && data?.user) {
-            const isInternal = email.endsWith('@kaasupport.com') || email.endsWith('@kaa-erp.com') || data.user?.user_metadata?.is_kaa_internal;
+            const isInternal = email.endsWith('@kaasupport.com') || 
+                               email.endsWith('@kaa-erp.com') || 
+                               email === 'qataritl037@gmail.com' ||
+                               data.user?.user_metadata?.is_kaa_internal;
             
             let resolvedCompany = data.user?.user_metadata?.company || null;
+            if (resolvedCompany === 'International Technical Legacy' || resolvedCompany === 'KAA Client') {
+              resolvedCompany = 'ISS Global Forwarding W.L.L';
+            }
             if (!resolvedCompany && !isInternal) {
               const { data: dbComp } = await (supabase.rpc as any)('get_user_company');
               if (dbComp) resolvedCompany = dbComp;

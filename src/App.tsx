@@ -150,7 +150,10 @@ export function App() {
                 {/* Inventory, KB, Admin Masters, Reports & Settings */}
                 <Route path="inventory" element={<InternalStaffRoute><InventoryPage /></InternalStaffRoute>} />
                 <Route path="knowledge-base" element={<KnowledgeBasePage />} />
-                <Route path="admin/masters" element={<InternalStaffRoute><MastersPage /></InternalStaffRoute>} />
+                <Route path="admin/masters" element={<MastersPage />} />
+                <Route path="masters" element={<Navigate to="/admin/masters" replace />} />
+                <Route path="admin/companies" element={<Navigate to="/admin/masters?tab=companies" replace />} />
+                <Route path="companies" element={<Navigate to="/admin/masters?tab=companies" replace />} />
                 <Route path="reports" element={<InternalStaffRoute><ReportsPage /></InternalStaffRoute>} />
                 <Route path="settings" element={<InternalStaffRoute><SettingsPage /></InternalStaffRoute>} />
                 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Cpu, QrCode, Search, Plus, Printer, History, Building2, FileSpreadsheet } from 'lucide-react';
+import { Cpu, QrCode, Search, Plus, Printer, History, Building2, FileSpreadsheet, Pencil } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import { useMasterStore } from '@/stores/master-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { Link } from 'react-router-dom';
 import { AssetExcelImportModal } from './AssetExcelImportModal';
+import { EditAssetModal } from './EditAssetModal';
 
 export default function AssetsPage() {
   const { isKaaInternal, userCompany } = useAuthStore();
@@ -21,6 +22,8 @@ export default function AssetsPage() {
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [assetToEdit, setAssetToEdit] = useState<any>(null);
 
   const [newAssetName, setNewAssetName] = useState('');
   const [newAssetTag, setNewAssetTag] = useState('');
@@ -238,9 +241,22 @@ export default function AssetsPage() {
 
               <div className="pt-3 border-t border-border/50 flex items-center justify-between text-xs">
                 <span className="text-[11px] text-muted-foreground">Expires: {asset.warrantyExpires}</span>
-                <Button variant="ghost" size="sm" onClick={() => handleOpenHistory(asset)} className="text-xs gap-1 h-7 text-primary hover:text-primary">
-                  <History className="w-3.5 h-3.5" /> History
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      setAssetToEdit(asset);
+                      setEditModalOpen(true);
+                    }} 
+                    className="text-xs gap-1 h-7 border-border hover:bg-primary/10 hover:text-primary hover:border-primary/40"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Edit
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleOpenHistory(asset)} className="text-xs gap-1 h-7 text-primary hover:text-primary">
+                    <History className="w-3.5 h-3.5" /> History
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
@@ -437,6 +453,13 @@ export default function AssetsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Asset & Reassignment Modal */}
+      <EditAssetModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        asset={assetToEdit}
+      />
     </div>
   );
 }

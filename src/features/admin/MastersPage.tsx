@@ -17,8 +17,10 @@ import {
   Trash2,
   FileCheck2,
   FileSpreadsheet,
-  Layers
+  Layers,
+  Pencil
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,10 +30,21 @@ import { useMasterStore, type UserMaster } from '@/stores/master-store';
 import { hashPassword } from '@/lib/crypto';
 import { supabase } from '@/lib/supabase';
 import { AssetExcelImportModal } from '@/features/assets/AssetExcelImportModal';
+import { EditAssetModal } from '@/features/assets/EditAssetModal';
 
 export default function MastersPage() {
-  const [activeTab, setActiveTab] = useState('companies');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'companies');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const [editAssetModalOpen, setEditAssetModalOpen] = useState(false);
+  const [selectedAssetForEdit, setSelectedAssetForEdit] = useState<any>(null);
+
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    setSearchParams({ tab: newTab });
+  };
 
   // Master Store State
   const { 
@@ -457,7 +470,7 @@ export default function MastersPage() {
         </div>
       </PageHeader>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="bg-secondary/40 p-1 border border-border rounded-xl flex flex-wrap h-auto gap-1">
           <TabsTrigger value="companies" className="gap-2 text-xs">
             <Building2 className="w-3.5 h-3.5 text-primary" /> Companies ({companiesList.length})
@@ -729,7 +742,18 @@ export default function MastersPage() {
                           {ast.amcStatus}
                         </Badge>
                       </td>
-                      <td className="p-3 text-right">
+                      <td className="p-3 text-right flex items-center justify-end gap-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => {
+                            setSelectedAssetForEdit(ast);
+                            setEditAssetModalOpen(true);
+                          }} 
+                          className="text-xs gap-1 h-7 border-border hover:bg-primary/10 hover:text-primary hover:border-primary/40"
+                        >
+                          <Pencil className="w-3 h-3" /> Edit
+                        </Button>
                         <Button variant="ghost" size="sm" onClick={() => void handleDeleteAsset(ast)} className="text-xs text-destructive hover:bg-destructive/10">
                           <Trash2 className="w-3.5 h-3.5" /> Remove
                         </Button>
@@ -1335,6 +1359,13 @@ export default function MastersPage() {
       <AssetExcelImportModal
         isOpen={excelImportModalOpen}
         onClose={() => setExcelImportModalOpen(false)}
+      />
+
+      {/* Edit Asset & Reassignment Modal */}
+      <EditAssetModal
+        open={editAssetModalOpen}
+        onOpenChange={setEditAssetModalOpen}
+        asset={selectedAssetForEdit}
       />
     </div>
   );

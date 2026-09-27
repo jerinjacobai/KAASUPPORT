@@ -170,7 +170,7 @@ interface MasterState {
   deleteHardwareType: (id: string) => Promise<void>
 
   addAsset: (asset: Omit<AssetMaster, 'id'> & { id?: string }) => Promise<AssetMaster>
-  updateAsset: (id: string, updates: Partial<AssetMaster>) => void
+  updateAsset: (id: string, updates: Partial<AssetMaster>) => Promise<void>
   deleteAsset: (id: string) => Promise<void>
 
   addAMCContract: (contract: Omit<AMCContractMaster, 'id' | 'contractNumber'> & { id?: string; contractNumber?: string }) => Promise<AMCContractMaster>
@@ -200,7 +200,17 @@ const isValidUUID = (str?: string): boolean => {
 }
 
 const cleanMockFilter = <T extends { company?: string; mappedCompany?: string; title?: string; name?: string }>(items: T[]): T[] => {
-  return (items || []).filter(item => {
+  return (items || []).map(item => {
+    const comp = item.company || item.mappedCompany || ''
+    if (comp === 'KAA Client' || comp === 'International Technical Legacy') {
+      return {
+        ...item,
+        ...(item.company !== undefined ? { company: 'ISS Global Forwarding W.L.L' } : {}),
+        ...(item.mappedCompany !== undefined ? { mappedCompany: 'ISS Global Forwarding W.L.L' } : {})
+      }
+    }
+    return item
+  }).filter(item => {
     const comp = item.company || item.mappedCompany || ''
     const name = item.name || item.title || ''
     const isMockComp = ['Acme Corp', 'Globex Ltd', 'Initech Inc'].includes(comp)
@@ -229,6 +239,7 @@ export const useMasterStore = create<MasterState>()(
           users: cleanMockFilter(state.users),
           assets: cleanMockFilter(state.assets),
           amcContracts: cleanMockFilter(state.amcContracts),
+          tickets: cleanMockFilter(state.tickets),
           inventoryParts: cleanMockFilter(state.inventoryParts || []),
           kbArticles: cleanMockFilter(state.kbArticles || []),
         }))
@@ -481,6 +492,7 @@ export const useMasterStore = create<MasterState>()(
 
         const { data: insertedAsset, error: insertError } = await (supabase.from as any)('assets').insert({
           company_id: company.id,
+          company_name: company.name,
           asset_tag: newAsset.tag,
           name: newAsset.name,
           model: newAsset.model,
@@ -508,14 +520,39 @@ export const useMasterStore = create<MasterState>()(
         return newAsset
       },
 
-      updateAsset: (id, updates) => {
+      updateAsset: async (id, updates) => {
+        // Map frontend camelCase to Postgres snake_case
+        const dbPayload: Record<string, any> = {}
+        if (updates.name !== undefined) dbPayload.name = updates.name
+        if (updates.model !== undefined) dbPayload.model = updates.model
+        if (updates.status !== undefined) dbPayload.status = (updates.status || 'active').toLowerCase()
+        if (updates.tag !== undefined) dbPayload.asset_tag = updates.tag
+        if (updates.serial !== undefined) dbPayload.serial_number = updates.serial
+        if (updates.assetUser !== undefined) dbPayload.asset_user = updates.assetUser
+        if (updates.hardwareType !== undefined) dbPayload.hardware_type = updates.hardwareType
+        if (updates.remarks !== undefined) dbPayload.remarks = updates.remarks
+        if (updates.description !== undefined) dbPayload.description = updates.description
+        if (updates.suggestion !== undefined) dbPayload.suggestion = updates.suggestion
+        if (updates.company !== undefined) {
+          dbPayload.company_name = updates.company
+          const comp = get().companies.find(c => c.name.toLowerCase() === updates.company?.toLowerCase() || c.code.toLowerCase() === updates.company?.toLowerCase())
+          if (comp?.id && isValidUUID(comp.id)) {
+            dbPayload.company_id = comp.id
+          }
+        }
+        dbPayload.updated_at = new Date().toISOString()
+
         set((state) => ({
           assets: state.assets.map(a => a.id === id ? { ...a, ...updates } : a)
         }))
 
-        ;(supabase.from as any)('assets').update(updates).eq('id', id).then(({ error }: any) => {
-          if (error) console.warn('Supabase asset update warning:', error.message)
-        })
+        if (isValidUUID(id)) {
+          const { error } = await (supabase.from as any)('assets').update(dbPayload).eq('id', id)
+          if (error) {
+            console.error('Supabase asset update error:', error.message)
+            throw new Error(error.message)
+          }
+        }
       },
 
       deleteAsset: async (id) => {
@@ -825,7 +862,7 @@ export const useMasterStore = create<MasterState>()(
               ticket_number: t.ticket_number || t.id,
               title: t.title || 'Support Request',
               description: t.description || '',
-              company: t.contact_name || 'KAA Client',
+              company: t.contact_name && t.contact_name !== 'KAA Client' && t.contact_name !== 'International Technical Legacy' ? t.contact_name : 'ISS Global Forwarding W.L.L',
               priority: t.priority || 'medium',
               status: t.status || 'open',
               category: t.category || 'General',
@@ -886,48 +923,71 @@ export const useMasterStore = create<MasterState>()(
           }
 
           // 5. Sync Live Assets
-          const { data: dbAssets } = await (supabase.from as any)('assets').select('*')
+          const { data: dbAssets } = await (supabase.from as any)('assets').select('*, companies(id, name)')
           if (Array.isArray(dbAssets)) {
-            const mappedAssets: AssetMaster[] = dbAssets.map((a: any) => ({
-              id: a.id,
-              tag: a.asset_tag || `AST-${a.id.slice(0, 6)}`,
-              name: a.name,
-              company: get().companies.find((company: CompanyMaster) => company.id === a.company_id)?.name || 'KAA Client',
-              category: a.hardware_type || 'Machinery',
-              model: a.model || 'Standard Unit',
-              serial: a.serial_number || 'N/A',
-              status: a.status || 'Active',
-              amcStatus: 'Active AMC',
-              warrantyExpires: '2027-12-31',
-              assetUser: a.asset_user || '',
-              hardwareType: a.hardware_type || 'Machinery',
-              description: a.description || '',
-              remarks: a.remarks || '',
-              suggestion: a.suggestion || '',
-              provisionPath: a.provision_path || '',
-              created_at: a.created_at
-            }))
+            const currentComps = get().companies
+            const mappedAssets: AssetMaster[] = dbAssets.map((a: any) => {
+              const matchedComp = a.company_name || a.companies?.name || currentComps.find((company: CompanyMaster) => company.id === a.company_id)?.name || 'ISS Global Forwarding W.L.L'
+              const resolvedComp = (matchedComp === 'KAA Client' || matchedComp === 'International Technical Legacy') ? 'ISS Global Forwarding W.L.L' : matchedComp
+              
+              const rawStatus = a.status || 'Active'
+              const displayStatus = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase()
+
+              return {
+                id: a.id,
+                tag: a.asset_tag || `AST-${a.id.slice(0, 6)}`,
+                name: a.name,
+                company: resolvedComp,
+                category: a.hardware_type || 'Machinery',
+                model: a.model || 'Standard Unit',
+                serial: a.serial_number || 'N/A',
+                status: displayStatus,
+                amcStatus: 'Active AMC',
+                warrantyExpires: '2027-12-31',
+                assetUser: a.asset_user || '',
+                hardwareType: a.hardware_type || 'Machinery',
+                description: a.description || '',
+                remarks: a.remarks || '',
+                suggestion: a.suggestion || '',
+                provisionPath: a.provision_path || '',
+                created_at: a.created_at
+              }
+            })
             set({ assets: mappedAssets })
           }
 
           // 6. Sync Live AMC Contracts
           const { data: dbContracts } = await (supabase.from as any)('amc_contracts').select('*')
           if (Array.isArray(dbContracts)) {
-            const mappedContracts: AMCContractMaster[] = dbContracts.map((c: any) => ({
-              id: c.id,
-              contractNumber: c.contract_number || `AMC-${c.id.slice(0, 6)}`,
-              name: c.name,
-              company: get().companies.find((company: CompanyMaster) => company.id === c.company_id)?.name || 'KAA Client',
-              startDate: c.start_date || '2026-01-01',
-              endDate: c.end_date || '2026-12-31',
-              totalVisits: c.total_visits || 12,
-              usedVisits: c.used_visits || 0,
-              status: c.status || 'Active',
-              includedLabor: c.included_labor ?? true,
-              created_at: c.created_at
-            }))
+            const currentComps = get().companies
+            const mappedContracts: AMCContractMaster[] = dbContracts.map((c: any) => {
+              const matchedComp = currentComps.find((company: CompanyMaster) => company.id === c.company_id)?.name || 'ISS Global Forwarding W.L.L'
+              const resolvedComp = (matchedComp === 'KAA Client' || matchedComp === 'International Technical Legacy') ? 'ISS Global Forwarding W.L.L' : matchedComp
+              return {
+                id: c.id,
+                contractNumber: c.contract_number || `AMC-${c.id.slice(0, 6)}`,
+                name: c.name,
+                company: resolvedComp,
+                startDate: c.start_date || '2026-01-01',
+                endDate: c.end_date || '2026-12-31',
+                totalVisits: c.total_visits || 12,
+                usedVisits: c.used_visits || 0,
+                status: c.status || 'Active',
+                includedLabor: c.included_labor ?? true,
+                created_at: c.created_at
+              }
+            })
             set({ amcContracts: mappedContracts })
           }
+
+          // 7. Update Company Counts Dynamically
+          set((state) => ({
+            companies: state.companies.map(c => ({
+              ...c,
+              assetsCount: state.assets.filter(a => a.company === c.name).length,
+              usersCount: state.users.filter(u => u.mappedCompany === c.name).length
+            }))
+          }))
 
           // 7. Sync Field Visits
           const { data: dbVisits } = await (supabase.from as any)('field_visits').select('*').order('created_at', { ascending: false })

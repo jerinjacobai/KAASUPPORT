@@ -42,13 +42,16 @@ export function Sidebar() {
       { name: isKaaInternal ? 'All Assets' : 'My Assets', path: '/assets', icon: Package },
       { name: 'AMC Contracts', path: '/amc', icon: FileText },
     ]},
-    { group: 'Help & Analytics', items: [
-      { name: 'Knowledge Base', path: '/knowledge-base', icon: BookOpen },
+    { group: 'Administration & Masters', items: [
+      { name: 'Company Master', path: '/admin/masters?tab=companies', icon: Building2 },
+      { name: 'Admin Masters', path: '/admin/masters', icon: FolderTree },
       ...(isKaaInternal ? [
-        { name: 'Admin Masters', path: '/admin/masters', icon: FolderTree },
         { name: 'Reports', path: '/reports', icon: BarChart3 },
         { name: 'Settings', path: '/settings', icon: Settings },
       ] : []),
+    ]},
+    { group: 'Help & Knowledge', items: [
+      { name: 'Knowledge Base', path: '/knowledge-base', icon: BookOpen },
     ]}
   ];
 
@@ -88,7 +91,11 @@ export function Sidebar() {
             )}
             {group.items.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+              const isExactSearch = item.path.includes('?');
+              const currentUrl = `${location.pathname}${location.search}`;
+              const isActive = isExactSearch 
+                ? currentUrl === item.path 
+                : (location.pathname === item.path || (item.path !== '/dashboard' && !location.search && location.pathname.startsWith(item.path)));
               
               return (
                 <Link
