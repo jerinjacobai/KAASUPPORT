@@ -295,8 +295,10 @@ export default function AMCContractsPage() {
 
           <form onSubmit={handleCreateContract} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Contract Title *</label>
+              <label htmlFor="amc-page-title" className="text-xs font-medium text-foreground">Contract Title *</label>
               <input 
+                id="amc-page-title"
+                name="contractName"
                 type="text" 
                 value={contractName}
                 onChange={(e) => setContractName(e.target.value)}
@@ -306,8 +308,10 @@ export default function AMCContractsPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Client Company *</label>
+              <label htmlFor="amc-page-company" className="text-xs font-medium text-foreground">Client Company *</label>
               <select 
+                id="amc-page-company"
+                name="companyName"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
@@ -320,8 +324,10 @@ export default function AMCContractsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Total Visit Quota</label>
+                <label htmlFor="amc-page-quota" className="text-xs font-medium text-foreground">Total Visit Quota</label>
                 <input 
+                  id="amc-page-quota"
+                  name="totalVisits"
                   type="number" 
                   value={totalVisits}
                   onChange={(e) => setTotalVisits(e.target.value)}
@@ -336,6 +342,7 @@ export default function AMCContractsPage() {
                   <input 
                     type="checkbox" 
                     id="laborCheck"
+                    name="includedLabor"
                     checked={includedLabor} 
                     onChange={(e) => setIncludedLabor(e.target.checked)}
                     className="rounded border-border"

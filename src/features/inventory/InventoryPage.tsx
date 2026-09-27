@@ -101,8 +101,11 @@ export default function InventoryPage() {
 
       <div className="flex items-center gap-4 bg-secondary/30 p-4 rounded-xl border border-border">
         <div className="relative flex-1">
+          <label htmlFor="inventory-search" className="sr-only">Search spare parts</label>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
+            id="inventory-search"
+            name="inventorySearch"
             type="text"
             placeholder="Search spare parts by SKU, name, or location..."
             value={searchTerm}
@@ -194,8 +197,10 @@ export default function InventoryPage() {
 
           <form onSubmit={handleAddPartSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Part Name *</label>
+              <label htmlFor="inventory-part-name" className="text-xs font-medium text-foreground">Part Name *</label>
               <input 
+                id="inventory-part-name"
+                name="partName"
                 type="text" 
                 value={partName}
                 onChange={(e) => setPartName(e.target.value)}
@@ -206,8 +211,10 @@ export default function InventoryPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">SKU Code</label>
+                <label htmlFor="inventory-part-sku" className="text-xs font-medium text-foreground">SKU Code</label>
                 <input 
+                  id="inventory-part-sku"
+                  name="skuCode"
                   type="text" 
                   value={partSku}
                   onChange={(e) => setPartSku(e.target.value)}
@@ -217,8 +224,10 @@ export default function InventoryPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Category</label>
+                <label htmlFor="inventory-part-category" className="text-xs font-medium text-foreground">Category</label>
                 <select 
+                  id="inventory-part-category"
+                  name="category"
                   value={partCategory} 
                   onChange={(e) => setPartCategory(e.target.value)}
                   className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
@@ -233,8 +242,10 @@ export default function InventoryPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Unit Price</label>
+                <label htmlFor="inventory-part-price" className="text-xs font-medium text-foreground">Unit Price</label>
                 <input 
+                  id="inventory-part-price"
+                  name="unitPrice"
                   type="text" 
                   value={partPrice}
                   onChange={(e) => setPartPrice(e.target.value)}
@@ -243,8 +254,10 @@ export default function InventoryPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Initial Stock Qty</label>
+                <label htmlFor="inventory-part-stock" className="text-xs font-medium text-foreground">Initial Stock Qty</label>
                 <input 
+                  id="inventory-part-stock"
+                  name="stockQty"
                   type="number" 
                   value={partStock}
                   onChange={(e) => setPartStock(e.target.value)}
@@ -254,8 +267,10 @@ export default function InventoryPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Warehouse Location</label>
+              <label htmlFor="inventory-part-location" className="text-xs font-medium text-foreground">Warehouse Location</label>
               <input 
+                id="inventory-part-location"
+                name="warehouseLocation"
                 type="text" 
                 value={partLocation}
                 onChange={(e) => setPartLocation(e.target.value)}
@@ -290,8 +305,12 @@ export default function InventoryPage() {
 
           <form onSubmit={handleCreatePOSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Supplier Name</label>
-              <select className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary">
+              <label htmlFor="inventory-supplier-name" className="text-xs font-medium text-foreground">Supplier Name</label>
+              <select 
+                id="inventory-supplier-name"
+                name="supplierName"
+                className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
+              >
                 <option>Siemens Industrial India Ltd</option>
                 <option>Cisco Systems Enterprise</option>
                 <option>Schneider Electric Global</option>

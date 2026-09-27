@@ -6,9 +6,12 @@ export interface SwitchProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
 }
 
 const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
-  ({ className, checked, onCheckedChange, ...props }, ref) => {
+  ({ className, checked, onCheckedChange, id, name, ...props }, ref) => {
+    const generatedId = React.useId();
+    const switchId = id || generatedId;
     return (
       <label
+        htmlFor={switchId}
         className={cn(
           'peer inline-flex h-[24px] w-[44px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50',
           checked ? 'bg-primary' : 'bg-muted',
@@ -16,6 +19,8 @@ const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
         )}
       >
         <input
+          id={switchId}
+          name={name || switchId}
           type="checkbox"
           className="sr-only"
           ref={ref}

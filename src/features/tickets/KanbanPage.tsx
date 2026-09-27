@@ -97,8 +97,11 @@ export default function KanbanPage() {
       {/* Filter & Search Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-secondary/30 p-3 rounded-xl border border-border">
         <div className="relative w-full sm:w-80">
+          <label htmlFor="kanban-search" className="sr-only">Filter Kanban tickets</label>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
+            id="kanban-search"
+            name="kanbanSearch"
             type="text"
             placeholder="Filter Kanban tickets..."
             value={searchTerm}

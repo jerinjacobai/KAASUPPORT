@@ -492,8 +492,11 @@ export default function MastersPage() {
         {/* Search Bar */}
         <div className="mt-4 flex items-center gap-4 bg-secondary/30 p-3 rounded-xl border border-border">
           <div className="relative flex-1">
+            <label htmlFor="masters-search" className="sr-only">Search in {activeTab}</label>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
+              id="masters-search"
+              name="masters-search"
               type="text"
               placeholder={`Search in ${activeTab}...`}
               value={searchTerm}
@@ -820,8 +823,10 @@ export default function MastersPage() {
 
           <form onSubmit={handleCreateCompany} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Company Name *</label>
+              <label htmlFor="comp-name" className="text-xs font-medium text-foreground">Company Name *</label>
               <input 
+                id="comp-name"
+                name="companyName"
                 type="text" 
                 value={compName}
                 onChange={(e) => setCompName(e.target.value)}
@@ -832,8 +837,10 @@ export default function MastersPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Company Code</label>
+                <label htmlFor="comp-code" className="text-xs font-medium text-foreground">Company Code</label>
                 <input 
+                  id="comp-code"
+                  name="companyCode"
                   type="text" 
                   value={compCode}
                   onChange={(e) => setCompCode(e.target.value)}
@@ -843,8 +850,10 @@ export default function MastersPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Industry Sector</label>
+                <label htmlFor="comp-industry" className="text-xs font-medium text-foreground">Industry Sector</label>
                 <select 
+                  id="comp-industry"
+                  name="industry"
                   value={compIndustry}
                   onChange={(e) => setCompIndustry(e.target.value)}
                   className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
@@ -858,15 +867,32 @@ export default function MastersPage() {
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Primary Contact Email</label>
-              <input 
-                type="email" 
-                value={compEmail}
-                onChange={(e) => setCompEmail(e.target.value)}
-                placeholder="info@qataritl.com"
-                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label htmlFor="comp-email" className="text-xs font-medium text-foreground">Primary Contact Email</label>
+                <input 
+                  id="comp-email"
+                  name="companyEmail"
+                  type="email" 
+                  value={compEmail}
+                  onChange={(e) => setCompEmail(e.target.value)}
+                  placeholder="info@qataritl.com"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="comp-phone" className="text-xs font-medium text-foreground">Phone Number</label>
+                <input 
+                  id="comp-phone"
+                  name="companyPhone"
+                  type="tel" 
+                  value={compPhone}
+                  onChange={(e) => setCompPhone(e.target.value)}
+                  placeholder="+974 4400 1234"
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -895,8 +921,10 @@ export default function MastersPage() {
 
           <form onSubmit={handleCreateUser} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Full Name *</label>
+              <label htmlFor="user-name" className="text-xs font-medium text-foreground">Full Name *</label>
               <input 
+                id="user-name"
+                name="userName"
                 type="text" 
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
@@ -906,8 +934,10 @@ export default function MastersPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">User Email Address *</label>
+              <label htmlFor="user-email" className="text-xs font-medium text-foreground">User Email Address *</label>
               <input 
+                id="user-email"
+                name="userEmail"
                 type="email" 
                 value={userEmail}
                 onChange={(e) => setUserEmail(e.target.value)}
@@ -918,8 +948,10 @@ export default function MastersPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Account Scope</label>
+                <label htmlFor="user-role-type" className="text-xs font-medium text-foreground">Account Scope</label>
                 <select 
+                  id="user-role-type"
+                  name="userRoleType"
                   value={userRoleType}
                   onChange={(e: any) => setUserRoleType(e.target.value)}
                   className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
@@ -930,8 +962,10 @@ export default function MastersPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Role Designation</label>
+                <label htmlFor="user-role-name" className="text-xs font-medium text-foreground">Role Designation</label>
                 <select 
+                  id="user-role-name"
+                  name="userRoleName"
                   value={userRoleName}
                   onChange={(e) => setUserRoleName(e.target.value)}
                   className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground"
@@ -956,10 +990,12 @@ export default function MastersPage() {
 
             {userRoleType === 'Client User' && (
               <div className="space-y-1 p-3 bg-secondary/40 rounded-lg border border-amber-500/30">
-                <label className="text-xs font-bold text-amber-400 flex items-center gap-1">
+                <label htmlFor="user-mapped-company" className="text-xs font-bold text-amber-400 flex items-center gap-1">
                   <Lock className="w-3.5 h-3.5" /> Map User to Client Company *
                 </label>
                 <select 
+                  id="user-mapped-company"
+                  name="userMappedCompany"
                   value={userMappedCompany}
                   onChange={(e) => setUserMappedCompany(e.target.value)}
                   className="w-full bg-card border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground font-semibold"
@@ -973,11 +1009,13 @@ export default function MastersPage() {
 
             {/* Password Provision Section */}
             <div className="space-y-1 p-3 bg-primary/5 rounded-lg border border-primary/20">
-              <label className="text-xs font-bold text-primary flex items-center gap-1">
+              <label htmlFor="user-password" className="text-xs font-bold text-primary flex items-center gap-1">
                 <KeyRound className="w-3.5 h-3.5" /> Initial Password Provision
               </label>
               <div className="relative">
                 <input 
+                  id="user-password"
+                  name="userPassword"
                   type={showPassword ? "text" : "password"} 
                   value={userPassword}
                   onChange={(e) => setUserPassword(e.target.value)}
@@ -1033,9 +1071,11 @@ export default function MastersPage() {
 
           <form onSubmit={handleSavePasswordReset} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">New Password *</label>
+              <label htmlFor="reset-new-password" className="text-xs font-medium text-foreground">New Password *</label>
               <div className="relative">
                 <input 
+                  id="reset-new-password"
+                  name="resetNewPassword"
                   type={showResetPassword ? "text" : "password"} 
                   value={resetNewPassword}
                   onChange={(e) => setResetNewPassword(e.target.value)}
@@ -1087,55 +1127,70 @@ export default function MastersPage() {
 
           <form onSubmit={handleCreateAssetMapping} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Asset User</label>
-              <input type="text" value={assetUser} onChange={e => setAssetUser(e.target.value)} placeholder="User name" className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-foreground">Hardware Type *</label>
-                <button
-                  type="button"
-                  onClick={() => setIsCustomHardwareType(!isCustomHardwareType)}
-                  className="text-[10px] text-primary hover:underline font-medium"
-                >
-                  {isCustomHardwareType ? '← Choose from Master' : '+ Custom Type'}
-                </button>
-              </div>
-              {isCustomHardwareType ? (
-                <input
-                  type="text"
-                  value={customHardwareType}
-                  onChange={e => setCustomHardwareType(e.target.value)}
-                  placeholder="Enter custom hardware type..."
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground"
+              <div className="space-y-1">
+                <label htmlFor="master-asset-user" className="text-xs font-medium text-foreground">Asset User</label>
+                <input 
+                  id="master-asset-user"
+                  name="assetUser"
+                  type="text" 
+                  value={assetUser} 
+                  onChange={e => setAssetUser(e.target.value)} 
+                  placeholder="User name" 
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground" 
                 />
-              ) : (
-                <select
-                  value={hardwareType}
-                  onChange={e => setHardwareType(e.target.value)}
-                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground"
-                >
-                  {hardwareTypesList.map(ht => (
-                    <option key={ht.id} value={ht.name}>{ht.name}{ht.code ? ` (${ht.code})` : ''}</option>
-                  ))}
-                  {hardwareTypesList.length === 0 && (
-                    <>
-                      <option value="PLC">PLC</option>
-                      <option value="VFD">VFD</option>
-                      <option value="HMI">HMI</option>
-                      <option value="Server">Server</option>
-                      <option value="Laptops">Laptops</option>
-                      <option value="Monitor">Monitor</option>
-                    </>
-                  )}
-                </select>
-              )}
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label htmlFor={isCustomHardwareType ? "master-asset-hw-custom" : "master-asset-hw-type"} className="text-xs font-medium text-foreground">Hardware Type *</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomHardwareType(!isCustomHardwareType)}
+                    className="text-[10px] text-primary hover:underline font-medium"
+                  >
+                    {isCustomHardwareType ? '← Choose from Master' : '+ Custom Type'}
+                  </button>
+                </div>
+                {isCustomHardwareType ? (
+                  <input
+                    id="master-asset-hw-custom"
+                    name="customHardwareType"
+                    type="text"
+                    value={customHardwareType}
+                    onChange={e => setCustomHardwareType(e.target.value)}
+                    placeholder="Enter custom hardware type..."
+                    className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground"
+                  />
+                ) : (
+                  <select
+                    id="master-asset-hw-type"
+                    name="hardwareType"
+                    value={hardwareType}
+                    onChange={e => setHardwareType(e.target.value)}
+                    className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground"
+                  >
+                    {hardwareTypesList.map(ht => (
+                      <option key={ht.id} value={ht.name}>{ht.name}{ht.code ? ` (${ht.code})` : ''}</option>
+                    ))}
+                    {hardwareTypesList.length === 0 && (
+                      <>
+                        <option value="PLC">PLC</option>
+                        <option value="VFD">VFD</option>
+                        <option value="HMI">HMI</option>
+                        <option value="Server">Server</option>
+                        <option value="Laptops">Laptops</option>
+                        <option value="Monitor">Monitor</option>
+                      </>
+                    )}
+                  </select>
+                )}
+              </div>
             </div>
-            </div>
+
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Asset Name *</label>
+              <label htmlFor="master-asset-name" className="text-xs font-medium text-foreground">Asset Name *</label>
               <input 
+                id="master-asset-name"
+                name="assetName"
                 type="text" 
                 value={assetName}
                 onChange={(e) => setAssetName(e.target.value)}
@@ -1144,17 +1199,60 @@ export default function MastersPage() {
               />
             </div>
 
-            <div className="space-y-1"><label className="text-xs font-medium text-foreground">Description</label><textarea value={assetDescription} onChange={e => setAssetDescription(e.target.value)} rows={2} className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground" /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1"><label className="text-xs font-medium text-foreground">Remarks</label><textarea value={assetRemarks} onChange={e => setAssetRemarks(e.target.value)} rows={2} className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground" /></div>
-              <div className="space-y-1"><label className="text-xs font-medium text-foreground">Suggestion</label><textarea value={assetSuggestion} onChange={e => setAssetSuggestion(e.target.value)} rows={2} className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground" /></div>
+            <div className="space-y-1">
+              <label htmlFor="master-asset-description" className="text-xs font-medium text-foreground">Description</label>
+              <textarea 
+                id="master-asset-description"
+                name="assetDescription"
+                value={assetDescription} 
+                onChange={e => setAssetDescription(e.target.value)} 
+                rows={2} 
+                className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground" 
+              />
             </div>
-            <div className="space-y-1"><label className="text-xs font-medium text-foreground">Provisioning Document</label><input type="file" onChange={e => setProvisionFile(e.target.files?.[0] || null)} className="w-full text-xs text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-xs" /></div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Asset Tag Code</label>
+                <label htmlFor="master-asset-remarks" className="text-xs font-medium text-foreground">Remarks</label>
+                <textarea 
+                  id="master-asset-remarks"
+                  name="assetRemarks"
+                  value={assetRemarks} 
+                  onChange={e => setAssetRemarks(e.target.value)} 
+                  rows={2} 
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground" 
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="master-asset-suggestion" className="text-xs font-medium text-foreground">Suggestion</label>
+                <textarea 
+                  id="master-asset-suggestion"
+                  name="assetSuggestion"
+                  value={assetSuggestion} 
+                  onChange={e => setAssetSuggestion(e.target.value)} 
+                  rows={2} 
+                  className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs text-foreground" 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label htmlFor="master-asset-provision-file" className="text-xs font-medium text-foreground">Provisioning Document</label>
+              <input 
+                id="master-asset-provision-file"
+                name="provisionFile"
+                type="file" 
+                onChange={e => setProvisionFile(e.target.files?.[0] || null)} 
+                className="w-full text-xs text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-xs" 
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label htmlFor="master-asset-tag" className="text-xs font-medium text-foreground">Asset Tag Code</label>
                 <input 
+                  id="master-asset-tag"
+                  name="assetTag"
                   type="text" 
                   value={assetTag}
                   onChange={(e) => setAssetTag(e.target.value)}
@@ -1164,8 +1262,10 @@ export default function MastersPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Model / Specs</label>
+                <label htmlFor="master-asset-model" className="text-xs font-medium text-foreground">Model / Specs</label>
                 <input 
+                  id="master-asset-model"
+                  name="assetModel"
                   type="text" 
                   value={assetModel}
                   onChange={(e) => setAssetModel(e.target.value)}
@@ -1176,10 +1276,12 @@ export default function MastersPage() {
             </div>
 
             <div className="space-y-1 p-3 bg-secondary/40 rounded-lg border border-emerald-500/30">
-              <label className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+              <label htmlFor="master-asset-company" className="text-xs font-bold text-emerald-400 flex items-center gap-1">
                 <Building2 className="w-3.5 h-3.5" /> Assign Owner Client Company *
               </label>
               <select 
+                id="master-asset-company"
+                name="company"
                 value={assetMappedCompany}
                 onChange={(e) => setAssetMappedCompany(e.target.value)}
                 className="w-full bg-card border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground font-semibold"
@@ -1216,8 +1318,10 @@ export default function MastersPage() {
 
           <form onSubmit={handleCreateAMCMaster} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Contract Title *</label>
+              <label htmlFor="amc-name" className="text-xs font-medium text-foreground">Contract Title *</label>
               <input 
+                id="amc-name"
+                name="amcName"
                 type="text" 
                 value={amcName}
                 onChange={(e) => setAmcName(e.target.value)}
@@ -1227,8 +1331,10 @@ export default function MastersPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Client Company *</label>
+              <label htmlFor="amc-company" className="text-xs font-medium text-foreground">Client Company *</label>
               <select 
+                id="amc-company"
+                name="amcCompany"
                 value={amcCompany}
                 onChange={(e) => setAmcCompany(e.target.value)}
                 className="w-full bg-secondary/50 border border-border rounded-lg p-2.5 text-xs outline-none focus:border-primary text-foreground font-semibold"
@@ -1241,8 +1347,10 @@ export default function MastersPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Start Date</label>
+                <label htmlFor="amc-start-date" className="text-xs font-medium text-foreground">Start Date</label>
                 <input 
+                  id="amc-start-date"
+                  name="amcStartDate"
                   type="date" 
                   value={amcStartDate}
                   onChange={(e) => setAmcStartDate(e.target.value)}
@@ -1251,8 +1359,10 @@ export default function MastersPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">End Date</label>
+                <label htmlFor="amc-end-date" className="text-xs font-medium text-foreground">End Date</label>
                 <input 
+                  id="amc-end-date"
+                  name="amcEndDate"
                   type="date" 
                   value={amcEndDate}
                   onChange={(e) => setAmcEndDate(e.target.value)}
@@ -1263,8 +1373,10 @@ export default function MastersPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Annual Visits Quota</label>
+                <label htmlFor="amc-total-visits" className="text-xs font-medium text-foreground">Annual Visits Quota</label>
                 <input 
+                  id="amc-total-visits"
+                  name="amcTotalVisits"
                   type="number" 
                   value={amcTotalVisits}
                   onChange={(e) => setAmcTotalVisits(e.target.value)}
@@ -1273,8 +1385,10 @@ export default function MastersPage() {
               </div>
 
               <div className="space-y-1 flex flex-col justify-end">
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-foreground pb-3">
+                <label htmlFor="amc-included-labor" className="flex items-center gap-2 cursor-pointer text-xs font-medium text-foreground pb-3">
                   <input 
+                    id="amc-included-labor"
+                    name="amcIncludedLabor"
                     type="checkbox" 
                     checked={amcIncludedLabor}
                     onChange={(e) => setAmcIncludedLabor(e.target.checked)}
@@ -1311,8 +1425,10 @@ export default function MastersPage() {
 
           <form onSubmit={handleCreateHardwareType} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Hardware Type Name *</label>
+              <label htmlFor="hw-name" className="text-xs font-medium text-foreground">Hardware Type Name *</label>
               <input 
+                id="hw-name"
+                name="hardwareTypeName"
                 type="text" 
                 value={hwName}
                 onChange={(e) => setHwName(e.target.value)}
@@ -1322,8 +1438,10 @@ export default function MastersPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Short Code</label>
+              <label htmlFor="hw-code" className="text-xs font-medium text-foreground">Short Code</label>
               <input 
+                id="hw-code"
+                name="hardwareTypeCode"
                 type="text" 
                 value={hwCode}
                 onChange={(e) => setHwCode(e.target.value)}
@@ -1333,8 +1451,10 @@ export default function MastersPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Description / Notes</label>
+              <label htmlFor="hw-description" className="text-xs font-medium text-foreground">Description / Notes</label>
               <textarea 
+                id="hw-description"
+                name="hardwareTypeDescription"
                 value={hwDescription}
                 onChange={(e) => setHwDescription(e.target.value)}
                 rows={3}

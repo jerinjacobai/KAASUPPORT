@@ -286,8 +286,10 @@ export default function ReportsPage() {
           <div className="flex flex-wrap items-center justify-between gap-4 bg-secondary/30 p-4 rounded-xl border border-border">
             <div className="flex items-center gap-3">
               <Calendar className="w-4 h-4 text-primary" />
-              <span className="text-xs font-bold text-foreground">Select Month:</span>
+              <label htmlFor="report-month-select" className="text-xs font-bold text-foreground">Select Month:</label>
               <select
+                id="report-month-select"
+                name="reportMonth"
                 value={selectedMonth}
                 onChange={(e) => {
                   setSelectedMonth(e.target.value);

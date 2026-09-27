@@ -292,9 +292,11 @@ export default function FieldVisitsPage() {
           <form onSubmit={handleScheduleSubmit} className="space-y-4">
             {/* Ticket Selector */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Associate with Active Ticket *</label>
+              <label htmlFor="visit-ticket-id" className="text-xs font-medium text-foreground">Associate with Active Ticket *</label>
               {tickets.length > 0 ? (
                 <select 
+                  id="visit-ticket-id"
+                  name="ticketId"
                   value={selectedTicketId}
                   onChange={(e) => handleTicketChange(e.target.value)}
                   className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
@@ -308,6 +310,8 @@ export default function FieldVisitsPage() {
                 </select>
               ) : (
                 <input
+                  id="visit-ticket-id"
+                  name="ticketId"
                   type="text"
                   value={selectedTicketId}
                   onChange={e => setSelectedTicketId(e.target.value)}
@@ -319,13 +323,15 @@ export default function FieldVisitsPage() {
 
             {/* Engineer Selector */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Assign Field Engineer *</label>
+              <label htmlFor="visit-engineer" className="text-xs font-medium text-foreground">Assign Field Engineer *</label>
               {engineersList.length === 0 ? (
                 <p className="text-xs text-amber-400 p-2 bg-amber-500/10 rounded border border-amber-500/20">
                   No internal staff onboarded yet. Create a user with role "KAA Internal Staff" in Admin Masters.
                 </p>
               ) : (
                 <select 
+                  id="visit-engineer"
+                  name="engineer"
                   value={visitEngineer}
                   onChange={(e) => setVisitEngineer(e.target.value)}
                   className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
@@ -339,8 +345,10 @@ export default function FieldVisitsPage() {
 
             {/* Client Company */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Client Organization</label>
+              <label htmlFor="visit-company" className="text-xs font-medium text-foreground">Client Organization</label>
               <select 
+                id="visit-company"
+                name="company"
                 value={visitCompany}
                 onChange={(e) => setVisitCompany(e.target.value)}
                 className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
@@ -356,8 +364,10 @@ export default function FieldVisitsPage() {
 
             {/* Site Location */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Site Location / Address *</label>
+              <label htmlFor="visit-location" className="text-xs font-medium text-foreground">Site Location / Address *</label>
               <input 
+                id="visit-location"
+                name="location"
                 type="text" 
                 value={visitLocation}
                 onChange={(e) => setVisitLocation(e.target.value)}
@@ -369,8 +379,10 @@ export default function FieldVisitsPage() {
             {/* Date & Time */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Visit Date</label>
+                <label htmlFor="visit-date" className="text-xs font-medium text-foreground">Visit Date</label>
                 <input 
+                  id="visit-date"
+                  name="visitDate"
                   type="date" 
                   value={visitDate}
                   onChange={(e) => setVisitDate(e.target.value)}
@@ -378,8 +390,10 @@ export default function FieldVisitsPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Dispatch Time</label>
+                <label htmlFor="visit-time" className="text-xs font-medium text-foreground">Dispatch Time</label>
                 <input 
+                  id="visit-time"
+                  name="visitTime"
                   type="time" 
                   value={visitTime}
                   onChange={(e) => setVisitTime(e.target.value)}

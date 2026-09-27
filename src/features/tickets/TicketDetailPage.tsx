@@ -274,7 +274,10 @@ export default function TicketDetailPage() {
 
           {/* Comment Input */}
           <div className="glass rounded-xl p-4 border-border/50 mt-4">
+            <label htmlFor="ticket-comment-text" className="sr-only">Add comment or service note</label>
             <textarea 
+              id="ticket-comment-text"
+              name="commentText"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               className="w-full bg-background border border-border rounded-lg p-3 text-xs min-h-[90px] outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all resize-none text-foreground"
@@ -287,6 +290,7 @@ export default function TicketDetailPage() {
                     <input 
                       type="checkbox" 
                       id="internal-check" 
+                      name="isInternalNote"
                       checked={isInternalNote}
                       onChange={(e) => setIsInternalNote(e.target.checked)}
                       className="rounded border-border text-amber-500 focus:ring-amber-500 bg-secondary/50 w-4 h-4" 
@@ -407,8 +411,10 @@ export default function TicketDetailPage() {
 
           <form onSubmit={handleSaveEdit} className="space-y-4 mt-2">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Ticket Title</label>
+              <label htmlFor="detail-edit-title" className="text-xs font-semibold text-foreground">Ticket Title</label>
               <input
+                id="detail-edit-title"
+                name="ticketTitle"
                 type="text"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
@@ -418,8 +424,10 @@ export default function TicketDetailPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Priority Level</label>
+              <label htmlFor="detail-edit-priority" className="text-xs font-semibold text-foreground">Priority Level</label>
               <select
+                id="detail-edit-priority"
+                name="ticketPriority"
                 value={editPriority}
                 onChange={(e) => setEditPriority(e.target.value)}
                 className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-primary text-foreground"
@@ -432,8 +440,10 @@ export default function TicketDetailPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Detailed Description</label>
+              <label htmlFor="detail-edit-description" className="text-xs font-semibold text-foreground">Detailed Description</label>
               <textarea
+                id="detail-edit-description"
+                name="ticketDescription"
                 rows={4}
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}

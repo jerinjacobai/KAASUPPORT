@@ -163,10 +163,12 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Equipment Name */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+            <label htmlFor="edit-asset-name" className="text-xs font-medium text-foreground flex items-center gap-1.5">
               <Cpu className="w-3.5 h-3.5 text-primary" /> Equipment / Product Name *
             </label>
             <input
+              id="edit-asset-name"
+              name="name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -179,7 +181,7 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
           {/* User Reassignment Section */}
           <div className="p-3.5 rounded-xl bg-secondary/30 border border-border/80 space-y-2.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+              <label htmlFor="edit-asset-user-select" className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-amber-400" /> Assign to Employee / User
               </label>
               <div className="flex gap-1 text-[11px]">
@@ -210,6 +212,8 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
             {selectedUserMode === 'existing' && (
               <div className="space-y-1">
                 <select
+                  id="edit-asset-user-select"
+                  name="assignedUser"
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
                   className="w-full bg-background border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
@@ -230,6 +234,8 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
             {selectedUserMode === 'custom' && (
               <div className="space-y-1">
                 <input
+                  id="edit-asset-user-custom"
+                  name="customUserName"
                   type="text"
                   value={customUserName}
                   onChange={(e) => setCustomUserName(e.target.value)}
@@ -251,7 +257,7 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
             {/* Hardware Type */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                <label htmlFor="edit-asset-hw-type" className="text-xs font-medium text-foreground flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5 text-purple-400" /> Hardware Type *
                 </label>
                 <button
@@ -265,6 +271,8 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
 
               {!isCustomType ? (
                 <select
+                  id="edit-asset-hw-type"
+                  name="hardwareType"
                   value={hardwareType}
                   onChange={(e) => setHardwareType(e.target.value)}
                   className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
@@ -285,6 +293,8 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
                 </select>
               ) : (
                 <input
+                  id="edit-asset-hw-custom"
+                  name="customHardwareType"
                   type="text"
                   value={customType}
                   onChange={(e) => setCustomType(e.target.value)}
@@ -296,10 +306,12 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
 
             {/* Owner Company */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+              <label htmlFor="edit-asset-company" className="text-xs font-medium text-foreground flex items-center gap-1.5">
                 <Building2 className="w-3.5 h-3.5 text-emerald-400" /> Company Scope
               </label>
               <select
+                id="edit-asset-company"
+                name="company"
                 value={company}
                 onChange={(e) => setCompany(e.target.value)}
                 disabled={!isKaaInternal}
@@ -317,10 +329,12 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
           {/* Model & Serial Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+              <label htmlFor="edit-asset-model" className="text-xs font-medium text-foreground flex items-center gap-1.5">
                 <Hash className="w-3.5 h-3.5 text-muted-foreground" /> Model / Specs
               </label>
               <input
+                id="edit-asset-model"
+                name="model"
                 type="text"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
@@ -330,10 +344,12 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+              <label htmlFor="edit-asset-serial" className="text-xs font-medium text-foreground flex items-center gap-1.5">
                 <Tag className="w-3.5 h-3.5 text-muted-foreground" /> Serial Number
               </label>
               <input
+                id="edit-asset-serial"
+                name="serial"
                 type="text"
                 value={serial}
                 onChange={(e) => setSerial(e.target.value)}
@@ -346,8 +362,10 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
           {/* Status & Tag Code Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Operational Status</label>
+              <label htmlFor="edit-asset-status" className="text-xs font-medium text-foreground">Operational Status</label>
               <select
+                id="edit-asset-status"
+                name="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
                 className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
@@ -360,8 +378,10 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Asset Tag Code</label>
+              <label htmlFor="edit-asset-tag" className="text-xs font-medium text-foreground">Asset Tag Code</label>
               <input
+                id="edit-asset-tag"
+                name="tag"
                 type="text"
                 value={tag}
                 onChange={(e) => setTag(e.target.value)}
@@ -373,10 +393,12 @@ export function EditAssetModal({ open, onOpenChange, asset, onSaved }: EditAsset
 
           {/* Remarks / Notes */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+            <label htmlFor="edit-asset-remarks" className="text-xs font-medium text-foreground flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-muted-foreground" /> Remarks / Hardware Notes
             </label>
             <textarea
+              id="edit-asset-remarks"
+              name="remarks"
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               placeholder="e.g. Upgraded to 16GB RAM, power adapter replaced, user transferred to Accounts"

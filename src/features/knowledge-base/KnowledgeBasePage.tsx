@@ -80,8 +80,11 @@ export default function KnowledgeBasePage() {
         <h2 className="text-2xl font-bold text-foreground">How can we help you solve your issue today?</h2>
         
         <div className="max-w-2xl mx-auto relative">
+          <label htmlFor="kb-search" className="sr-only">Search knowledge base articles</label>
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <input
+            id="kb-search"
+            name="kbSearch"
             type="text"
             placeholder="Type error code, machine model, or question..."
             value={searchTerm}
@@ -178,8 +181,10 @@ export default function KnowledgeBasePage() {
 
           <form onSubmit={handleCreateArticleSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Article Title *</label>
+              <label htmlFor="kb-article-title" className="text-xs font-medium text-foreground">Article Title *</label>
               <input 
+                id="kb-article-title"
+                name="articleTitle"
                 type="text" 
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
@@ -189,8 +194,10 @@ export default function KnowledgeBasePage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Category</label>
+              <label htmlFor="kb-article-category" className="text-xs font-medium text-foreground">Category</label>
               <select 
+                id="kb-article-category"
+                name="articleCategory"
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
                 className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
@@ -203,8 +210,10 @@ export default function KnowledgeBasePage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Troubleshooting Steps / Content</label>
+              <label htmlFor="kb-article-content" className="text-xs font-medium text-foreground">Troubleshooting Steps / Content</label>
               <textarea 
+                id="kb-article-content"
+                name="articleContent"
                 rows={4}
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}

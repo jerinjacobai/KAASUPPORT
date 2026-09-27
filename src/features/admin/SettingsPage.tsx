@@ -55,8 +55,10 @@ export default function SettingsPage() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="space-y-2">
-                <label className="font-medium text-xs">Portal Name</label>
+                <label htmlFor="settings-portal-name" className="font-medium text-xs">Portal Name</label>
                 <input 
+                  id="settings-portal-name"
+                  name="portalName"
                   type="text" 
                   value={portalName}
                   onChange={(e) => setPortalName(e.target.value)}
@@ -64,8 +66,10 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="font-medium text-xs">Support Email</label>
+                <label htmlFor="settings-support-email" className="font-medium text-xs">Support Email</label>
                 <input 
+                  id="settings-support-email"
+                  name="supportEmail"
                   type="email" 
                   value={supportEmail}
                   onChange={(e) => setSupportEmail(e.target.value)}

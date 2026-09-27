@@ -99,8 +99,11 @@ export default function EngineersPage() {
 
       <div className="flex items-center gap-4 bg-secondary/30 p-4 rounded-xl border border-border">
         <div className="relative flex-1">
+          <label htmlFor="engineer-search" className="sr-only">Search engineers</label>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
+            id="engineer-search"
+            name="engineerSearch"
             type="text"
             placeholder="Search engineers by name, role, or email..."
             value={searchTerm}
@@ -233,8 +236,10 @@ export default function EngineersPage() {
 
           <form onSubmit={handleAddEngineerSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Full Name *</label>
+              <label htmlFor="new-engineer-name" className="text-xs font-medium text-foreground">Full Name *</label>
               <input 
+                id="new-engineer-name"
+                name="engineerName"
                 type="text" 
                 value={newEngineerName}
                 onChange={(e) => setNewEngineerName(e.target.value)}
@@ -244,8 +249,10 @@ export default function EngineersPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Email Address *</label>
+              <label htmlFor="new-engineer-email" className="text-xs font-medium text-foreground">Email Address *</label>
               <input 
+                id="new-engineer-email"
+                name="engineerEmail"
                 type="email" 
                 value={newEngineerEmail}
                 onChange={(e) => setNewEngineerEmail(e.target.value)}
@@ -255,8 +262,10 @@ export default function EngineersPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Role / Designation</label>
+              <label htmlFor="new-engineer-role" className="text-xs font-medium text-foreground">Role / Designation</label>
               <select 
+                id="new-engineer-role"
+                name="engineerRole"
                 value={newEngineerRole}
                 onChange={(e) => setNewEngineerRole(e.target.value)}
                 className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"

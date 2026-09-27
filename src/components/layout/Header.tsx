@@ -194,8 +194,11 @@ export function Header() {
           
           {/* Search Header Input */}
           <div className="flex items-center px-4 py-3.5 border-b border-border bg-secondary/30">
+            <label htmlFor="global-command-search" className="sr-only">Search tickets, assets, engineers, or modules</label>
             <Search className="w-5 h-5 text-primary mr-3 shrink-0" />
             <input 
+              id="global-command-search"
+              name="globalSearch"
               ref={inputRef}
               autoFocus
               className="flex-1 bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground text-base font-medium"

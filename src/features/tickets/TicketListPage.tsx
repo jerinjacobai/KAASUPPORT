@@ -226,8 +226,11 @@ export default function TicketListPage() {
           
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative group w-full sm:w-80">
+              <label htmlFor="ticket-list-search" className="sr-only">Search tickets</label>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <input 
+                id="ticket-list-search"
+                name="ticketSearch"
                 type="text" 
                 placeholder="Search by ID, title, or assignee..." 
                 value={searchTerm}
@@ -245,7 +248,10 @@ export default function TicketListPage() {
             )}
             
             {/* Status Filter Dropdown */}
+            <label htmlFor="ticket-status-filter" className="sr-only">Filter by status</label>
             <select
+              id="ticket-status-filter"
+              name="statusFilter"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="bg-background/80 border border-border/80 text-foreground rounded-lg appearance-none cursor-pointer px-3 py-2.5 pr-8 outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/15 text-xs font-medium"
@@ -259,7 +265,10 @@ export default function TicketListPage() {
             </select>
 
             {/* Priority Filter Dropdown */}
+            <label htmlFor="ticket-priority-filter" className="sr-only">Filter by priority</label>
             <select
+              id="ticket-priority-filter"
+              name="priorityFilter"
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
               className="bg-background/80 border border-border/80 text-foreground rounded-lg appearance-none cursor-pointer px-3 py-2.5 pr-8 outline-none focus:border-primary/60 focus:ring-2 focus:ring-primary/15 text-xs font-medium"
@@ -448,8 +457,10 @@ export default function TicketListPage() {
 
           <form onSubmit={handleSaveEdit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Ticket Title *</label>
+              <label htmlFor="quick-edit-title" className="text-xs font-medium text-foreground">Ticket Title *</label>
               <input 
+                id="quick-edit-title"
+                name="ticketTitle"
                 type="text" 
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
@@ -459,8 +470,10 @@ export default function TicketListPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Priority Level</label>
+              <label htmlFor="quick-edit-priority" className="text-xs font-medium text-foreground">Priority Level</label>
               <select 
+                id="quick-edit-priority"
+                name="ticketPriority"
                 value={editPriority}
                 onChange={(e) => setEditPriority(e.target.value)}
                 className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary"
@@ -473,8 +486,10 @@ export default function TicketListPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Issue Description</label>
+              <label htmlFor="quick-edit-description" className="text-xs font-medium text-foreground">Issue Description</label>
               <textarea 
+                id="quick-edit-description"
+                name="ticketDescription"
                 rows={4}
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}

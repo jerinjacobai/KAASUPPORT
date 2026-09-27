@@ -150,8 +150,11 @@ export default function AssetsPage() {
 
       <div className="flex items-center gap-4 bg-secondary/30 p-4 rounded-xl border border-border">
         <div className="relative flex-1">
+          <label htmlFor="asset-search" className="sr-only">Search assets</label>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
+            id="asset-search"
+            name="asset-search"
             type="text"
             placeholder="Search by asset tag, name, serial number, hardware type or company..."
             value={searchTerm}
@@ -277,8 +280,10 @@ export default function AssetsPage() {
 
           <form onSubmit={handleRegisterSubmit} className="space-y-3">
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Equipment Name *</label>
+              <label htmlFor="reg-asset-name" className="text-xs font-medium text-foreground">Equipment Name *</label>
               <input 
+                id="reg-asset-name"
+                name="assetName"
                 type="text" 
                 value={newAssetName}
                 onChange={(e) => setNewAssetName(e.target.value)}
@@ -289,8 +294,10 @@ export default function AssetsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Asset Tag Code</label>
+                <label htmlFor="reg-asset-tag" className="text-xs font-medium text-foreground">Asset Tag Code</label>
                 <input 
+                  id="reg-asset-tag"
+                  name="assetTag"
                   type="text" 
                   value={newAssetTag}
                   onChange={(e) => setNewAssetTag(e.target.value)}
@@ -300,8 +307,10 @@ export default function AssetsPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Model / Specs</label>
+                <label htmlFor="reg-asset-model" className="text-xs font-medium text-foreground">Model / Specs</label>
                 <input 
+                  id="reg-asset-model"
+                  name="assetModel"
                   type="text" 
                   value={newAssetModel}
                   onChange={(e) => setNewAssetModel(e.target.value)}
@@ -314,7 +323,7 @@ export default function AssetsPage() {
             {/* Hardware Type Master Dropdown */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-foreground">Hardware Type *</label>
+                <label htmlFor={isCustomType ? "reg-asset-hw-custom" : "reg-asset-hw-type"} className="text-xs font-medium text-foreground">Hardware Type *</label>
                 <button
                   type="button"
                   onClick={() => setIsCustomType(!isCustomType)}
@@ -326,6 +335,8 @@ export default function AssetsPage() {
 
               {isCustomType ? (
                 <input
+                  id="reg-asset-hw-custom"
+                  name="customHardwareType"
                   type="text"
                   value={customHardwareType}
                   onChange={(e) => setCustomHardwareType(e.target.value)}
@@ -334,6 +345,8 @@ export default function AssetsPage() {
                 />
               ) : (
                 <select
+                  id="reg-asset-hw-type"
+                  name="hardwareType"
                   value={newAssetHardwareType}
                   onChange={(e) => setNewAssetHardwareType(e.target.value)}
                   className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"
@@ -357,8 +370,10 @@ export default function AssetsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Serial Number</label>
+                <label htmlFor="reg-asset-serial" className="text-xs font-medium text-foreground">Serial Number</label>
                 <input 
+                  id="reg-asset-serial"
+                  name="serialNumber"
                   type="text" 
                   value={newAssetSerial}
                   onChange={(e) => setNewAssetSerial(e.target.value)}
@@ -368,8 +383,10 @@ export default function AssetsPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Assigned User / Operator</label>
+                <label htmlFor="reg-asset-user" className="text-xs font-medium text-foreground">Assigned User / Operator</label>
                 <input 
+                  id="reg-asset-user"
+                  name="assetUser"
                   type="text" 
                   value={newAssetUser}
                   onChange={(e) => setNewAssetUser(e.target.value)}
@@ -380,8 +397,10 @@ export default function AssetsPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-foreground">Owner Client Company *</label>
+              <label htmlFor="reg-asset-company" className="text-xs font-medium text-foreground">Owner Client Company *</label>
               <select 
+                id="reg-asset-company"
+                name="company"
                 value={newAssetCompany}
                 onChange={(e) => setNewAssetCompany(e.target.value)}
                 className="w-full bg-secondary/50 border border-border text-foreground rounded-lg p-2.5 text-xs outline-none focus:border-primary font-medium"

@@ -417,8 +417,10 @@ export function ServiceReportModal({ open, onOpenChange, ticketId, engineerName,
 
           {/* Intervention Findings */}
           <div className="space-y-1.5 pt-1">
-            <label className="text-[11px] font-semibold text-foreground">Service Notes / Work Carried Out</label>
+            <label htmlFor="service-report-notes" className="text-[11px] font-semibold text-foreground">Service Notes / Work Carried Out</label>
             <textarea
+              id="service-report-notes"
+              name="serviceNotes"
               rows={2}
               value={serviceNotes}
               onChange={(e) => setServiceNotes(e.target.value)}
@@ -491,7 +493,10 @@ export function ServiceReportModal({ open, onOpenChange, ticketId, engineerName,
             </div>
           ) : (
             <div className="space-y-2">
+              <label htmlFor="signature-type-name" className="sr-only">Type Customer Signature</label>
               <input
+                id="signature-type-name"
+                name="signatureTypeName"
                 type="text"
                 value={typedSignerName}
                 onChange={(e) => setTypedSignerName(e.target.value)}
@@ -508,8 +513,10 @@ export function ServiceReportModal({ open, onOpenChange, ticketId, engineerName,
 
           <div className="grid grid-cols-2 gap-3 pt-1">
             <div className="space-y-1">
-              <label className="text-[10px] text-muted-foreground font-semibold">Signer Name / Representative</label>
+              <label htmlFor="report-signer-name" className="text-[10px] text-muted-foreground font-semibold">Signer Name / Representative</label>
               <input
+                id="report-signer-name"
+                name="signerName"
                 type="text"
                 value={typedSignerName}
                 onChange={(e) => setTypedSignerName(e.target.value)}
@@ -518,8 +525,10 @@ export function ServiceReportModal({ open, onOpenChange, ticketId, engineerName,
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] text-muted-foreground font-semibold">Designation / Role</label>
+              <label htmlFor="report-signer-role" className="text-[10px] text-muted-foreground font-semibold">Designation / Role</label>
               <input
+                id="report-signer-role"
+                name="signerRole"
                 type="text"
                 value={signerRole}
                 onChange={(e) => setSignerRole(e.target.value)}
@@ -529,8 +538,10 @@ export function ServiceReportModal({ open, onOpenChange, ticketId, engineerName,
             </div>
           </div>
 
-          <label className="flex items-start gap-2 cursor-pointer pt-1">
+          <label htmlFor="report-acknowledgement" className="flex items-start gap-2 cursor-pointer pt-1">
             <input
+              id="report-acknowledgement"
+              name="acknowledgement"
               type="checkbox"
               checked={acknowledged}
               onChange={(e) => setAcknowledged(e.target.checked)}

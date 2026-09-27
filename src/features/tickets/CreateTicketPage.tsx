@@ -229,11 +229,13 @@ export default function CreateTicketPage() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium flex items-center justify-between text-foreground">
+                    <label htmlFor="ticket-company" className="text-sm font-medium flex items-center justify-between text-foreground">
                       Client Company <span className="text-destructive">*</span>
                       {!isKaaInternal && <Lock className="w-3.5 h-3.5 text-emerald-400" />}
                     </label>
                     <select 
+                      id="ticket-company"
+                      name="company"
                       value={company}
                       onChange={(e) => {
                         setCompany(e.target.value);
@@ -250,8 +252,10 @@ export default function CreateTicketPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Mapped Equipment / Asset (Optional)</label>
+                    <label htmlFor="ticket-asset-id" className="text-sm font-medium text-foreground">Mapped Equipment / Asset (Optional)</label>
                     <select 
+                      id="ticket-asset-id"
+                      name="assetId"
                       value={assetId}
                       onChange={(e) => setAssetId(e.target.value)}
                       className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
@@ -267,16 +271,16 @@ export default function CreateTicketPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Branch / Location</label>
-                    <select className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
+                    <label htmlFor="ticket-branch" className="text-sm font-medium text-foreground">Branch / Location</label>
+                    <select id="ticket-branch" name="branch" className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                       <option>HQ - Primary Plant</option>
                       <option>Branch Office - Zone 2</option>
                     </select>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Department</label>
-                    <select className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
+                    <label htmlFor="ticket-department" className="text-sm font-medium text-foreground">Department</label>
+                    <select id="ticket-department" name="department" className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                       <option>IT & Infrastructure</option>
                       <option>Plant Maintenance</option>
                       <option>Operations</option>
@@ -293,8 +297,10 @@ export default function CreateTicketPage() {
                 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Subject / Title <span className="text-destructive">*</span></label>
+                    <label htmlFor="ticket-title" className="text-sm font-medium text-foreground">Subject / Title <span className="text-destructive">*</span></label>
                     <input 
+                      id="ticket-title"
+                      name="title"
                       type="text" 
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
@@ -305,8 +311,8 @@ export default function CreateTicketPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Category</label>
-                      <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
+                      <label htmlFor="ticket-category" className="text-sm font-medium text-foreground">Category</label>
+                      <select id="ticket-category" name="category" value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                         <option value="Hardware">Hardware / Machinery</option>
                         <option value="Software">Software / Firmware</option>
                         <option value="Electrical">Electrical / PLC</option>
@@ -315,8 +321,8 @@ export default function CreateTicketPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Priority Level</label>
-                      <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
+                      <label htmlFor="ticket-priority" className="text-sm font-medium text-foreground">Priority Level</label>
+                      <select id="ticket-priority" name="priority" value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full bg-card border border-border text-foreground rounded-lg appearance-none cursor-pointer p-2.5 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" style={{ backgroundImage: "url(\"data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23a1a1aa%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.7rem top 50%", backgroundSize: "0.65rem auto" }}>
                         <option value="low">Low (Standard response)</option>
                         <option value="medium">Medium (4-hour SLA)</option>
                         <option value="high">High (2-hour SLA)</option>
@@ -326,8 +332,10 @@ export default function CreateTicketPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Detailed Symptom Description</label>
+                    <label htmlFor="ticket-description" className="text-sm font-medium text-foreground">Detailed Symptom Description</label>
                     <textarea 
+                      id="ticket-description"
+                      name="description"
                       rows={4}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
@@ -351,6 +359,8 @@ export default function CreateTicketPage() {
                 </div>
                 
                 <input 
+                  id="ticket-file-upload"
+                  name="fileAttachments"
                   type="file" 
                   ref={fileInputRef} 
                   onChange={handleFileChange} 

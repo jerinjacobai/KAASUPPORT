@@ -319,7 +319,10 @@ export function AssetExcelImportModal({ open, onOpenChange, isOpen, onClose }: A
               </p>
             </div>
             <div>
+              <label htmlFor="asset-excel-file-upload" className="sr-only">Upload Asset Excel or CSV File</label>
               <input
+                id="asset-excel-file-upload"
+                name="assetExcelFile"
                 ref={fileInputRef}
                 type="file"
                 accept=".xlsx,.xls,.csv"
