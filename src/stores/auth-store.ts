@@ -5,12 +5,19 @@ import type { Profile } from '@/types/database'
 import { supabase } from '@/lib/supabase'
 import { useMasterStore } from '@/stores/master-store'
 import { hashPassword } from '@/lib/crypto'
+import { 
+  DEFAULT_ROLE_PERMISSIONS, 
+  getRoleInfo, 
+  type RoleTier 
+} from '@/types/permissions'
 
 interface AuthState {
   user: User | null
   session: Session | null
   profile: Profile | null
   roles: string[]
+  roleName: string | null
+  roleTier: RoleTier
   permissions: string[]
   companyIds: string[]
   userCompany: string | null
@@ -21,6 +28,7 @@ interface AuthState {
   setSession: (session: Session | null) => void
   setProfile: (profile: Profile | null) => void
   setRoles: (roles: string[]) => void
+  setRoleName: (roleName: string | null) => void
   setPermissions: (permissions: string[]) => void
   setCompanyIds: (ids: string[]) => void
   setUserCompany: (company: string | null) => void
@@ -28,6 +36,7 @@ interface AuthState {
   setIsLoading: (loading: boolean) => void
   hasPermission: (permission: string) => boolean
   hasRole: (role: string) => boolean
+  hasMenuAccess: (menuId: string) => boolean
   checkSession: () => Promise<void>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
@@ -41,6 +50,8 @@ export const useAuthStore = create<AuthState>()(
       session: null,
       profile: null,
       roles: [],
+      roleName: null,
+      roleTier: 'user',
       permissions: [],
       companyIds: [],
       userCompany: null,
@@ -52,6 +63,10 @@ export const useAuthStore = create<AuthState>()(
       setSession: (session) => set({ session }),
       setProfile: (profile) => set({ profile }),
       setRoles: (roles) => set({ roles, isKaaInternal: roles.includes('internal') || roles.includes('super_admin') }),
+      setRoleName: (roleName) => {
+        const roleInfo = getRoleInfo(roleName)
+        set({ roleName, roleTier: roleInfo.tier })
+      },
       setPermissions: (permissions) => set({ permissions }),
       setCompanyIds: (companyIds) => set({ companyIds }),
       setUserCompany: (userCompany) => set({ userCompany }),
@@ -60,6 +75,51 @@ export const useAuthStore = create<AuthState>()(
 
       hasPermission: (permission) => get().permissions.includes('*') || get().permissions.includes(permission),
       hasRole: (role) => get().roles.includes(role),
+
+      hasMenuAccess: (menuId: string): boolean => {
+        const state = get()
+        const user = state.user
+        const roleName = state.roleName
+        const isInternal = state.isKaaInternal
+
+        // 1. Super Admin: Always unrestricted whole admin scope (*)
+        if (
+          state.roleTier === 'super_admin' || 
+          roleName === 'Super Admin' ||
+          state.roles.includes('super_admin') ||
+          user?.email?.toLowerCase() === 'admin@kaasupport.com' ||
+          user?.email?.toLowerCase() === 'qataritl037@gmail.com'
+        ) {
+          return true
+        }
+
+        // 2. Check individual user-specific custom permissions override
+        if (user?.id) {
+          const userOverrides = useMasterStore.getState().userPermissions[user.id]
+          if (Array.isArray(userOverrides) && userOverrides.length > 0) {
+            return userOverrides.includes(menuId)
+          }
+        }
+
+        // 3. Check active role permissions configured in masterStore
+        if (roleName) {
+          const configuredRolePerms = useMasterStore.getState().rolePermissions[roleName]
+          if (Array.isArray(configuredRolePerms)) {
+            return configuredRolePerms.includes(menuId)
+          }
+          // Default role fallback
+          const defaultPerms = DEFAULT_ROLE_PERMISSIONS[roleName]
+          if (Array.isArray(defaultPerms)) {
+            return defaultPerms.includes(menuId)
+          }
+        }
+
+        // 4. Fallback: Base minimal access
+        if (isInternal) {
+          return ['dashboard', 'tickets', 'knowledge_base'].includes(menuId)
+        }
+        return ['dashboard', 'tickets', 'tickets_new', 'knowledge_base'].includes(menuId)
+      },
 
       checkSession: async () => {
         try {
@@ -79,12 +139,21 @@ export const useAuthStore = create<AuthState>()(
               if (dbComp) resolvedCompany = dbComp;
             }
 
+            // Match directory user for role
+            const masterUser = useMasterStore.getState().users.find(
+              u => u.email.toLowerCase() === session.user.email?.toLowerCase() || u.id === session.user.id
+            );
+            const resolvedRoleName = session.user.user_metadata?.role_name || masterUser?.roleName || (isInternal ? 'Super Admin' : 'Client Requester');
+            const roleInfo = getRoleInfo(resolvedRoleName);
+
             set({
               session,
               user: session.user,
               isKaaInternal: !!isInternal,
-              roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
-              permissions: ['*'],
+              roles: roleInfo.tier === 'super_admin' ? ['super_admin', 'internal'] : (isInternal ? ['internal', 'admin'] : ['client_user']),
+              roleName: resolvedRoleName,
+              roleTier: roleInfo.tier,
+              permissions: roleInfo.tier === 'super_admin' ? ['*'] : (useMasterStore.getState().rolePermissions[resolvedRoleName] || []),
               userCompany: resolvedCompany,
               isLoading: false,
             })
@@ -118,12 +187,20 @@ export const useAuthStore = create<AuthState>()(
               if (dbComp) resolvedCompany = dbComp;
             }
 
+            const masterUser = useMasterStore.getState().users.find(
+              u => u.email.toLowerCase() === email || u.id === data.user.id
+            );
+            const resolvedRoleName = data.user.user_metadata?.role_name || masterUser?.roleName || (isInternal ? 'Super Admin' : 'Client Requester');
+            const roleInfo = getRoleInfo(resolvedRoleName);
+
             set({ 
               user: data.user, 
               session: data.session,
               isKaaInternal: !!isInternal,
-              roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
-              permissions: ['*'],
+              roles: roleInfo.tier === 'super_admin' ? ['super_admin', 'internal'] : (isInternal ? ['internal', 'admin'] : ['client_user']),
+              roleName: resolvedRoleName,
+              roleTier: roleInfo.tier,
+              permissions: roleInfo.tier === 'super_admin' ? ['*'] : (useMasterStore.getState().rolePermissions[resolvedRoleName] || []),
               userCompany: resolvedCompany,
               isLoading: false
             })
@@ -136,10 +213,9 @@ export const useAuthStore = create<AuthState>()(
           const enteredHash = await hashPassword(password);
 
           const foundMasterUser = masterUsers.find(u => {
-            if (u.email.toLowerCase() !== email.toLowerCase() || u.status !== 'Active') {
+            if (u.email.toLowerCase() !== email || u.status !== 'Active') {
               return false;
             }
-            // Check hash match or fallback match (with immediate hash upgrade)
             return u.passwordHash === enteredHash || 
                    u.password === password || 
                    u.defaultPassword === password;
@@ -156,13 +232,18 @@ export const useAuthStore = create<AuthState>()(
             }
 
             const isInternal = foundMasterUser.roleType === 'KAA Internal Staff';
+            const resolvedRoleName = foundMasterUser.roleName || (isInternal ? 'Super Admin' : 'Client Requester');
+            const roleInfo = getRoleInfo(resolvedRoleName);
+
             const userObj: any = {
               id: foundMasterUser.id,
               email: foundMasterUser.email,
               user_metadata: {
                 full_name: foundMasterUser.name,
                 company: foundMasterUser.mappedCompany,
-                is_kaa_internal: isInternal
+                is_kaa_internal: isInternal,
+                role_name: resolvedRoleName,
+                role_type: foundMasterUser.roleType
               }
             };
 
@@ -170,8 +251,10 @@ export const useAuthStore = create<AuthState>()(
               user: userObj,
               session: { user: userObj } as any,
               isKaaInternal: isInternal,
-              roles: isInternal ? ['super_admin', 'internal'] : ['client_admin'],
-              permissions: ['*'],
+              roles: roleInfo.tier === 'super_admin' ? ['super_admin', 'internal'] : (isInternal ? ['internal', 'admin'] : ['client_user']),
+              roleName: resolvedRoleName,
+              roleTier: roleInfo.tier,
+              permissions: roleInfo.tier === 'super_admin' ? ['*'] : (useMasterStore.getState().rolePermissions[resolvedRoleName] || []),
               userCompany: isInternal ? null : foundMasterUser.mappedCompany,
               isLoading: false
             });
@@ -199,6 +282,8 @@ export const useAuthStore = create<AuthState>()(
         session: null,
         profile: null,
         roles: [],
+        roleName: null,
+        roleTier: 'user',
         permissions: [],
         companyIds: [],
         userCompany: null,
@@ -214,6 +299,8 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         session: state.session,
         roles: state.roles,
+        roleName: state.roleName,
+        roleTier: state.roleTier,
         permissions: state.permissions,
         isKaaInternal: state.isKaaInternal,
         userCompany: state.userCompany,

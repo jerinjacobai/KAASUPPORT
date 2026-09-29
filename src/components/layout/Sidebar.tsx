@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useUIStore } from '@/stores/ui-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { cn } from '@/lib/utils';
+import type { MenuId } from '@/types/permissions';
 import { 
   LayoutDashboard, 
   Ticket, 
@@ -17,48 +18,86 @@ import {
   LogOut,
   Building2,
   PlusCircle,
-  FolderTree
+  FolderTree,
+  ShieldCheck,
+  UserCheck
 } from 'lucide-react';
+
+interface NavItem {
+  id: MenuId;
+  name: string;
+  path: string;
+  icon: any;
+}
+
+interface NavGroup {
+  group: string;
+  items: NavItem[];
+}
 
 export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
-  const { isKaaInternal, userCompany, signOut } = useAuthStore();
+  const { user, isKaaInternal, userCompany, roleName, roleTier, hasMenuAccess, signOut } = useAuthStore();
   const location = useLocation();
 
-  // Navigation Items defined conditionally
-  const navigationItems = [
-    { group: 'Overview', items: [
-      { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    ]},
-    { group: 'Support Desk', items: [
-      { name: isKaaInternal ? 'All Tickets' : 'My Tickets', path: '/tickets', icon: Ticket },
-      { name: 'Raise Ticket', path: '/tickets/new', icon: PlusCircle },
-      ...(isKaaInternal ? [
-        { name: 'Engineers', path: '/engineers', icon: Users },
-        { name: 'Field Visits', path: '/field-visits', icon: Map },
-      ] : []),
-    ]},
-    { group: 'Assets & Contracts', items: [
-      { name: isKaaInternal ? 'All Assets' : 'My Assets', path: '/assets', icon: Package },
-      { name: 'AMC Contracts', path: '/amc', icon: FileText },
-    ]},
-    { group: 'Administration & Masters', items: [
-      { name: 'Company Master', path: '/admin/masters?tab=companies', icon: Building2 },
-      { name: 'Admin Masters', path: '/admin/masters', icon: FolderTree },
-      ...(isKaaInternal ? [
-        { name: 'Reports', path: '/reports', icon: BarChart3 },
-        { name: 'Settings', path: '/settings', icon: Settings },
-      ] : []),
-    ]},
-    { group: 'Help & Knowledge', items: [
-      { name: 'Knowledge Base', path: '/knowledge-base', icon: BookOpen },
-    ]}
+  // All system navigation items mapped with unique menu IDs
+  const allNavigationGroups: NavGroup[] = [
+    { 
+      group: 'Overview', 
+      items: [
+        { id: 'dashboard', name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+      ]
+    },
+    { 
+      group: 'Support Desk', 
+      items: [
+        { id: 'tickets', name: isKaaInternal ? 'All Tickets' : 'My Tickets', path: '/tickets', icon: Ticket },
+        { id: 'tickets_new', name: 'Raise Ticket', path: '/tickets/new', icon: PlusCircle },
+        { id: 'engineers', name: 'Engineers', path: '/engineers', icon: Users },
+        { id: 'field_visits', name: 'Field Visits', path: '/field-visits', icon: Map },
+      ]
+    },
+    { 
+      group: 'Assets & Contracts', 
+      items: [
+        { id: 'assets', name: isKaaInternal ? 'All Assets' : 'My Assets', path: '/assets', icon: Package },
+        { id: 'amc', name: 'AMC Contracts', path: '/amc', icon: FileText },
+      ]
+    },
+    { 
+      group: 'Administration & Masters', 
+      items: [
+        { id: 'company_master', name: 'Company Master', path: '/admin/masters?tab=companies', icon: Building2 },
+        { id: 'admin_masters', name: 'Admin Masters', path: '/admin/masters', icon: FolderTree },
+        { id: 'reports', name: 'Reports', path: '/reports', icon: BarChart3 },
+        { id: 'settings', name: 'Settings', path: '/settings', icon: Settings },
+      ]
+    },
+    { 
+      group: 'Help & Knowledge', 
+      items: [
+        { id: 'knowledge_base', name: 'Knowledge Base', path: '/knowledge-base', icon: BookOpen },
+      ]
+    }
   ];
 
+  // Dynamically filter navigation items based on active user's permissions
+  const visibleGroups = allNavigationGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => hasMenuAccess(item.id))
+    }))
+    .filter(group => group.items.length > 0);
+
+  // User display name and role badge formatting
+  const displayName = user?.user_metadata?.full_name || (isKaaInternal ? 'KAA Team Member' : 'Client User');
+  const roleDisplay = roleName || (roleTier === 'super_admin' ? 'Super Admin' : (isKaaInternal ? 'Staff' : 'Client Requester'));
+
   return (
-    <aside className="h-full flex flex-col bg-card border-r border-border/80 text-card-foreground relative z-10">
+    <aside className="h-full flex flex-col bg-card border-r border-border/80 text-card-foreground relative z-10 select-none">
       {/* Subtle top gradient overlay */}
       <div className="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-primary/[0.045] to-transparent pointer-events-none -z-10" />
+      
       {/* Brand Header */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-border shrink-0">
         <Link to="/dashboard" className="flex items-center gap-3 overflow-hidden">
@@ -74,6 +113,7 @@ export function Sidebar() {
         </Link>
         <button 
           onClick={toggleSidebar}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors hidden lg:block"
         >
           {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -82,7 +122,7 @@ export function Sidebar() {
 
       {/* Navigation List */}
       <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6 custom-scrollbar">
-        {navigationItems.map((group, idx) => (
+        {visibleGroups.map((group, idx) => (
           <div key={idx} className="space-y-1">
             {!sidebarCollapsed && (
               <h4 className="px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
@@ -99,7 +139,7 @@ export function Sidebar() {
               
               return (
                 <Link
-                  key={item.path}
+                  key={item.id}
                   to={item.path}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors group relative overflow-hidden",
@@ -131,18 +171,31 @@ export function Sidebar() {
           <div className="flex items-center justify-between bg-secondary/30 p-2 rounded-xl border border-border/50 shadow-sm hover:border-border transition-colors">
             <div className="flex items-center gap-3 overflow-hidden">
               <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center font-bold text-sm text-primary shadow-inner shrink-0">
-                  {isKaaInternal ? 'K' : (userCompany ? userCompany.slice(0, 2).toUpperCase() : 'C')}
+                <div className={cn(
+                  "w-9 h-9 rounded-full border flex items-center justify-center font-bold text-sm shadow-inner shrink-0",
+                  roleTier === 'super_admin' ? "bg-red-500/10 border-red-500/30 text-red-400" :
+                  roleTier === 'admin' ? "bg-amber-500/10 border-amber-500/30 text-amber-400" :
+                  "bg-primary/10 border-primary/20 text-primary"
+                )}>
+                  {displayName.slice(0, 1).toUpperCase()}
                 </div>
                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-background rounded-full"></div>
               </div>
               <div className="flex flex-col truncate">
                 <span className="text-xs font-semibold truncate text-foreground leading-tight">
-                  {isKaaInternal ? 'KAA Admin' : userCompany}
+                  {displayName}
                 </span>
-                <span className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                  <Building2 className="w-3 h-3 text-primary/70" />
-                  {isKaaInternal ? 'Super Admin' : 'Client Scope'}
+                <span className="text-[10px] text-muted-foreground flex items-center gap-1 mt-0.5 truncate">
+                  {roleTier === 'super_admin' ? (
+                    <ShieldCheck className="w-3 h-3 text-red-400 shrink-0" />
+                  ) : roleTier === 'admin' ? (
+                    <UserCheck className="w-3 h-3 text-amber-400 shrink-0" />
+                  ) : (
+                    <Building2 className="w-3 h-3 text-primary/70 shrink-0" />
+                  )}
+                  <span className="truncate">
+                    {roleTier === 'super_admin' ? 'Super Admin (*)' : `${roleDisplay}${userCompany ? ` • ${userCompany}` : ''}`}
+                  </span>
                 </span>
               </div>
             </div>

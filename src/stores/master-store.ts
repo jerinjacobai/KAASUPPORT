@@ -1,6 +1,10 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { supabase } from '@/lib/supabase'
+import { 
+  DEFAULT_ROLE_PERMISSIONS, 
+  MENU_DEFINITIONS 
+} from '@/types/permissions'
 
 export interface CompanyMaster {
   id: string
@@ -27,6 +31,7 @@ export interface UserMaster {
   password?: string
   defaultPassword?: string
   isPasswordResetRequired?: boolean
+  customPermissions?: string[]
   created_at?: string
 }
 
@@ -154,6 +159,8 @@ interface MasterState {
   fieldVisits: FieldVisitMaster[]
   inventoryParts: InventoryPartMaster[]
   kbArticles: KBArticleMaster[]
+  rolePermissions: Record<string, string[]>
+  userPermissions: Record<string, string[]>
   isSyncing: boolean
 
   // Actions
@@ -165,6 +172,14 @@ interface MasterState {
   updateUser: (id: string, updates: Partial<UserMaster>) => void
   resetUserPassword: (id: string, newPassword?: string) => Promise<string>
   deleteUser: (id: string) => Promise<void>
+
+  // Permissions & Access Actions
+  updateRolePermissions: (roleName: string, menus: string[]) => Promise<void>
+  updateUserPermissions: (userId: string, menus: string[]) => Promise<void>
+  resetUserPermissions: (userId: string) => Promise<void>
+  resetRolePermissionsToDefault: (roleName?: string) => Promise<void>
+  getUserEffectivePermissions: (userOrId: UserMaster | string) => string[]
+  hasUserMenuPermission: (userOrId: UserMaster | string | null | undefined, menuId: string) => boolean
 
   addHardwareType: (type: string | { name: string; code?: string; description?: string }) => Promise<HardwareTypeMaster>
   deleteHardwareType: (id: string) => Promise<void>
@@ -231,6 +246,8 @@ export const useMasterStore = create<MasterState>()(
       fieldVisits: [] as FieldVisitMaster[],
       inventoryParts: [] as InventoryPartMaster[],
       kbArticles: [] as KBArticleMaster[],
+      rolePermissions: { ...DEFAULT_ROLE_PERMISSIONS },
+      userPermissions: {} as Record<string, string[]>,
       isSyncing: false,
 
       purgeMockData: () => {
@@ -409,6 +426,136 @@ export const useMasterStore = create<MasterState>()(
         set((state) => ({
           users: state.users.map(user => user.id === id ? { ...user, status: 'Inactive' } : user)
         }))
+      },
+
+      updateRolePermissions: async (roleName: string, menus: string[]) => {
+        if (roleName === 'Super Admin') {
+          // Super Admin retains whole admin scope (*), immutable
+          return
+        }
+        set((state) => ({
+          rolePermissions: {
+            ...state.rolePermissions,
+            [roleName]: menus
+          }
+        }))
+
+        try {
+          await (supabase.from as any)('roles')
+            .update({ permissions: { menus } })
+            .eq('display_name', roleName)
+        } catch (err) {
+          console.warn('Could not sync role permissions to Supabase:', err)
+        }
+      },
+
+      updateUserPermissions: async (userId: string, menus: string[]) => {
+        const foundUser = get().users.find(u => u.id === userId)
+        if (foundUser?.roleName === 'Super Admin') {
+          // Super Admin retains whole admin scope (*), immutable
+          return
+        }
+
+        set((state) => ({
+          userPermissions: {
+            ...state.userPermissions,
+            [userId]: menus
+          },
+          users: state.users.map(u => u.id === userId ? { ...u, customPermissions: menus } : u)
+        }))
+
+        try {
+          if (isValidUUID(userId)) {
+            await (supabase.from as any)('profiles')
+              .update({ custom_permissions: { menus } })
+              .eq('id', userId)
+          }
+        } catch (err) {
+          console.warn('Could not sync user permissions to Supabase:', err)
+        }
+      },
+
+      resetUserPermissions: async (userId: string) => {
+        set((state) => {
+          const next = { ...state.userPermissions }
+          delete next[userId]
+          return {
+            userPermissions: next,
+            users: state.users.map(u => u.id === userId ? { ...u, customPermissions: undefined } : u)
+          }
+        })
+
+        try {
+          if (isValidUUID(userId)) {
+            await (supabase.from as any)('profiles')
+              .update({ custom_permissions: null })
+              .eq('id', userId)
+          }
+        } catch (err) {
+          console.warn('Could not reset user permissions in Supabase:', err)
+        }
+      },
+
+      resetRolePermissionsToDefault: async (roleName?: string) => {
+        if (roleName) {
+          if (roleName === 'Super Admin') return
+          const defaultMenus = DEFAULT_ROLE_PERMISSIONS[roleName] || MENU_DEFINITIONS.map(m => m.id)
+          set((state) => ({
+            rolePermissions: {
+              ...state.rolePermissions,
+              [roleName]: defaultMenus
+            }
+          }))
+
+          try {
+            await (supabase.from as any)('roles')
+              .update({ permissions: { menus: defaultMenus } })
+              .eq('display_name', roleName)
+          } catch (err) {
+            console.warn('Could not reset role permissions in Supabase:', err)
+          }
+        } else {
+          set({ rolePermissions: { ...DEFAULT_ROLE_PERMISSIONS } })
+          for (const [rName, defaultMenus] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
+            try {
+              await (supabase.from as any)('roles')
+                .update({ permissions: { menus: defaultMenus } })
+                .eq('display_name', rName)
+            } catch {
+              // ignore
+            }
+          }
+        }
+      },
+
+      getUserEffectivePermissions: (userOrId: UserMaster | string): string[] => {
+        let user: UserMaster | undefined
+        if (typeof userOrId === 'string') {
+          user = get().users.find(u => u.id === userOrId || u.email.toLowerCase() === userOrId.toLowerCase())
+        } else {
+          user = userOrId
+        }
+
+        if (!user) return MENU_DEFINITIONS.map(m => m.id)
+        if (user.roleName === 'Super Admin') return MENU_DEFINITIONS.map(m => m.id)
+
+        const userOverride = get().userPermissions[user.id]
+        if (userOverride && Array.isArray(userOverride) && userOverride.length > 0) {
+          return userOverride
+        }
+
+        const rolePerms = get().rolePermissions[user.roleName]
+        if (rolePerms && Array.isArray(rolePerms)) {
+          return rolePerms
+        }
+
+        return DEFAULT_ROLE_PERMISSIONS[user.roleName] || ['dashboard', 'tickets', 'knowledge_base']
+      },
+
+      hasUserMenuPermission: (userOrId: UserMaster | string | null | undefined, menuId: string): boolean => {
+        if (!userOrId) return false
+        const effective = get().getUserEffectivePermissions(userOrId)
+        return effective.includes(menuId)
       },
 
       addHardwareType: async (input: string | { name: string; code?: string; description?: string }) => {
@@ -1063,6 +1210,44 @@ export const useMasterStore = create<MasterState>()(
             }))
             set({ kbArticles: mappedArticles })
           }
+
+          // 10. Sync Live Roles & Menu Permissions
+          try {
+            const { data: dbRoles } = await (supabase.from as any)('roles').select('name, display_name, permissions')
+            if (Array.isArray(dbRoles) && dbRoles.length > 0) {
+              const currentRolePerms = { ...get().rolePermissions }
+              for (const r of dbRoles) {
+                if (r.display_name && r.permissions?.menus && Array.isArray(r.permissions.menus)) {
+                  currentRolePerms[r.display_name] = r.permissions.menus
+                }
+              }
+              set({ rolePermissions: currentRolePerms })
+            }
+          } catch (rErr) {
+            console.warn('Roles permissions sync warning:', rErr)
+          }
+
+          // 11. Sync Live User Custom Permissions
+          try {
+            const { data: dbProfiles } = await (supabase.from as any)('profiles').select('id, custom_permissions')
+            if (Array.isArray(dbProfiles) && dbProfiles.length > 0) {
+              const currentUserPerms = { ...get().userPermissions }
+              for (const p of dbProfiles) {
+                if (p.id && p.custom_permissions?.menus && Array.isArray(p.custom_permissions.menus)) {
+                  currentUserPerms[p.id] = p.custom_permissions.menus
+                }
+              }
+              set({ 
+                userPermissions: currentUserPerms,
+                users: get().users.map(u => ({
+                  ...u,
+                  customPermissions: currentUserPerms[u.id] || u.customPermissions
+                }))
+              })
+            }
+          } catch (pErr) {
+            console.warn('Profiles custom permissions sync warning:', pErr)
+          }
         } catch (err) {
           console.warn('Sync error from Supabase:', err)
         } finally {
@@ -1083,6 +1268,8 @@ export const useMasterStore = create<MasterState>()(
         fieldVisits: state.fieldVisits,
         inventoryParts: state.inventoryParts,
         kbArticles: state.kbArticles,
+        rolePermissions: state.rolePermissions,
+        userPermissions: state.userPermissions,
       }),
     }
   )

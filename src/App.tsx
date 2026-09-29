@@ -18,7 +18,6 @@ const EngineersPage = lazy(() => import('@/features/engineers/EngineersPage'));
 const FieldVisitsPage = lazy(() => import('@/features/engineers/FieldVisitsPage'));
 const AssetsPage = lazy(() => import('@/features/assets/AssetsPage'));
 const AMCContractsPage = lazy(() => import('@/features/amc/AMCContractsPage'));
-const InventoryPage = lazy(() => import('@/features/inventory/InventoryPage'));
 const KnowledgeBasePage = lazy(() => import('@/features/knowledge-base/KnowledgeBasePage'));
 const ReportsPage = lazy(() => import('@/features/reports/ReportsPage'));
 const SettingsPage = lazy(() => import('@/features/admin/SettingsPage'));
@@ -64,9 +63,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Internal Staff Only Guard (Restricts Admin Masters, Inventory, Engineers, Field Visits, Reports & Settings)
-const InternalStaffRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isKaaInternal, isLoading } = useAuthStore();
+// Permission Guard Component (Dynamically verifies user/role menu authorization)
+const PermissionRoute = ({ menuId, children }: { menuId: string; children: React.ReactNode }) => {
+  const { hasMenuAccess, isLoading } = useAuthStore();
 
   if (isLoading) {
     return (
@@ -76,7 +75,7 @@ const InternalStaffRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!isKaaInternal) {
+  if (!hasMenuAccess(menuId)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -133,29 +132,30 @@ export function App() {
                 <Route path="dashboard" element={<DashboardPage />} />
                 
                 {/* Tickets */}
-                <Route path="tickets" element={<TicketListPage />} />
-                <Route path="tickets/new" element={<CreateTicketPage />} />
-                <Route path="tickets/:id" element={<TicketDetailPage />} />
-                <Route path="tickets/kanban" element={<KanbanPage />} />
+                <Route path="tickets" element={<PermissionRoute menuId="tickets"><TicketListPage /></PermissionRoute>} />
+                <Route path="tickets/new" element={<PermissionRoute menuId="tickets_new"><CreateTicketPage /></PermissionRoute>} />
+                <Route path="tickets/:id" element={<PermissionRoute menuId="tickets"><TicketDetailPage /></PermissionRoute>} />
+                <Route path="tickets/kanban" element={<PermissionRoute menuId="tickets"><KanbanPage /></PermissionRoute>} />
                 
-                {/* Field Operations (Internal Staff Only) */}
-                <Route path="engineers" element={<InternalStaffRoute><EngineersPage /></InternalStaffRoute>} />
-                <Route path="field-visits" element={<InternalStaffRoute><FieldVisitsPage /></InternalStaffRoute>} />
+                {/* Field Operations */}
+                <Route path="engineers" element={<PermissionRoute menuId="engineers"><EngineersPage /></PermissionRoute>} />
+                <Route path="field-visits" element={<PermissionRoute menuId="field_visits"><FieldVisitsPage /></PermissionRoute>} />
                 
                 {/* Assets & AMC */}
-                <Route path="assets" element={<AssetsPage />} />
-                <Route path="assets/:id" element={<AssetsPage />} />
-                <Route path="amc" element={<AMCContractsPage />} />
+                <Route path="assets" element={<PermissionRoute menuId="assets"><AssetsPage /></PermissionRoute>} />
+                <Route path="assets/:id" element={<PermissionRoute menuId="assets"><AssetsPage /></PermissionRoute>} />
+                <Route path="amc" element={<PermissionRoute menuId="amc"><AMCContractsPage /></PermissionRoute>} />
                 
-                {/* Inventory, KB, Admin Masters, Reports & Settings */}
-                <Route path="inventory" element={<InternalStaffRoute><InventoryPage /></InternalStaffRoute>} />
-                <Route path="knowledge-base" element={<KnowledgeBasePage />} />
-                <Route path="admin/masters" element={<MastersPage />} />
+                {/* KB, Admin Masters, Permissions, Reports & Settings */}
+                <Route path="knowledge-base" element={<PermissionRoute menuId="knowledge_base"><KnowledgeBasePage /></PermissionRoute>} />
+                <Route path="admin/masters" element={<PermissionRoute menuId="admin_masters"><MastersPage /></PermissionRoute>} />
+                <Route path="admin/permissions" element={<Navigate to="/admin/masters?tab=permissions" replace />} />
+                <Route path="permissions" element={<Navigate to="/admin/masters?tab=permissions" replace />} />
                 <Route path="masters" element={<Navigate to="/admin/masters" replace />} />
                 <Route path="admin/companies" element={<Navigate to="/admin/masters?tab=companies" replace />} />
                 <Route path="companies" element={<Navigate to="/admin/masters?tab=companies" replace />} />
-                <Route path="reports" element={<InternalStaffRoute><ReportsPage /></InternalStaffRoute>} />
-                <Route path="settings" element={<InternalStaffRoute><SettingsPage /></InternalStaffRoute>} />
+                <Route path="reports" element={<PermissionRoute menuId="reports"><ReportsPage /></PermissionRoute>} />
+                <Route path="settings" element={<PermissionRoute menuId="settings"><SettingsPage /></PermissionRoute>} />
                 
                 {/* Catch all redirects to login if unauthenticated or dashboard if authenticated */}
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

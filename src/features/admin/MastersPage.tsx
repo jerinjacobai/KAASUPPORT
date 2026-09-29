@@ -18,7 +18,8 @@ import {
   FileCheck2,
   FileSpreadsheet,
   Layers,
-  Pencil
+  Pencil,
+  ShieldCheck
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -31,6 +32,7 @@ import { hashPassword } from '@/lib/crypto';
 import { supabase } from '@/lib/supabase';
 import { AssetExcelImportModal } from '@/features/assets/AssetExcelImportModal';
 import { EditAssetModal } from '@/features/assets/EditAssetModal';
+import { PermissionsMatrixTab } from './PermissionsMatrixTab';
 
 export default function MastersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -487,24 +489,29 @@ export default function MastersPage() {
           <TabsTrigger value="amc" className="gap-2 text-xs">
             <FileCheck2 className="w-3.5 h-3.5 text-cyan-400" /> AMC Contracts ({amcList.length})
           </TabsTrigger>
+          <TabsTrigger value="permissions" className="gap-2 text-xs">
+            <ShieldCheck className="w-3.5 h-3.5 text-rose-400" /> User vs Permissions
+          </TabsTrigger>
         </TabsList>
 
-        {/* Search Bar */}
-        <div className="mt-4 flex items-center gap-4 bg-secondary/30 p-3 rounded-xl border border-border">
-          <div className="relative flex-1">
-            <label htmlFor="masters-search" className="sr-only">Search in {activeTab}</label>
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              id="masters-search"
-              name="masters-search"
-              type="text"
-              placeholder={`Search in ${activeTab}...`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-background border border-border rounded-lg pl-9 pr-4 py-1.5 text-xs outline-none focus:border-primary text-foreground"
-            />
+        {/* Search Bar (Hidden on Permissions Matrix tab since it has dedicated filter tools) */}
+        {activeTab !== 'permissions' && (
+          <div className="mt-4 flex items-center gap-4 bg-secondary/30 p-3 rounded-xl border border-border">
+            <div className="relative flex-1">
+              <label htmlFor="masters-search" className="sr-only">Search in {activeTab}</label>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                id="masters-search"
+                name="masters-search"
+                type="text"
+                placeholder={`Search in ${activeTab}...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-background border border-border rounded-lg pl-9 pr-4 py-1.5 text-xs outline-none focus:border-primary text-foreground"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Tab 1: Companies Master */}
         <TabsContent value="companies" className="mt-4 space-y-4">
@@ -806,6 +813,11 @@ export default function MastersPage() {
               </tbody>
             </table>
           </div>
+        </TabsContent>
+
+        {/* Tab 6: Permissions Matrix (Role vs Menu & User vs Permissions) */}
+        <TabsContent value="permissions" className="mt-4">
+          <PermissionsMatrixTab />
         </TabsContent>
       </Tabs>
 
